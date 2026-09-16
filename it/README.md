@@ -11,8 +11,10 @@ Engineering with Traceability*).
   adattabilità, appendice di setup opzionale (CEREBRO/Qdrant/Ollama/Graphify).
 - **[`ONBOARDING_CHECKLIST.md`](ONBOARDING_CHECKLIST.md)** — checklist rapida da seguire a inizio
   sessione/feature.
-- **[`templates/`](templates/)** — 13 documenti scheletro, uno per ogni fase/artefatto del ciclo
-  di vita descritto nel manuale (§8).
+- **[`templates/`](templates/)** — i documenti scheletro: 13 template di ciclo di vita (uno per
+  fase/artefatto, §8) più 2 template di documentazione della codebase (vedi §A.4).
+- **[`guides/workflow.html`](guides/workflow.html)** — guida operativa interattiva (SPA) con 9 casi prova.
+- **[`guides/install.html`](guides/install.html)** — guida all'installazione dei componenti.
 
 ## Template disponibili
 
@@ -39,6 +41,14 @@ manuale):
 | --- | --- |
 | `templates/MODULE_MAP_TEMPLATE.md` | Mappa dei progetti/moduli di un workspace e delle loro dipendenze |
 | `templates/CROSS_PROJECT_CHANGE_TEMPLATE.md` | Coordinamento di una modifica che attraversa più progetti/moduli |
+
+**Template di documentazione della codebase** (usati da `limet-index` per generare `docs/`, vedi il
+manuale §A.4):
+
+| Template | Uso tipico |
+| --- | --- |
+| `templates/ARCHITECTURE_TEMPLATE.md` | Panoramica architetturale scritta da umano/agente, complementare al report Graphify |
+| `templates/CONVENTIONS_TEMPLATE.md` | Convenzioni di codice distillate dalla codebase |
 
 Vedi anche la versione inglese in [`../en/`](../en/README.md).
 

@@ -52,3 +52,5 @@
 - [ ] Completed work has been frozen with `ARCHIVE_ENTRY_TEMPLATE.md`, if the project separates
       active documentation from archived documentation.
 - [ ] Leftover tasks that are no longer needed have been removed/flagged.
+- [ ] The project's RAG collection has been re-indexed (`limet/scripts/limet-index.ps1 update`),
+      so the archived change is searchable context for future sessions.

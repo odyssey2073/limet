@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LIMET — Guida all'installazione</title>
+<style>
+  :root {
+    --bg: #0e1116; --bg2: #141923; --card: #171d29; --border: #262f40;
+    --text: #e6ebf2; --muted: #8b96a8; --accent: #f59e0b; --accent2: #d97706;
+    --ok: #22c55e; --warn: #f59e0b; --err: #ef4444;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: radial-gradient(1200px 600px at 50% -10%, #1a2230 0%, var(--bg) 55%);
+    color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+  }
+  .top {
+    display: flex; align-items: center; gap: 12px; padding: 14px 24px;
+    border-bottom: 1px solid var(--border); background: rgba(14,17,22,.7);
+    position: sticky; top: 0; z-index: 10; backdrop-filter: blur(6px);
+  }
+  .top .logo { font-size: 22px; }
+  .top h1 { font-size: 17px; margin: 0; font-weight: 700; }
+  .top .sub { color: var(--muted); font-size: 12.5px; margin-left: auto; }
+  .top .lang { margin-left: 12px; color: var(--muted); text-decoration: none; border: 1px solid var(--border); border-radius: 8px; padding: 4px 12px; font-size: 13px; white-space: nowrap; }
+  .top .lang:hover { color: var(--text); border-color: var(--accent); }
+
+  .layout { display: flex; gap: 20px; padding: 20px 24px; max-width: 1200px; margin: 0 auto; align-items: flex-start; }
+  nav.side { width: 250px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; position: sticky; top: 70px; }
+  nav.side button {
+    text-align: left; padding: 11px 14px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--bg2); color: var(--muted); cursor: pointer; font-size: 13.5px; transition: all .15s;
+  }
+  nav.side button:hover { border-color: #3a4a63; color: var(--text); }
+  nav.side button.on { border-color: var(--accent); color: var(--text); background: rgba(245,158,11,.10); }
+
+  main { flex: 1; min-width: 0; }
+  .head { margin-bottom: 18px; }
+  .head h2 { font-size: 20px; margin: 0 0 6px; }
+  .head p { color: var(--muted); font-size: 13.5px; margin: 0; line-height: 1.5; max-width: 720px; }
+
+  .step { border: 1px solid var(--border); border-radius: 12px; background: var(--card); padding: 18px 20px; margin-bottom: 14px; }
+  .step .t { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .step .d { color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+  .step .d code { background: rgba(0,0,0,.3); padding: 1px 5px; border-radius: 5px; font-family: var(--mono); font-size: 12px; }
+  .code {
+    margin-top: 10px; background: #0b0e13; border: 1px solid var(--border); border-radius: 9px;
+    font-family: var(--mono); font-size: 12.5px; padding: 12px 14px; position: relative; overflow-x: auto;
+    white-space: pre; color: #c7d2e0;
+  }
+  .code button.copy {
+    position: absolute; top: 8px; right: 8px; background: var(--bg2); border: 1px solid var(--border);
+    color: var(--muted); border-radius: 7px; padding: 4px 9px; font-size: 11px; cursor: pointer;
+  }
+  .code button.copy:hover { color: var(--text); border-color: var(--accent); }
+  .note { margin-top: 10px; font-size: 12.5px; color: var(--warn); line-height: 1.5; }
+  .note::before { content: "⚠ "; }
+
+  table.tbl { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+  table.tbl th, table.tbl td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+  table.tbl th { background: var(--bg2); color: var(--muted); font-weight: 600; }
+  table.tbl code { background: rgba(0,0,0,.3); padding: 1px 5px; border-radius: 5px; font-family: var(--mono); font-size: 12px; }
+
+  @media (max-width: 760px) {
+    .layout { flex-direction: column; padding: 14px; }
+    nav.side { width: 100%; flex-direction: row; flex-wrap: wrap; position: static; }
+    nav.side button { flex: 1 1 45%; }
+  }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="logo">🟧</div>
+  <h1>LIMET — Guida all'installazione</h1>
+  <div class="sub">Solo comandi di installazione · l'uso operativo è dal launcher web</div>
+  <a class="lang" href="../../en/guides/install.html">EN</a>
+</div>
+
+<div class="layout">
+  <nav class="side" id="side"></nav>
+  <main>
+    <div class="head"><h2 id="secTitle"></h2><p id="secDesc"></p></div>
+    <div id="steps"></div>
+  </main>
+</div>
+
+<script>
+const SECTIONS = [
+  { id: "prereq", title: "Prerequisiti", desc: "Cosa serve sulla macchina prima di iniziare. Tutto gira in locale (nessuna cloud, nessuna API key).",
+    steps: [
+      { t: "Strumenti base", d: "<code>Python 3.10+</code>, <code>Git</code> (clonare i repo), <code>Docker Desktop</code> (per Qdrant).", c: "python --version\ngit --version\ndocker --version" },
+      { t: "Ollama", d: "Per gli embedding dei documenti (modello <code>nomic-embed-text</code>). Installa da <code>https://ollama.com</code>." },
+      { t: "(Opzionale) uv o pipx", d: "Per installare Graphify in modo isolato. <code>uv</code> è la via consigliata.", c: "# uv: https://github.com/astral-sh/uv" }
+    ] },
+  { id: "qdrant", title: "Qdrant (database vettoriale)", desc: "Il database vettoriale usato da CEREBRO. Un container Docker locale.",
+    steps: [
+      { t: "Cos'è e come funziona", d: "Qdrant è il <b>database vettoriale</b>: memorizza i documenti come vettori (embedding) e permette la ricerca per <b>similarità semantica</b>. CEREBRO lo usa come storage. Ogni progetto LIMET ha una collection isolata <code>CRB_&lt;slug&gt;</code>." },
+      { t: "Scarica l'immagine", c: "docker pull qdrant/qdrant" },
+      { t: "Avvia il container", d: "Porte 6333 (REST) e 6334 (gRPC); volume persistente <code>qdrant_storage</code>.", c: "docker run -d --name qdrant -p 6333:6333 -p 6334:6334 -v qdrant_storage:/qdrant/storage qdrant/qdrant" },
+      { t: "Verifica", d: "Risposta JSON con la lista collezioni (inizialmente vuota).", c: "curl http://localhost:6333/collections" },
+      { t: "Riavvio (se spento)", c: "docker start qdrant" }
+    ] },
+  { id: "ollama", title: "Ollama (embedding)", desc: "Genera gli embedding usati da CEREBRO per indicizzare e interrogare.",
+    steps: [
+      { t: "Cos'è e come funziona", d: "Ollama esegue modelli LLM <b>in locale</b>. CEREBRO lo usa solo per gli <b>embedding</b> (modello <code>nomic-embed-text</code>): nessuna chiamata cloud, i documenti non lasciano la macchina." },
+      { t: "Scarica il modello di embedding", c: "ollama pull nomic-embed-text" },
+      { t: "Avvia il servizio", c: "ollama serve" },
+      { t: "Verifica", d: "Deve rispondere <code>Ollama is running</code>.", c: "curl http://localhost:11434" }
+    ] },
+  { id: "cerebro", title: "CEREBRO (RAG documentale)", desc: "Sistema RAG locale multi-progetto. Qui installi solo CEREBRO: la registrazione/indicizzazione dei progetti la fa LIMET (launcher).",
+    steps: [
+      { t: "Cos'è e come funziona", d: "CEREBRO è il <b>RAG documentale</b>: indicizza la documentazione di un progetto in Qdrant e genera i blocchi istruzioni per l'agente. In LIMET copre il contesto <b>§2.1 (documentale)</b>: risponde a 'perché è stato fatto così / cosa dice la specifica'." },
+      { t: "Clona il repository", c: "git clone https://github.com/odyssey2073/cerebro.git\ncd cerebro" },
+      { t: "Crea il virtualenv e installa le dipendenze", c: "python -m venv .venv\n.venv\\Scripts\\Activate.ps1\npip install -r requirements.txt" },
+      { t: "Configura .env", d: "I default vanno già bene per un install locale standard.", c: "copy .env.example .env\n# QDRANT_URL=http://localhost:6333\n# OLLAMA_URL=http://localhost:11434\n# EMBEDDING_MODEL=nomic-embed-text" },
+      { t: "Fatto", d: "Da qui in poi la registrazione dei progetti, l'indicizzazione e le istruzioni per l'agente le fa <b>LIMET</b> tramite il launcher (azione <b>Crea</b>). Non serve toccare CEREBRO a mano. Per avviare il launcher:", c: "python <LIMET_HOME>\\scripts\\limet-launcher.py" }
+    ] },
+  { id: "graphify", title: "Graphify (knowledge graph del codice)", desc: "Analisi statica (AST) del codice. Qui installi solo la CLI: la generazione/aggiornamento del grafo la fa LIMET (launcher).",
+    steps: [
+      { t: "Cos'è e come funziona", d: "Graphify è il <b>knowledge graph del codice</b>: analizza staticamente (AST) il sorgente e costruisce un grafo di simboli/moduli/chiamate, interrogabile in linguaggio naturale. In LIMET copre il contesto <b>§2.2 (strutturale)</b>: 'dove è implementato X / chi dipende da Y'." },
+      { t: "Installa la CLI", c: "uv tool install graphifyy   # consigliato\n# alternative: pipx install graphifyy  /  pip install graphifyy" },
+      { t: "Registra la skill per l'assistente", d: "Rileva automaticamente l'assistente in uso (Claude Code, Copilot, ecc.).", c: "graphify install            # a livello utente\ngraphify install --project   # solo per il progetto corrente" },
+      { t: "Fatto", d: "La generazione del grafo e del report architetturale la fa <b>LIMET</b> (launcher, azione <b>Crea</b>); l'aggiornamento dopo modifiche al codice lo fa l'azione <b>Re-index</b>. Per avviare il launcher:", c: "python <LIMET_HOME>\\scripts\\limet-launcher.py" }
+    ] },
+  { id: "limet", title: "LIMET (framework)", desc: "Il framework spec-driven. Cloni il repo e da lì operi tutto dal launcher web.",
+    steps: [
+      { t: "Clona il repository LIMET", d: "Il launcher e gli script stanno in <code>scripts/</code>.", c: "git clone <repo-limiet> <LIMET_HOME>" },
+      { t: "Avvia il launcher web", d: "È l'unico comando operativo: apre l'interfaccia web nel browser. Da qui fai tutto il resto.", c: "python <LIMET_HOME>\\scripts\\limet-launcher.py" },
+      { t: "Attiva LIMET in un progetto (dal launcher)", d: "Nel launcher: azione <b>Crea</b> → inserisci il <b>percorso</b>, scegli <b>lingua</b> e <b>modalità</b> (Progetto/Workspace), lascia spuntato <b>Strumenti di contesto</b> → clicca <b>Crea progetto</b>. Fa <code>limet init</code> + <code>limet-index init</code> (Graphify + CEREBRO + blocco <code>LIMET-CONTEXT</code>) automaticamente." },
+      { t: "Operazioni successive", d: "Dal launcher gestisci anche <b>Re-index</b>, <b>Status</b> e <b>Rimuovi</b> (vedi la guida operativa)." }
+    ] },
+  { id: "verify", title: "Verifica e troubleshooting", desc: "Come controllare che tutto funzioni e le diagnosi rapide dei problemi più comuni.",
+    steps: [
+      { t: "Controlla lo stato", d: "Dal launcher: azione <b>Status</b> → mostra i progetti registrati e il conteggio dei chunk indicizzati (deve essere &gt; 0)." },
+      { t: "Tabella di troubleshooting", table: [
+          ["Sintomo", "Causa", "Fix"],
+          ["Connection refused :6333", "Qdrant spento", "docker start qdrant"],
+          ["Connection refused :11434", "Ollama spento", "ollama serve"],
+          ["Collection doesn't exist", "mai indicizzato", "launcher → Crea"],
+          ["Risultati non aggiornati", "doc cambiati, non re-indicizzati", "launcher → Re-index"]
+        ] }
+    ] }
+];
+
+let idx = 0;
+function renderSide() {
+  const side = document.getElementById("side");
+  side.innerHTML = "";
+  SECTIONS.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.className = i === idx ? "on" : "";
+    b.textContent = s.title;
+    b.onclick = () => { idx = i; renderSide(); render(); };
+    side.appendChild(b);
+  });
+}
+function render() {
+  const s = SECTIONS[idx];
+  document.getElementById("secTitle").textContent = s.title;
+  document.getElementById("secDesc").textContent = s.desc;
+  const el = document.getElementById("steps");
+  el.innerHTML = "";
+  s.steps.forEach((st, i) => {
+    const d = document.createElement("div");
+    d.className = "step";
+    let html = `<div class="t">${i + 1}. ${st.t}</div>${st.d ? `<div class="d">${st.d}</div>` : ""}`;
+    if (st.c) html += `<div class="code"><button class="copy">copia</button>${esc(st.c)}</div>`;
+    if (st.table) {
+      const rows = st.table.map((r, ri) => `<tr>${r.map(c => ri === 0 ? `<th>${c}</th>` : `<td>${c}</td>`).join("")}</tr>`).join("");
+      html += `<table class="tbl">${rows}</table>`;
+    }
+    d.innerHTML = html;
+    const cp = d.querySelector("button.copy");
+    if (cp) cp.onclick = () => copy(cp, st.c);
+    el.appendChild(d);
+  });
+}
+function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function copy(btn, text) {
+  const ok = () => { btn.textContent = "copiato ✓"; setTimeout(() => btn.textContent = "copia", 1200); };
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(ok).catch(ok); else ok();
+}
+renderSide();
+render();
+</script>
+</body>
+</html>

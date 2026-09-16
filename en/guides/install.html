@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LIMET — Installation guide</title>
+<style>
+  :root {
+    --bg: #0e1116; --bg2: #141923; --card: #171d29; --border: #262f40;
+    --text: #e6ebf2; --muted: #8b96a8; --accent: #f59e0b; --accent2: #d97706;
+    --ok: #22c55e; --warn: #f59e0b; --err: #ef4444;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: radial-gradient(1200px 600px at 50% -10%, #1a2230 0%, var(--bg) 55%);
+    color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+  }
+  .top {
+    display: flex; align-items: center; gap: 12px; padding: 14px 24px;
+    border-bottom: 1px solid var(--border); background: rgba(14,17,22,.7);
+    position: sticky; top: 0; z-index: 10; backdrop-filter: blur(6px);
+  }
+  .top .logo { font-size: 22px; }
+  .top h1 { font-size: 17px; margin: 0; font-weight: 700; }
+  .top .sub { color: var(--muted); font-size: 12.5px; margin-left: auto; }
+  .top .lang { margin-left: 12px; color: var(--muted); text-decoration: none; border: 1px solid var(--border); border-radius: 8px; padding: 4px 12px; font-size: 13px; white-space: nowrap; }
+  .top .lang:hover { color: var(--text); border-color: var(--accent); }
+
+  .layout { display: flex; gap: 20px; padding: 20px 24px; max-width: 1200px; margin: 0 auto; align-items: flex-start; }
+  nav.side { width: 250px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; position: sticky; top: 70px; }
+  nav.side button {
+    text-align: left; padding: 11px 14px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--bg2); color: var(--muted); cursor: pointer; font-size: 13.5px; transition: all .15s;
+  }
+  nav.side button:hover { border-color: #3a4a63; color: var(--text); }
+  nav.side button.on { border-color: var(--accent); color: var(--text); background: rgba(245,158,11,.10); }
+
+  main { flex: 1; min-width: 0; }
+  .head { margin-bottom: 18px; }
+  .head h2 { font-size: 20px; margin: 0 0 6px; }
+  .head p { color: var(--muted); font-size: 13.5px; margin: 0; line-height: 1.5; max-width: 720px; }
+
+  .step { border: 1px solid var(--border); border-radius: 12px; background: var(--card); padding: 18px 20px; margin-bottom: 14px; }
+  .step .t { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .step .d { color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+  .step .d code { background: rgba(0,0,0,.3); padding: 1px 5px; border-radius: 5px; font-family: var(--mono); font-size: 12px; }
+  .code {
+    margin-top: 10px; background: #0b0e13; border: 1px solid var(--border); border-radius: 9px;
+    font-family: var(--mono); font-size: 12.5px; padding: 12px 14px; position: relative; overflow-x: auto;
+    white-space: pre; color: #c7d2e0;
+  }
+  .code button.copy {
+    position: absolute; top: 8px; right: 8px; background: var(--bg2); border: 1px solid var(--border);
+    color: var(--muted); border-radius: 7px; padding: 4px 9px; font-size: 11px; cursor: pointer;
+  }
+  .code button.copy:hover { color: var(--text); border-color: var(--accent); }
+
+  table.tbl { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+  table.tbl th, table.tbl td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+  table.tbl th { background: var(--bg2); color: var(--muted); font-weight: 600; }
+  table.tbl code { background: rgba(0,0,0,.3); padding: 1px 5px; border-radius: 5px; font-family: var(--mono); font-size: 12px; }
+
+  @media (max-width: 760px) {
+    .layout { flex-direction: column; padding: 14px; }
+    nav.side { width: 100%; flex-direction: row; flex-wrap: wrap; position: static; }
+    nav.side button { flex: 1 1 45%; }
+  }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="logo">🟧</div>
+  <h1>LIMET — Installation guide</h1>
+  <div class="sub">Installation commands only · operational use is from the web launcher</div>
+  <a class="lang" href="../../it/guides/install.html">IT</a>
+</div>
+
+<div class="layout">
+  <nav class="side" id="side"></nav>
+  <main>
+    <div class="head"><h2 id="secTitle"></h2><p id="secDesc"></p></div>
+    <div id="steps"></div>
+  </main>
+</div>
+
+<script>
+const SECTIONS = [
+  { id: "prereq", title: "Prerequisites", desc: "What the machine needs before starting. Everything runs locally (no cloud, no API keys).",
+    steps: [
+      { t: "Base tools", d: "<code>Python 3.10+</code>, <code>Git</code> (to clone repos), <code>Docker Desktop</code> (for Qdrant).", c: "python --version\ngit --version\ndocker --version" },
+      { t: "Ollama", d: "For document embeddings (model <code>nomic-embed-text</code>). Install from <code>https://ollama.com</code>." },
+      { t: "(Optional) uv or pipx", d: "To install Graphify in isolation. <code>uv</code> is recommended.", c: "# uv: https://github.com/astral-sh/uv" }
+    ] },
+  { id: "qdrant", title: "Qdrant (vector database)", desc: "The vector database used by CEREBRO. A local Docker container.",
+    steps: [
+      { t: "What it is and how it works", d: "Qdrant is the <b>vector database</b>: it stores documents as vectors (embeddings) and enables <b>semantic similarity</b> search. CEREBRO uses it as storage. Each LIMET project has an isolated collection <code>CRB_&lt;slug&gt;</code>." },
+      { t: "Pull the image", c: "docker pull qdrant/qdrant" },
+      { t: "Run the container", d: "Ports 6333 (REST) and 6334 (gRPC); persistent volume <code>qdrant_storage</code>.", c: "docker run -d --name qdrant -p 6333:6333 -p 6334:6334 -v qdrant_storage:/qdrant/storage qdrant/qdrant" },
+      { t: "Verify", d: "JSON response with the collection list (initially empty).", c: "curl http://localhost:6333/collections" },
+      { t: "Restart (if stopped)", c: "docker start qdrant" }
+    ] },
+  { id: "ollama", title: "Ollama (embeddings)", desc: "Generates the embeddings CEREBRO uses to index and query.",
+    steps: [
+      { t: "What it is and how it works", d: "Ollama runs LLM models <b>locally</b>. CEREBRO uses it only for <b>embeddings</b> (model <code>nomic-embed-text</code>): no cloud calls, documents never leave the machine." },
+      { t: "Pull the embedding model", c: "ollama pull nomic-embed-text" },
+      { t: "Start the service", c: "ollama serve" },
+      { t: "Verify", d: "It must answer <code>Ollama is running</code>.", c: "curl http://localhost:11434" }
+    ] },
+  { id: "cerebro", title: "CEREBRO (documentation RAG)", desc: "Local multi-project RAG system. Here you only install CEREBRO: project registration/indexing is done by LIMET (launcher).",
+    steps: [
+      { t: "What it is and how it works", d: "CEREBRO is the <b>documentation RAG</b>: it indexes a project's documentation into Qdrant and generates the agent instruction blocks. In LIMET it covers the <b>§2.1 (documentary)</b> context: 'why was it done this way / what does the spec say'." },
+      { t: "Clone the repository", c: "git clone https://github.com/odyssey2073/cerebro.git\ncd cerebro" },
+      { t: "Create the virtualenv and install deps", c: "python -m venv .venv\n.venv\\Scripts\\Activate.ps1\npip install -r requirements.txt" },
+      { t: "Configure .env", d: "Defaults are already correct for a standard local install.", c: "copy .env.example .env\n# QDRANT_URL=http://localhost:6333\n# OLLAMA_URL=http://localhost:11434\n# EMBEDDING_MODEL=nomic-embed-text" },
+      { t: "Done", d: "From here on, project registration, indexing and agent instructions are done by <b>LIMET</b> via the launcher (action <b>Create</b>). No need to touch CEREBRO by hand. To start the launcher:", c: "python <LIMET_HOME>\\scripts\\limet-launcher.py" }
+    ] },
+  { id: "graphify", title: "Graphify (code knowledge graph)", desc: "Static (AST) analysis of the code. Here you only install the CLI: graph generation/update is done by LIMET (launcher).",
+    steps: [
+      { t: "What it is and how it works", d: "Graphify is the <b>code knowledge graph</b>: it statically analyzes (AST) the source and builds a graph of symbols/modules/calls, queryable in natural language. In LIMET it covers the <b>§2.2 (structural)</b> context: 'where is X implemented / what depends on Y'." },
+      { t: "Install the CLI", c: "uv tool install graphifyy   # recommended\n# alternatives: pipx install graphifyy  /  pip install graphifyy" },
+      { t: "Register the skill for the assistant", d: "Auto-detects the assistant in use (Claude Code, Copilot, etc.).", c: "graphify install            # user level\ngraphify install --project   # current project only" },
+      { t: "Done", d: "Graph and architecture report generation is done by <b>LIMET</b> (launcher, action <b>Create</b>); updates after code changes are done by <b>Re-index</b>. To start the launcher:", c: "python <LIMET_HOME>\\scripts\\limet-launcher.py" }
+    ] },
+  { id: "limet", title: "LIMET (framework)", desc: "The spec-driven framework. Clone the repo, then operate everything from the web launcher.",
+    steps: [
+      { t: "Clone the LIMET repository", d: "The launcher and scripts live in <code>scripts/</code>.", c: "git clone <limet-repo> <LIMET_HOME>" },
+      { t: "Start the web launcher", d: "The only operational command: opens the web interface in the browser. Everything else is done from there.", c: "python <LIMET_HOME>\\scripts\\limet-launcher.py" },
+      { t: "Activate LIMET in a project (from the launcher)", d: "In the launcher: action <b>Create</b> → enter the <b>path</b>, choose <b>language</b> and <b>mode</b> (Project/Workspace), keep <b>Context tools</b> checked → click <b>Create project</b>. It runs <code>limet init</code> + <code>limet-index init</code> (Graphify + CEREBRO + <code>LIMET-CONTEXT</code> block) automatically." },
+      { t: "Subsequent operations", d: "From the launcher you also manage <b>Re-index</b>, <b>Status</b> and <b>Remove</b> (see the operational guide)." }
+    ] },
+  { id: "verify", title: "Verification and troubleshooting", desc: "How to check everything works, and quick diagnoses of the most common problems.",
+    steps: [
+      { t: "Check status", d: "From the launcher: action <b>Status</b> → shows the registered projects and the indexed chunk count (must be &gt; 0)." },
+      { t: "Troubleshooting table", table: [
+          ["Symptom", "Cause", "Fix"],
+          ["Connection refused :6333", "Qdrant down", "docker start qdrant"],
+          ["Connection refused :11434", "Ollama down", "ollama serve"],
+          ["Collection doesn't exist", "never indexed", "launcher → Create"],
+          ["Stale results", "docs changed, not re-indexed", "launcher → Re-index"]
+        ] }
+    ] }
+];
+
+let idx = 0;
+function renderSide() {
+  const side = document.getElementById("side");
+  side.innerHTML = "";
+  SECTIONS.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.className = i === idx ? "on" : "";
+    b.textContent = s.title;
+    b.onclick = () => { idx = i; renderSide(); render(); };
+    side.appendChild(b);
+  });
+}
+function render() {
+  const s = SECTIONS[idx];
+  document.getElementById("secTitle").textContent = s.title;
+  document.getElementById("secDesc").textContent = s.desc;
+  const el = document.getElementById("steps");
+  el.innerHTML = "";
+  s.steps.forEach((st, i) => {
+    const d = document.createElement("div");
+    d.className = "step";
+    let html = `<div class="t">${i + 1}. ${st.t}</div>${st.d ? `<div class="d">${st.d}</div>` : ""}`;
+    if (st.c) html += `<div class="code"><button class="copy">copy</button>${esc(st.c)}</div>`;
+    if (st.table) {
+      const rows = st.table.map((r, ri) => `<tr>${r.map(c => ri === 0 ? `<th>${c}</th>` : `<td>${c}</td>`).join("")}</tr>`).join("");
+      html += `<table class="tbl">${rows}</table>`;
+    }
+    d.innerHTML = html;
+    const cp = d.querySelector("button.copy");
+    if (cp) cp.onclick = () => copy(cp, st.c);
+    el.appendChild(d);
+  });
+}
+function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function copy(btn, text) {
+  const ok = () => { btn.textContent = "copied ✓"; setTimeout(() => btn.textContent = "copy", 1200); };
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(ok).catch(ok); else ok();
+}
+renderSide();
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LIMET Launcher</title>
+<style>
+  :root {
+    --bg: #0e1116; --bg2: #141923; --card: #171d29; --border: #262f40;
+    --text: #e6ebf2; --muted: #8b96a8; --accent: #f59e0b; --accent2: #d97706;
+    --danger: #ef4444; --ok: #22c55e; --warn: #f59e0b;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: radial-gradient(1200px 600px at 50% -10%, #1a2230 0%, var(--bg) 55%);
+    color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px;
+  }
+  .card { width: 100%; max-width: 640px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+  header { text-align: center; margin-bottom: 24px; }
+  .logo { font-size: 30px; letter-spacing: 2px; }
+  h1 { font-size: 22px; margin: 10px 0 4px; font-weight: 700; }
+  .sub { color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+
+  .field { margin-bottom: 20px; }
+  .field > label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 7px; letter-spacing: .3px; text-transform: uppercase; }
+  input[type="text"] {
+    width: 100%; background: var(--bg2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 10px; padding: 11px 13px; font-size: 14px; font-family: var(--mono); outline: none;
+  }
+  input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245,158,11,.15); }
+  textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border); color: var(--text); border-radius: 9px; padding: 10px 12px; font-size: 13px; font-family: var(--mono); min-height: 70px; resize: vertical; outline: none; }
+  textarea:focus { border-color: var(--accent); }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+
+  .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill {
+    flex: 1; min-width: 90px; text-align: center; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: 10px; cursor: pointer; font-size: 14px; color: var(--muted); user-select: none;
+    transition: all .15s; background: var(--bg2);
+  }
+  .pill input { display: none; }
+  .pill.on { border-color: var(--accent); color: var(--text); background: rgba(245,158,11,.10); }
+  .pill.danger.on { border-color: var(--danger); color: #fca5a5; background: rgba(239,68,68,.12); }
+  #action { flex-direction: column; }
+  #action .pill { flex: none; }
+
+  .check { display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--border); border-radius: 10px; padding: 13px; background: var(--bg2); cursor: pointer; }
+  .check input { margin-top: 2px; accent-color: var(--accent); }
+  .check .t { font-size: 14px; font-weight: 600; }
+  .check .d { font-size: 12.5px; color: var(--muted); margin-top: 2px; line-height: 1.45; }
+
+  .status { font-size: 12.5px; color: var(--muted); margin-top: 14px; line-height: 1.6; }
+  .status b.ok { color: var(--ok); } .status b.ko { color: var(--warn); }
+
+  button.go {
+    width: 100%; margin-top: 22px; padding: 14px; border: none; border-radius: 11px;
+    background: linear-gradient(180deg, var(--accent), var(--accent2)); color: #1a1204;
+    font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: .2px;
+  }
+  button.go.danger { background: linear-gradient(180deg, #ef4444, #b91c1c); color: #fff; }
+  button.go:disabled { opacity: .5; cursor: not-allowed; }
+
+  #log {
+    display: none; margin-top: 22px; background: #0b0e13; border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; font-family: var(--mono); font-size: 12.5px; line-height: 1.55; white-space: pre-wrap;
+    max-height: 340px; overflow-y: auto; color: #c7d2e0;
+  }
+  #next { display: none; margin-top: 22px; border: 1px solid rgba(34,197,94,.35); background: rgba(34,197,94,.08); border-radius: 10px; padding: 16px; font-size: 13.5px; line-height: 1.6; }
+  #next code { background: rgba(0,0,0,.3); padding: 1px 6px; border-radius: 5px; font-family: var(--mono); }
+</style>
+</head>
+<body>
+<div class="card">
+  <header>
+    <div class="logo">🟧</div>
+    <h1>LIMET Launcher</h1>
+    <div class="sub">Interfaccia web per gestire un progetto LIMET: creazione, re-index, status e rimozione.</div>
+  </header>
+
+  <form id="f">
+    <div class="field">
+      <label>Azione</label>
+      <div class="pills" id="action">
+        <label class="pill on"><input type="radio" name="action" value="create" checked>Crea</label>
+        <label class="pill"><input type="radio" name="action" value="update">Re-index</label>
+        <label class="pill"><input type="radio" name="action" value="status">Status</label>
+        <label class="pill"><input type="radio" name="action" value="docs">Documentazione</label>
+        <label class="pill danger"><input type="radio" name="action" value="remove">Rimuovi</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="path">Percorso progetto</label>
+      <input type="text" id="path" placeholder="C:\Progetti\myapp" autocomplete="off" spellcheck="false">
+      <div class="hint">Cartella del progetto. Per "Crea", se non esiste verrà creata.</div>
+    </div>
+
+    <div id="createFields">
+      <div class="field">
+        <label>Lingua</label>
+        <div class="pills" id="lang">
+          <label class="pill on"><input type="radio" name="lang" value="it" checked>Italiano</label>
+          <label class="pill"><input type="radio" name="lang" value="en">English</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Modalità</label>
+        <div class="pills" id="mode">
+          <label class="pill on"><input type="radio" name="mode" value="project" checked>Progetto</label>
+          <label class="pill"><input type="radio" name="mode" value="workspace">Workspace</label>
+        </div>
+        <div class="hint">Workspace = più progetti correlati / monorepo multi-modulo (Appendice C).</div>
+      </div>
+
+      <div class="field">
+        <label class="check">
+          <input type="checkbox" id="context" checked>
+          <span>
+            <span class="t">Strumenti di contesto (CEREBRO RAG + Graphify)</span>
+            <span class="d">Registra il progetto in CEREBRO (Qdrant), indicizza i documenti e genera il report architetturale Graphify.</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <div id="docsFields" style="display:none">
+      <div class="field">
+        <label>Verifica prerequisiti</label>
+        <div class="status" id="checkStatus">Clicca "Verifica prerequisiti".</div>
+        <button type="button" class="go" id="checkBtn" style="margin-top:10px">Verifica prerequisiti</button>
+      </div>
+      <div class="field">
+        <label for="docs">Documenti di progetto (uno per riga)</label>
+        <textarea id="docs" placeholder="C:\Progetti\myapp\spec.pdf&#10;C:\Progetti\myapp\notes\"></textarea>
+        <div class="hint">File o cartelle da copiare in <code>docs/</code> e indicizzare in CEREBRO.</div>
+      </div>
+      <button type="button" class="go" id="addDocsBtn" disabled>Aggiungi documenti</button>
+      <button type="button" class="go" id="genDocsBtn" style="margin-top:10px" disabled>Genera documentazione</button>
+    </div>
+
+    <div class="field">
+      <label for="cerebro">CEREBRO_HOME</label>
+      <input type="text" id="cerebro" placeholder="C:\Progetti\CEREBRO" autocomplete="off" spellcheck="false">
+      <div class="hint">Cartella d'installazione di CEREBRO (con <code>.venv</code> e <code>scripts</code>).</div>
+    </div>
+
+    <div class="status" id="status">Caricamento…</div>
+
+    <button class="go" id="go">Crea progetto</button>
+  </form>
+
+  <pre id="log"></pre>
+  <div id="next"></div>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const BTN = { create: "Crea progetto", update: "Re-index", status: "Mostra status", remove: "Rimuovi", docs: "Documentazione" };
+
+  document.querySelectorAll('.pills').forEach(group => {
+    group.addEventListener('change', () => {
+      group.querySelectorAll('.pill').forEach(p => p.classList.toggle('on', p.querySelector('input').checked));
+    });
+  });
+
+  const actionInputs = () => document.querySelector('input[name="action"]');
+  function refresh() {
+    const a = document.querySelector('input[name="action"]:checked').value;
+    $('createFields').style.display = a === 'create' ? '' : 'none';
+    $('docsFields').style.display = a === 'docs' ? '' : 'none';
+    const btn = $('go');
+    btn.style.display = a === 'docs' ? 'none' : '';
+    btn.textContent = BTN[a];
+    btn.classList.toggle('danger', a === 'remove');
+  }
+  document.getElementById('action').addEventListener('change', refresh);
+
+  async function info() {
+    try {
+      const r = await fetch('/api/info'); const d = await r.json();
+      if (d.cerebro_home) $('cerebro').value = d.cerebro_home;
+      $('status').innerHTML =
+        'Graphify: ' + (d.graphify ? '<b class="ok">trovato</b>' : '<b class="ko">non trovato</b>') +
+        ' &nbsp;·&nbsp; CEREBRO_HOME: ' + (d.cerebro_home ? '<b class="ok">' + d.cerebro_home + '</b>' : '<b class="ko">non impostato</b>');
+    } catch (e) {
+      $('status').innerHTML = '<b class="ko">Server non raggiungibile</b>';
+    }
+  }
+  info();
+
+  async function streamRun(payload) {
+    const log = $('log');
+    log.style.display = 'block'; log.textContent = '';
+    $('next').style.display = 'none';
+    const res = await fetch('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      log.textContent += dec.decode(value, { stream: true });
+      log.scrollTop = log.scrollHeight;
+    }
+    log.textContent += dec.decode();
+    log.scrollTop = log.scrollHeight;
+    return log.textContent;
+  }
+
+  $('f').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const action = document.querySelector('input[name="action"]:checked').value;
+    const payload = {
+      action,
+      path: $('path').value.trim(),
+      lang: document.querySelector('input[name="lang"]:checked').value,
+      workspace: document.querySelector('input[name="mode"]:checked').value === 'workspace',
+      context: $('context').checked,
+      cerebro_home: $('cerebro').value.trim(),
+    };
+    if (!payload.path) { alert('Inserisci il percorso del progetto.'); return; }
+    if (action === 'remove' && !confirm('Rimuovere il progetto dal registry CEREBRO?\n(la collection Qdrant resta, cancellabile a parte)')) return;
+
+    const btn = $('go'); btn.disabled = true;
+    try {
+      const txt = await streamRun(payload);
+      if (!txt.includes('[ERRORE]')) {
+        $('next').innerHTML = nextSteps(action);
+        $('next').style.display = 'block';
+      }
+    } catch (err) {
+      $('log').textContent += '\n[ERRORE] ' + err + '\n';
+    } finally {
+      btn.disabled = false; refresh();
+    }
+  });
+
+  // --- Documentazione ---
+  $('checkBtn').onclick = async () => {
+    const path = $('path').value.trim();
+    if (!path) { alert('Inserisci il percorso del progetto.'); return; }
+    try {
+      const r = await fetch('/api/check?path=' + encodeURIComponent(path) + '&cerebro=' + encodeURIComponent($('cerebro').value.trim()));
+      const d = await r.json();
+      if (d.error) { $('checkStatus').innerHTML = '<b class="ko">' + d.error + '</b>'; return; }
+      const ok = (b) => b ? '<b class="ok">✓</b>' : '<b class="ko">✗</b>';
+      const allOk = d.registered && d.qdrant_up && d.ollama_up && d.collection_created;
+      $('addDocsBtn').disabled = !allOk;
+      $('genDocsBtn').disabled = !allOk;
+      const docsMsg = !allOk ? ''
+        : (d.docs_count > 0
+          ? '<br><b>Ci sono già ' + d.docs_count + ' documenti</b> in <code>docs/</code>. Vuoi aggiungerne altri?'
+          : '<br><b>Nessun documento presente</b> in <code>docs/</code>: aggiungi i documenti del progetto.');
+      $('checkStatus').innerHTML =
+        'CEREBRO registrato ' + ok(d.registered) + ' · Qdrant ' + ok(d.qdrant_up) + ' · Ollama ' + ok(d.ollama_up) + ' · Collection ' + ok(d.collection_created) +
+        '<br><code>' + d.collection + '</code> · docs: <code>' + d.docs_dir + '</code>' + docsMsg +
+        (allOk
+          ? '<br><b class="ok">CEREBRO pronto: puoi aggiungere documenti e generare la documentazione.</b>'
+          : '<br><b class="ko">Configura CEREBRO per il progetto (azione "Crea") prima di procedere.</b>');
+    } catch (err) { $('checkStatus').innerHTML = '<b class="ko">Errore: ' + err + '</b>'; }
+  };
+
+  $('addDocsBtn').onclick = async () => {
+    const path = $('path').value.trim();
+    const docs = $('docs').value.split('\n').map(s => s.trim()).filter(Boolean);
+    if (!path) { alert('Inserisci il percorso del progetto.'); return; }
+    if (!docs.length) { alert('Inserisci almeno un documento.'); return; }
+    await streamRun({ action: 'adddocs', path, docs, cerebro_home: $('cerebro').value.trim() });
+  };
+
+  $('genDocsBtn').onclick = async () => {
+    const path = $('path').value.trim();
+    if (!path) { alert('Inserisci il percorso del progetto.'); return; }
+    await streamRun({ action: 'instructions', path, lang: document.querySelector('input[name="lang"]:checked').value, cerebro_home: $('cerebro').value.trim() });
+  };
+
+  function nextSteps(a) {
+    if (a === 'create') return '<b>Progetto pronto.</b> Apri la cartella con il tuo agente:<br>· <b>Claude Code</b>: <code>claude</code> nella cartella (legge <code>CLAUDE.md</code> → <code>@AGENTS.md</code>).<br>· <b>Copilot CLI</b>: <code>gh copilot</code> nella cartella (legge <code>AGENTS.md</code>).';
+    if (a === 'update') return '<b>Indici aggiornati.</b> I documenti e il grafo sono allineati.';
+    if (a === 'status') return '<b>Status mostrato.</b> Controlla conteggio chunk e progetti registrati.';
+    return '<b>Rimosso dal registry.</b> La collection Qdrant resta: cancellala a parte se serve.';
+  }
+
+  refresh();
+</script>
+</body>
+</html>

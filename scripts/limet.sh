@@ -89,6 +89,12 @@ LIMET_PROJECT_DIR="$PROJECT_PATH/$REL_LIMET_DIR"
 if [ -d "$LIMET_PROJECT_DIR" ]; then STATUS_DIR="Refreshed"; else STATUS_DIR="Created"; fi
 mkdir -p "$LIMET_PROJECT_DIR/templates" "$LIMET_PROJECT_DIR/changes" "$LIMET_PROJECT_DIR/archive"
 
+# The transversal context tool (CEREBRO RAG + Graphify) is copied alongside the framework files so
+# each project is self-contained: the agent can always run <limetDir>/scripts/limet-index.sh.
+mkdir -p "$LIMET_PROJECT_DIR/scripts"
+cp -f "$SCRIPT_DIR/limet-index.ps1" "$LIMET_PROJECT_DIR/scripts/limet-index.ps1"
+cp -f "$SCRIPT_DIR/limet-index.sh" "$LIMET_PROJECT_DIR/scripts/limet-index.sh"
+
 cp -f "$SOURCE_LANG_DIR/FRAMEWORK_MANUAL.md" "$LIMET_PROJECT_DIR/FRAMEWORK_MANUAL.md"
 cp -f "$SOURCE_LANG_DIR/ONBOARDING_CHECKLIST.md" "$LIMET_PROJECT_DIR/ONBOARDING_CHECKLIST.md"
 cp -f "$SOURCE_LANG_DIR/MASTER_INDEX.md" "$LIMET_PROJECT_DIR/MASTER_INDEX.md"
@@ -139,6 +145,8 @@ Regole vincolanti (vedi il manuale per il dettaglio):
 - A inizio sessione/feature, consultare \`$REL_LIMET_DIR/ONBOARDING_CHECKLIST.md\`.
 - A modifica conclusa e verificata, spostare/archiviare i documenti in \`$REL_LIMET_DIR/archive/\`
   usando \`templates/ARCHIVE_ENTRY_TEMPLATE.md\`.
+- Dopo l'archiviazione, eseguire \`$REL_LIMET_DIR/scripts/limet-index.ps1 update\` (o
+  \`limet-index.sh update\`) per re-indicizzare la collection RAG del progetto (CEREBRO).
 - Se questo progetto fa parte di un workspace multi-progetto (più repository correlati o più
   moduli), verificare se esiste una cartella \`limet-workspace/\` nella cartella padre condivisa:
   in tal caso consultare \`limet-workspace/MODULE_MAP.md\` prima di modifiche che potrebbero
@@ -173,6 +181,8 @@ Binding rules (see the manual for full detail):
 - At the start of a session/feature, consult \`$REL_LIMET_DIR/ONBOARDING_CHECKLIST.md\`.
 - Once a change is complete and verified, move/archive its documents into
   \`$REL_LIMET_DIR/archive/\` using \`templates/ARCHIVE_ENTRY_TEMPLATE.md\`.
+- After archiving a change, run \`$REL_LIMET_DIR/scripts/limet-index.ps1 update\` (or
+  \`limet-index.sh update\`) to re-index the project's RAG collection (CEREBRO).
 - If this project is part of a multi-project workspace (several correlated repositories or
   several modules), check whether a \`limet-workspace/\` folder exists in the shared parent
   folder: if so, consult \`limet-workspace/MODULE_MAP.md\` before changes that might touch other
@@ -212,6 +222,9 @@ Regole vincolanti:
   la verifica di integrazione end-to-end tra progetti è stata eseguita con esito positivo.
 - Vedi \`FRAMEWORK_MANUAL.md\` Appendice C per gli scenari operativi completi (nuovo workspace,
   bug fix cross-progetto, nuova feature cross-progetto).
+- Dopo l'archiviazione di una modifica cross-progetto, eseguire
+  \`$REL_LIMET_DIR/scripts/limet-index.ps1 update\` per re-indicizzare la collection RAG del
+  workspace.
 <!-- LIMET-WORKSPACE:END -->
 EOF
 
@@ -244,6 +257,8 @@ Binding rules:
   cross-project end-to-end integration verification has passed.
 - See \`FRAMEWORK_MANUAL.md\` Appendix C for the full operational scenarios (new workspace,
   cross-project bug fix, cross-project feature).
+- After archiving a cross-project change, run \`$REL_LIMET_DIR/scripts/limet-index.ps1 update\` to
+  re-index the workspace RAG collection.
 <!-- LIMET-WORKSPACE:END -->
 EOF
 

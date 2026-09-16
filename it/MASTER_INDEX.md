@@ -12,6 +12,8 @@
 | 2 | Indice di questa edizione | `README.md` | Elenco dei template disponibili e comando di installazione rapido |
 | 3 | Manuale completo del framework | `FRAMEWORK_MANUAL.md` | Metodologia completa: principi (§1), categorie di contesto (§2), ciclo di vita (§3), convenzioni (§4), anti-pattern (§5), adattabilità (§6), naming/glossario (§7), indice template (§8), attivazione pratica (§9), Appendice A (setup CEREBRO/Graphify), Appendice B (esempi operativi passo-passo), Appendice C (scenari multi-progetto/workspace) |
 | 4 | Checklist rapida di onboarding | `ONBOARDING_CHECKLIST.md` | Da consultare a **ogni** inizio sessione/feature, dopo aver letto il manuale la prima volta |
+| 5 | Guida operativa interattiva (SPA) | `guides\workflow.html` | 9 casi prova: nuovo progetto, feature, bug fix, workspace, manutenzione, glossario, cross-progetto, monorepo, mappa manuale |
+| 6 | Guida all'installazione dei componenti (SPA) | `guides\install.html` | Qdrant, Ollama, CEREBRO, Graphify, LIMET: cosa sono, come si installano e come si usano in LIMET |
 
 ## 2. Setup tecnico (una tantum per macchina/progetto)
 

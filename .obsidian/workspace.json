@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "README.md",
+                "file": "it/FRAMEWORK_MANUAL.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "README"
+              "title": "FRAMEWORK_MANUAL"
             }
           }
         ]
@@ -99,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "README.md",
+                "file": "it/FRAMEWORK_MANUAL.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -118,7 +118,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "README.md",
+                "file": "it/FRAMEWORK_MANUAL.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "README.md",
+                "file": "it/FRAMEWORK_MANUAL.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -189,5 +189,23 @@
     }
   },
   "active": "03c944e7e02911da",
-  "lastOpenFiles": []
+  "lastOpenFiles": [
+    "scripts/launcher.html.tmp.9316.102d4d43381c",
+    "scripts/launcher.html.tmp.9316.5fe8301caf5f",
+    "scripts/limet-launcher.py.tmp.9316.5edb8cd24d67",
+    "scripts/limet-launcher.py.tmp.9316.fd3b8727560e",
+    "scripts/limet-launcher.py.tmp.9316.83687a47eeda",
+    "scripts/launcher.html.tmp.9316.51378794429a",
+    "scripts/limet-index.ps1.tmp.9316.c052b7ea813f",
+    "scripts/launcher.html.tmp.9316.0057765a4c80",
+    "scripts/launcher.html.tmp.9316.aa1d39efc966",
+    "scripts/launcher.html.tmp.9316.ed4074019eea",
+    "scripts/launcher.html.tmp.9316.bd66c68b8c7d",
+    "it/templates/ARCHITECTURE_TEMPLATE.md",
+    "it/templates/CONVENTIONS_TEMPLATE.md",
+    "en/templates/ARCHITECTURE_TEMPLATE.md",
+    "en/templates/CONVENTIONS_TEMPLATE.md",
+    "README.md",
+    "CLAUDE.md"
+  ]
 }

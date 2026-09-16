@@ -253,6 +253,14 @@ installati in `limet-workspace/templates/`, non in `limet/templates/` del singol
 | `templates/MODULE_MAP_TEMPLATE.md` | Per mappare i progetti/moduli di un workspace, i loro ruoli e le dipendenze/contratti tra loro |
 | `templates/CROSS_PROJECT_CHANGE_TEMPLATE.md` | Per coordinare una modifica (feature o bug fix) che attraversa più progetti/moduli |
 
+**Template di documentazione della codebase** (generati in `docs/_templates/` da `limet-index`, vedi
+§A.4 — documentano la codebase stessa, non una singola modifica):
+
+| Template | Quando usarlo |
+| --- | --- |
+| `templates/ARCHITECTURE_TEMPLATE.md` | Per scrivere la panoramica architetturale che completa il report Graphify |
+| `templates/CONVENTIONS_TEMPLATE.md` | Per distillare le convenzioni di codice del progetto dalla codebase |
+
 Vedi anche `ONBOARDING_CHECKLIST.md` per una checklist rapida operativa da seguire a inizio
 sessione, e `scripts/limet.ps1` / `scripts/limet.sh` per l'installazione automatica (§9).
 
@@ -410,10 +418,10 @@ python scripts\query_qdrant.py --project miaapp search "architettura" --limit 3
 
 **Query manuale**: `python scripts\query_qdrant.py --project miaapp search "<domanda>" --limit 5`
 
-**Skill opzionale per Claude Code**: CEREBRO fornisce una skill `/cerebro` interattiva (menu
-guidato: nuovo progetto, re-index, status, rimozione) — vedi `INSTALL.md` nel repo per i dettagli
-di installazione (`xcopy` della cartella skill in `~/.claude/skills/cerebro` e variabile
-`CEREBRO_HOME`).
+**Launcher web (consigliato)**: CEREBRO fornisce una SPA web locale
+(`python scripts\cerebro-launcher.py`) che gestisce nuovo progetto, re-index, status, rimozione e
+query dal browser — una sola interfaccia per Claude Code e GitHub Copilot. Vedi `INSTALL.md` nel
+repo CEREBRO per come avviarla e usarla.
 
 **Troubleshooting rapido**:
 
@@ -494,6 +502,41 @@ Coerente con il criterio generale di §2.4:
    incrociare i risultati prima di scrivere un piano o proporre una soluzione.
 4. Non ripetere una ricerca CEREBRO se il contesto rilevante è già stato recuperato in un turno
    precedente della stessa sessione (evita spreco di token/tempo).
+
+### A.4 Mantenere gli indici aggiornati (lato scrittura): `limet-index`
+
+A.1-A.3 coprono il setup e il *recupero* (interrogare indice/grafo). Non dicono **quando
+ricostruirli**. È il ruolo dello script trasversale `scripts/limet-index.ps1` (e `limet-index.sh`),
+installato nella cartella `limet/scripts/` di ogni progetto da `limet init`.
+
+`limet-index` collega i tre strumenti sul lato **scrittura**:
+
+| Comando | Effetto |
+| --- | --- |
+| `limet/scripts/limet-index.ps1 init -ProjectPath .` | crea `docs/` + template codebase-doc, esegue `graphify .` (report architetturale → `docs/architecture/GRAPH_REPORT.md`), registra il progetto in CEREBRO (`CRB_<slug>`), indicizza i documenti e scrive il blocco `<!-- LIMET-CONTEXT:START/END -->` in `AGENTS.md` |
+| `limet/scripts/limet-index.ps1 update -ProjectPath .` | riesegue `graphify update .` e re-indicizza (upsert deterministico, nessun duplicato) |
+| `limet/scripts/limet-index.ps1 status -ProjectPath .` | stampa i progetti registrati e il conteggio chunk di questo progetto |
+| `limet/scripts/limet-index.ps1 remove -ProjectPath .` | rimuove dal registro CEREBRO (la collection Qdrant resta; il comando DELETE è stampato per una rimozione deliberata con doppia conferma) |
+
+**Cosa viene indicizzato** (collection `CRB_<slug>` del progetto):
+- `docs/` — documentazione generata della codebase: `architecture/GRAPH_REPORT.md` (auto, Graphify)
+  più i documenti scritti dall'agente `architecture/ARCHITECTURE.md`, `conventions.md`,
+  `module-map.md`, `glossary.md` (dai template in `docs/_templates/`).
+- `limet/changes/` e `limet/archive/` — i documenti LIMET prodotti nel ciclo di vita (§3).
+
+**Workspace / multi-progetto**: eseguendo `limet-index init -Workspace` sulla cartella padre si crea
+una collection `CRB_<ws>` per `limet-workspace/changes/`, `limet-workspace/archive/` e
+`MODULE_MAP.md`. Ogni progetto sotto il workspace la rileva automaticamente e registra `CRB_<ws>`
+come extra collection, così `query_qdrant.py --project <slug>` interroga entrambe. Vedi Appendice C.
+
+**Cross-tool**: `limet-index` è una semplice CLI senza file per-tool; i comandi di query e
+manutenzione sono scritti una volta nel blocco `AGENTS.md`, letti da Copilot nativamente e da
+Claude Code via l'import `@AGENTS.md` (§9).
+
+**Hook del ciclo di vita**: dopo aver archiviato una modifica (fase 7 / `ARCHIVE_ENTRY_TEMPLATE.md`),
+esegui `limet-index update` così i documenti archiviati diventano contesto ricercabile. È il
+corrispettivo in scrittura del routing in lettura di §2.4 / A.3, e degrada con grazia (§7): senza
+CEREBRO/Graphify i documenti restano su disco e ricercabili con full-text.
 
 ---
 

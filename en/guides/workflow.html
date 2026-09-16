@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LIMET — Operational guide</title>
+<style>
+  :root {
+    --bg: #0e1116; --bg2: #141923; --card: #171d29; --border: #262f40;
+    --text: #e6ebf2; --muted: #8b96a8; --accent: #f59e0b; --accent2: #d97706;
+    --ok: #22c55e; --warn: #f59e0b; --err: #ef4444;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: radial-gradient(1200px 600px at 50% -10%, #1a2230 0%, var(--bg) 55%);
+    color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+  }
+  .top {
+    display: flex; align-items: center; gap: 12px; padding: 16px 24px;
+    border-bottom: 1px solid var(--border); background: rgba(14,17,22,.7);
+    position: sticky; top: 0; z-index: 10; backdrop-filter: blur(6px);
+  }
+  .top .logo { font-size: 22px; }
+  .top h1 { font-size: 17px; margin: 0; font-weight: 700; }
+  .top .sub { color: var(--muted); font-size: 12.5px; margin-left: auto; }
+  .top .lang { margin-left: 12px; color: var(--muted); text-decoration: none; border: 1px solid var(--border); border-radius: 8px; padding: 4px 12px; font-size: 13px; white-space: nowrap; }
+  .top .lang:hover { color: var(--text); border-color: var(--accent); }
+
+  .layout { display: flex; gap: 20px; padding: 20px 24px; max-width: 1200px; margin: 0 auto; align-items: flex-start; }
+  nav.side { width: 250px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; position: sticky; top: 70px; }
+  nav.side button {
+    text-align: left; padding: 11px 14px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--bg2); color: var(--muted); cursor: pointer; font-size: 13.5px; transition: all .15s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  nav.side button:hover { border-color: #3a4a63; color: var(--text); }
+  nav.side button.on { border-color: var(--accent); color: var(--text); background: rgba(245,158,11,.10); }
+  nav.side button .n { font-size: 11px; color: var(--muted); opacity: .7; margin-left: auto; font-family: var(--mono); }
+
+  main { flex: 1; min-width: 0; }
+  .head { margin-bottom: 18px; }
+  .head h2 { font-size: 20px; margin: 0 0 6px; }
+  .head p { color: var(--muted); font-size: 13.5px; margin: 0; line-height: 1.5; max-width: 720px; }
+
+  .progress { height: 6px; background: var(--bg2); border: 1px solid var(--border); border-radius: 99px; margin: 0 0 20px; overflow: hidden; }
+  .progress .bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0%; transition: width .25s; }
+
+  .step { border: 1px solid var(--border); border-radius: 12px; background: var(--card); padding: 18px 20px; margin-bottom: 14px; }
+  .step.done { border-color: rgba(34,197,94,.35); }
+  .step .row { display: flex; gap: 12px; align-items: flex-start; }
+  .step input[type="checkbox"] { margin-top: 3px; accent-color: var(--accent); width: 16px; height: 16px; flex-shrink: 0; cursor: pointer; }
+  .step .body { flex: 1; min-width: 0; }
+  .step .t { font-size: 15px; font-weight: 700; margin-bottom: 5px; }
+  .step .tag { display: inline-block; font-size: 10.5px; font-weight: 600; border-radius: 99px; padding: 1px 8px; margin-left: 6px; vertical-align: middle; }
+  .tag.launcher { color: var(--accent); border: 1px solid rgba(245,158,11,.45); }
+  .tag.agent { color: #7dd3fc; border: 1px solid rgba(56,189,248,.45); }
+  .tag.user { color: #86efac; border: 1px solid rgba(34,197,94,.45); }
+  .step .d { color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+  .step .d code { background: rgba(0,0,0,.3); padding: 1px 5px; border-radius: 5px; font-family: var(--mono); font-size: 12px; }
+  .note { margin-top: 10px; font-size: 12.5px; color: var(--warn); line-height: 1.5; }
+  .note::before { content: "⚠ "; }
+
+  .navb { display: flex; gap: 10px; margin-top: 6px; }
+  .navb button {
+    flex: 1; padding: 12px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600;
+    border: 1px solid var(--border); background: var(--bg2); color: var(--text);
+  }
+  .navb button:disabled { opacity: .4; cursor: not-allowed; }
+  .navb button.primary { background: linear-gradient(180deg, var(--accent), var(--accent2)); color: #1a1204; border: none; }
+
+  @media (max-width: 760px) {
+    .layout { flex-direction: column; padding: 14px; }
+    nav.side { width: 100%; flex-direction: row; flex-wrap: wrap; position: static; }
+    nav.side button { flex: 1 1 45%; }
+    .top .sub { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="logo">🟧</div>
+  <h1>LIMET — Operational guide</h1>
+  <div class="sub">Each step says <b>what</b> to do and <b>where</b> (Launcher / Agent / User)</div>
+  <a class="lang" href="../../it/guides/workflow.html">IT</a>
+</div>
+
+<div class="layout">
+  <nav class="side" id="side"></nav>
+  <main>
+    <div class="head">
+      <h2 id="scenTitle"></h2>
+      <p id="scenDesc"></p>
+    </div>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+    <div id="steps"></div>
+    <div class="navb">
+      <button id="prev">← Previous</button>
+      <button id="next" class="primary">Next →</button>
+    </div>
+  </main>
+</div>
+
+<script>
+const SCENARIOS = [
+  { id: "new", title: "1 · New project with LIMET",
+    desc: "Activate LIMET in a new project, all from the web launcher.",
+    steps: [
+      { t: "Check prerequisites", tag: "User", d: "Components installed: Qdrant, Ollama, CEREBRO, Graphify (see the install guide)." },
+      { t: "Start the web launcher", tag: "Launcher", d: "Open a terminal and run <code>python <LIMET_HOME>\\scripts\\limet-launcher.py</code> → the browser opens at <code>http://127.0.0.1:8799</code>." },
+      { t: "Fill the form", tag: "Launcher", d: "Action <b>Create</b> · <b>Path</b> = project folder · <b>Language</b> = it/en · <b>Mode</b> = Project · keep <b>Context tools</b> checked." },
+      { t: "Create", tag: "Launcher", d: "Click <b>Create project</b>. Wait for the log to reach <b>Done. Project ready.</b>" },
+      { t: "Open with the agent", tag: "Agent", d: "Open the folder with Claude Code (<code>claude</code>) or Copilot (<code>gh copilot</code>): it reads <code>AGENTS.md</code> and knows how to query CEREBRO/Graphify.", n: "Check that AGENTS.md contains the LIMET and LIMET-CONTEXT blocks." }
+    ] },
+  { id: "feature", title: "2 · New feature",
+    desc: "The feature is built by working with the agent in the project (templates in limet/changes/); the launcher only does the final re-index.",
+    steps: [
+      { t: "Open the project with the agent", tag: "User", d: "Open the folder with Claude Code (<code>claude</code>) or Copilot (<code>gh copilot</code>): the agent reads <code>AGENTS.md</code> (LIMET + LIMET-CONTEXT blocks) and knows how to apply LIMET." },
+      { t: "Assign the feature", tag: "User", d: "Describe to the agent what you want to build." },
+      { t: "Exploration (context)", tag: "Agent", d: "The agent queries the <b>knowledge graph</b> (code) and <b>CEREBRO</b> (docs) to gather context — you do nothing." },
+      { t: "Proposal", tag: "Agent", d: "The agent creates <code>limet/changes/0002-slug/PLAN.md</code> (or <code>CHANGE_PROPOSAL.md</code> + <code>SPEC.md</code> + <code>DESIGN.md</code> for larger changes)." },
+      { t: "Review", tag: "User", d: "Read and approve the plan. Every ambiguity must be a question with an answer, never assumed." },
+      { t: "Task breakdown", tag: "Agent", d: "The agent creates <code>TASK_LIST.md</code> with a test strategy per task." },
+      { t: "Implementation", tag: "Agent", d: "The agent implements within the declared scope. No persistent effects (commit/push/deploy) without your authorization." },
+      { t: "Verification (mandatory)", tag: "Agent", d: "The agent fills <code>TEST_PLAN.md</code> + <code>TEST_EXECUTION.md</code> + <code>E2E_VERIFICATION.md</code>." },
+      { t: "Non-technical summary", tag: "Agent", d: "<code>NON_TECHNICAL_SUMMARY.md</code> (if needed)." },
+      { t: "Archive", tag: "Agent", d: "The agent fills <code>ARCHIVE_ENTRY.md</code> and moves the folder from <code>limet/changes/</code> to <code>limet/archive/</code>." },
+      { t: "Re-index", tag: "Launcher", d: "Action <b>Re-index</b> → the archived docs become searchable RAG context." }
+    ] },
+  { id: "bug", title: "3 · Bug fix",
+    desc: "The defect is fixed by working with the agent in the project (docs in limet/changes/); the launcher only does the final re-index.",
+    steps: [
+      { t: "Open the project with the agent", tag: "User", d: "Open the folder with Claude Code (<code>claude</code>) or Copilot (<code>gh copilot</code>): the agent reads <code>AGENTS.md</code> (LIMET + LIMET-CONTEXT blocks) and knows how to work and query CEREBRO/Graphify." },
+      { t: "Assign the bug", tag: "User", d: "Describe the defect to the agent: what happens and what you expect." },
+      { t: "Report the defect", tag: "Agent", d: "The agent creates <code>limet/changes/NNNN-slug/BUG_REPORT.md</code> (observed / expected / reproduction)." },
+      { t: "Isolate the cause", tag: "Agent", d: "The agent queries the <b>knowledge graph</b> (Graphify) to locate the defect and its dependencies." },
+      { t: "Propose the fix", tag: "Agent", d: "The agent creates <code>PLAN.md</code> + <code>TASK_LIST.md</code> with targeted regression tests." },
+      { t: "Fix and test", tag: "Agent", d: "The agent applies the fix and the regression tests (the bug must not reappear)." },
+      { t: "Archive", tag: "Agent", d: "<code>ARCHIVE_ENTRY.md</code> + move the folder to <code>limet/archive/</code>." },
+      { t: "Re-index", tag: "Launcher", d: "Open the launcher → action <b>Re-index</b> → the archived docs become searchable RAG context for future sessions." }
+    ] },
+  { id: "workspace", title: "4 · Multi-project workspace",
+    desc: "Several correlated projects coordinated by a shared limet-workspace/ layer.",
+    steps: [
+      { t: "Create the workspace layer", tag: "Launcher", d: "Action <b>Create</b> + Mode <b>Workspace</b>, with <b>Path</b> = parent folder (e.g. C:\\Progetti\\myws)." },
+      { t: "Fill MODULE_MAP", tag: "User", d: "Fill <code>limet-workspace/MODULE_MAP.md</code>: projects/modules, roles, dependencies and contracts." },
+      { t: "Initialize the children", tag: "Launcher", d: "Action <b>Create</b> (Project mode) on each child project: auto-detects the workspace as an extra collection." },
+      { t: "Open the workspace with the agent", tag: "User", d: "To coordinate a change touching multiple projects, open the workspace folder with the agent: it reads <code>AGENTS.md</code> and <code>MODULE_MAP.md</code>." },
+      { t: "Cross-project change", tag: "Agent", d: "The agent creates <code>limet-workspace/changes/NNNN-slug/CROSS_PROJECT_CHANGE.md</code> with producer→consumers order." },
+      { t: "Closure + re-index", tag: "Launcher", d: "When all projects are 'done' + e2e passed: <b>Re-index</b> on both the workspace and the projects." }
+    ] },
+  { id: "maint", title: "5 · Maintenance / re-index",
+    desc: "Keep the RAG index (CEREBRO) and the knowledge graph (Graphify) current.",
+    steps: [
+      { t: "Re-index", tag: "Launcher", d: "After document or code changes: action <b>Re-index</b> (updates CEREBRO and Graphify, no duplicates)." },
+      { t: "Status", tag: "Launcher", d: "Action <b>Status</b>: shows registered projects and chunk count." },
+      { t: "Remove", tag: "Launcher", d: "Action <b>Remove</b>: removes the project from the registry (the Qdrant collection stays, delete it separately)." }
+    ] },
+  { id: "glossary", title: "6 · Update the glossary",
+    desc: "Shared terminology: updated by working with the agent, then re-indexed from the launcher.",
+    steps: [
+      { t: "Open the project with the agent", tag: "User", d: "Open the folder with Claude Code or Copilot: the agent reads <code>AGENTS.md</code> and knows where the docs are." },
+      { t: "Assign the update", tag: "User", d: "Ask the agent to pin down an ambiguous term in the glossary." },
+      { t: "Detect the ambiguity", tag: "Agent", d: "A term/concept/acronym used in confusing ways (§7 of the manual)." },
+      { t: "Update the glossary", tag: "Agent", d: "The agent fills <code>docs/glossary.md</code> (terms, technical concepts, acronyms)." },
+      { t: "Re-index", tag: "Launcher", d: "Open the launcher → action <b>Re-index</b> → the glossary enters the RAG context." }
+    ] },
+  { id: "cross-feature", title: "7 · Cross-project feature",
+    desc: "A feature spanning multiple projects: coordinated with the agent in the workspace, then re-indexed.",
+    steps: [
+      { t: "Open the workspace with the agent", tag: "User", d: "Open the workspace folder with the agent: it reads <code>AGENTS.md</code> and <code>MODULE_MAP.md</code> to coordinate the involved projects." },
+      { t: "Umbrella document", tag: "Agent", d: "The agent creates <code>limet-workspace/changes/NNNN-slug/CROSS_PROJECT_CHANGE.md</code>." },
+      { t: "Define the contract", tag: "Agent", d: "The shared contract shape (API/schema/event) written first in the workspace doc." },
+      { t: "Per-project cycle", tag: "Agent", d: "Each project runs its own cycle in its own <code>limet/changes/</code> (links, doesn't duplicate)." },
+      { t: "Summary", tag: "Agent", d: "<code>NON_TECHNICAL_SUMMARY.md</code> at workspace level." },
+      { t: "Closure + re-index", tag: "Launcher", d: "All 'done' + e2e passed → <b>Re-index</b> at both levels." }
+    ] },
+  { id: "monorepo", title: "8 · Multi-module monorepo",
+    desc: "Workspace variant: modules of the same repository (Appendix C.4).",
+    steps: [
+      { t: "Workspace on the root", tag: "Launcher", d: "Action <b>Create</b> + Mode <b>Workspace</b> on the monorepo root." },
+      { t: "Map the modules", tag: "User", d: "Fill <code>MODULE_MAP.md</code>: the modules are of the same repo ('own repository?' = no)." },
+      { t: "Initialize the modules", tag: "Launcher", d: "Action <b>Create</b> on each module (subfolder)." },
+      { t: "Open the monorepo with the agent", tag: "User", d: "For the contract change, open the root (or the module) with the agent: it reads <code>MODULE_MAP.md</code> and respects the producer→consumers order." },
+      { t: "Contract change", tag: "Agent", d: "A single commit/PR is allowed, but the logical order stays producer → consumers.", n: "The cross-module e2e verification requirement stays mandatory." }
+    ] },
+  { id: "manual", title: "9 · When you need the manual",
+    desc: "The guide covers operational use. This map tells where to look in the manual for the 'why' and the edge cases.",
+    steps: [
+      { t: "Principles and traceability", d: "→ <code>FRAMEWORK_MANUAL.md</code> <b>§1 / §1.2</b> — every ambiguity = contextual question (answer + date)." },
+      { t: "Context categories", d: "→ <b>§2</b> — documentary (2.1), structural (2.2), real data (2.3), combination (2.4)." },
+      { t: "Full lifecycle", d: "→ <b>§3</b> — fluid phases: you can go back." },
+      { t: "Working conventions", d: "→ <b>§4</b>." },
+      { t: "Anti-patterns to avoid", d: "→ <b>§5</b>." },
+      { t: "Binding verification (mandatory tests)", d: "→ <b>§1.5 / §5</b> — no task 'done' without a verification strategy." },
+      { t: "Adaptability without tools", d: "→ <b>§7</b> — controlled degradation without CEREBRO/Graphify." },
+      { t: "Template index", d: "→ <b>§8</b>." },
+      { t: "Practical activation (AGENTS.md + CLAUDE.md)", d: "→ <b>§9</b> — single-source mechanism." },
+      { t: "CEREBRO/Graphify setup (reference)", d: "→ <b>Appendix A</b>." },
+      { t: "Step-by-step operational examples", d: "→ <b>Appendix B</b>." },
+      { t: "Multi-project / workspace", d: "→ <b>Appendix C</b>." }
+    ] }
+];
+
+const state = { idx: 0 };
+function storageKey() { return "limet-guide:" + SCENARIOS[state.idx].id; }
+
+function renderSide() {
+  const side = document.getElementById("side");
+  side.innerHTML = "";
+  SCENARIOS.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.className = i === state.idx ? "on" : "";
+    b.innerHTML = `<span>${s.title}</span><span class="n">${doneCount(s)}/${s.steps.length}</span>`;
+    b.onclick = () => { state.idx = i; render(); };
+    side.appendChild(b);
+  });
+}
+function doneCount(s) {
+  const v = JSON.parse(localStorage.getItem("limet-guide:" + s.id) || "[]");
+  return s.steps.filter((_, i) => v[i]).length;
+}
+
+function render() {
+  const s = SCENARIOS[state.idx];
+  document.getElementById("scenTitle").textContent = s.title;
+  document.getElementById("scenDesc").textContent = s.desc;
+  const saved = JSON.parse(localStorage.getItem(storageKey()) || "[]");
+  const stepsEl = document.getElementById("steps");
+  stepsEl.innerHTML = "";
+  s.steps.forEach((st, i) => {
+    const el = document.createElement("div");
+    el.className = "step" + (saved[i] ? " done" : "");
+    const note = st.n ? `<div class="note">${st.n}</div>` : "";
+    const tag = st.tag ? `<span class="tag ${st.tag.toLowerCase()}">${st.tag}</span>` : "";
+    el.innerHTML = `<div class="row"><input type="checkbox" ${saved[i] ? "checked" : ""}><div class="body"><div class="t">${i + 1}. ${st.t}${tag}</div><div class="d">${st.d}</div>${note}</div></div>`;
+    el.querySelector("input").onchange = (e) => {
+      const cur = JSON.parse(localStorage.getItem(storageKey()) || "[]");
+      cur[i] = e.target.checked;
+      localStorage.setItem(storageKey(), JSON.stringify(cur));
+      el.classList.toggle("done", e.target.checked);
+      updateBar(); renderSide();
+    };
+    stepsEl.appendChild(el);
+  });
+  document.getElementById("prev").disabled = state.idx === 0;
+  document.getElementById("next").disabled = state.idx === SCENARIOS.length - 1;
+  updateBar();
+  renderSide();
+}
+function updateBar() {
+  const s = SCENARIOS[state.idx];
+  const v = JSON.parse(localStorage.getItem(storageKey()) || "[]");
+  const done = s.steps.filter((_, i) => v[i]).length;
+  document.getElementById("bar").style.width = (done / s.steps.length * 100) + "%";
+}
+
+document.getElementById("prev").onclick = () => { state.idx = Math.max(0, state.idx - 1); render(); };
+document.getElementById("next").onclick = () => { state.idx = Math.min(SCENARIOS.length - 1, state.idx + 1); render(); };
+render();
+</script>
+</body>
+</html>

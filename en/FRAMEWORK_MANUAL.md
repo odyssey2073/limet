@@ -249,6 +249,14 @@ installed under `limet-workspace/templates/`, not under the single project's `li
 | `templates/MODULE_MAP_TEMPLATE.md` | To map the projects/modules of a workspace, their roles, and the dependencies/contracts between them |
 | `templates/CROSS_PROJECT_CHANGE_TEMPLATE.md` | To coordinate a change (feature or bug fix) that spans multiple projects/modules |
 
+**Codebase documentation templates** (scaffolded into `docs/_templates/` by `limet-index`, see
+§A.4 — they document the codebase itself, not a single change):
+
+| Template | When to use it |
+| --- | --- |
+| `templates/ARCHITECTURE_TEMPLATE.md` | To write the architecture overview that complements the Graphify report |
+| `templates/CONVENTIONS_TEMPLATE.md` | To distill the project's coding conventions from the codebase |
+
 See also `ONBOARDING_CHECKLIST.md` for a quick operational checklist to follow at the start of a
 session, and `scripts/limet.ps1` / `scripts/limet.sh` for automatic installation (§9).
 
@@ -405,9 +413,10 @@ python scripts\query_qdrant.py --project myapp search "architecture" --limit 3
 
 **Manual query**: `python scripts\query_qdrant.py --project myapp search "<question>" --limit 5`
 
-**Optional skill for Claude Code**: CEREBRO ships an interactive `/cerebro` skill (guided menu:
-new project, re-index, status, removal) — see `INSTALL.md` in the repo for installation details
-(`xcopy` the skill folder into `~/.claude/skills/cerebro` and the `CEREBRO_HOME` variable).
+**Web launcher (recommended)**: CEREBRO ships a local web SPA
+(`python scripts\cerebro-launcher.py`) that manages new project, re-index, status, removal and
+query from the browser — a single interface for both Claude Code and GitHub Copilot. See
+`INSTALL.md` in the CEREBRO repo for how to launch and use it.
 
 **Quick troubleshooting**:
 
@@ -486,6 +495,41 @@ Consistent with the general criterion in §2.4:
    results before writing a plan or proposing a solution.
 4. Do not repeat a CEREBRO search if relevant context was already retrieved in a previous turn of
    the same session (avoid wasting time/tokens).
+
+### A.4 Keeping the indexes current (write-side): `limet-index`
+
+A.1-A.3 cover setup and *retrieval* (query the index/graph). They do not tell you **when to
+rebuild** them. That is the role of the transversal script `scripts/limet-index.ps1` (and
+`limet-index.sh`), installed into every project's `limet/scripts/` by `limet init`.
+
+`limet-index` bridges the three tools on the **write** side:
+
+| Command | Effect |
+| --- | --- |
+| `limet/scripts/limet-index.ps1 init -ProjectPath .` | creates `docs/` + codebase-doc templates, runs `graphify .` (architectural report → `docs/architecture/GRAPH_REPORT.md`), registers the project in CEREBRO (`CRB_<slug>`), ingests the docs, and writes the `<!-- LIMET-CONTEXT:START/END -->` block into `AGENTS.md` |
+| `limet/scripts/limet-index.ps1 update -ProjectPath .` | re-runs `graphify update .` and re-ingests (deterministic upsert, no duplicates) |
+| `limet/scripts/limet-index.ps1 status -ProjectPath .` | prints registered projects and this project's chunk count |
+| `limet/scripts/limet-index.ps1 remove -ProjectPath .` | unregisters from CEREBRO (the Qdrant collection is left intact; the DELETE command is printed for a deliberate, double-confirmed removal) |
+
+**What gets indexed** (the project's `CRB_<slug>` collection):
+- `docs/` — the generated codebase documentation: `architecture/GRAPH_REPORT.md` (auto, Graphify)
+  plus the agent-written `architecture/ARCHITECTURE.md`, `conventions.md`, `module-map.md`,
+  `glossary.md` (from the templates in `docs/_templates/`).
+- `limet/changes/` and `limet/archive/` — the LIMET documents produced over the lifecycle (§3).
+
+**Workspace / multi-project**: running `limet-index init -Workspace` on the parent folder creates a
+`CRB_<ws>` collection for `limet-workspace/changes/`, `limet-workspace/archive/` and
+`MODULE_MAP.md`. Each project under the workspace auto-detects it and registers `CRB_<ws>` as an
+extra collection, so `query_qdrant.py --project <slug>` searches both. See Appendix C.
+
+**Cross-tool**: `limet-index` is a plain CLI with no per-tool files; the query/maintenance commands
+are written once in the `AGENTS.md` block, read by Copilot natively and by Claude Code via the
+`@AGENTS.md` import (§9).
+
+**Lifecycle hook**: after archiving a change (phase 7 / `ARCHIVE_ENTRY_TEMPLATE.md`), run
+`limet-index update` so the archived documents become searchable context. This is the write-side
+counterpart of the read-side routing in §2.4 / A.3, and it degrades gracefully (§7): without
+CEREBRO/Graphify the documents remain on disk and full-text searchable.
 
 ---
 

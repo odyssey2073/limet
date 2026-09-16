@@ -50,3 +50,6 @@
 - [ ] Il lavoro concluso è stato congelato con `ARCHIVE_ENTRY_TEMPLATE.md`, se il progetto separa
       documentazione attiva da documentazione archiviata.
 - [ ] Sono stati eliminati/segnalati i task residui che non servono più.
+- [ ] La collection RAG del progetto è stata re-indicizzata
+      (`limet/scripts/limet-index.ps1 update`), così la modifica archiviata è contesto
+      ricercabile.

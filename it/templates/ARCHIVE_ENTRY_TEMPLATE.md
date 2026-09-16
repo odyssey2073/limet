@@ -38,3 +38,9 @@ delle scelte fatte.]
 ## Lezioni apprese (opzionale)
 
 [Cosa rifare uguale, cosa evitare in futuro, per migliorare l'uso del framework stesso.]
+
+## Re-indicizzazione del contesto
+
+- [ ] Dopo l'archiviazione, eseguire `limet/scripts/limet-index.ps1 update` (o
+      `limet-index.sh update`) per re-indicizzare la collection RAG del progetto (CEREBRO), così
+      la modifica archiviata diventa contesto ricercabile per le sessioni future.

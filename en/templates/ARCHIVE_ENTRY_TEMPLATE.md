@@ -39,3 +39,9 @@ choices made is not lost.]
 
 [What to repeat the same way, what to avoid in the future, to improve the use of the framework
 itself.]
+
+## Re-index context
+
+- [ ] After archiving, run `limet/scripts/limet-index.ps1 update` (or `limet-index.sh update`) to
+      re-index the project's RAG collection (CEREBRO), so the archived change becomes searchable
+      context for future sessions.
