@@ -40,5 +40,4 @@ LIMET generalizes recurring patterns observed across real agent-assisted enginee
 summaries) and incorporates ideas from the spec-driven change-proposal workflow popularized by
 tools such as OpenSpec (proposal → spec → design → tasks → archive), adapted here to be
 tool-agnostic and to make test coverage (unit + e2e) a non-negotiable part of every task.
-# limet
-# limet
+
