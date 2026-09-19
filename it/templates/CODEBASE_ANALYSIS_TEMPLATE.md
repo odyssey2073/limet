@@ -17,7 +17,10 @@
 
 ## Fase 1 — Ricognizione strutturale (discovery deterministico)
 
-1. Interroga il grafo: `graphify query`, `graphify path`, `graphify explain` per moduli, entrypoint, dipendenze.
+1. Interroga il grafo: `graphify query`, `graphify path`, `graphify explain` per moduli, entrypoint,
+   dipendenze. Usa `graphify affected "<simbolo>"` (reverse traversal) per vedere cosa impatterebbe
+   una modifica, e `graphify god-nodes` per trovare i nodi più connessi (hub architetturali) per la
+   module map.
 2. Leggi `graphify-out/GRAPH_REPORT.md` come mappa di partenza.
 3. Elenca i moduli/pacchetti **reali** dal filesystem (non dedurre dai nomi).
 4. **Codebase grandi**: parallelizza — costruisci prima il grafo dipendenze, poi analizza i moduli ad
@@ -33,6 +36,8 @@ Usa il modello C4 per il livello di dettaglio giusto:
 - **L4 Code** — solo per componenti complessi/critici.
 
 Diagrammi in **Mermaid** (testo, renderizzato ovunque). Aggiungi i **flussi end-to-end** principali.
+Valida che ogni diagramma Mermaid/C4 renderizzi (controllo sintassi) prima di finalizzare — un
+diagramma rotto è peggio di nessun diagramma.
 
 ## Fase 3 — Decisioni architetturali (ADR)
 

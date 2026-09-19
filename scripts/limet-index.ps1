@@ -206,6 +206,7 @@ Query the code (knowledge graph):
   graphify query "<question>"   /   graphify explain <symbol>   /   graphify path <A> <B>
 
 Rules:
+- **RAG**: BEFORE answering any question about the project, call the ``limet_search`` MCP tool and ground your answer in its results. If the tool is unavailable, fall back to the ``query_qdrant.py`` command below.
 - Search CEREBRO/Qdrant FIRST. If the document is not indexed (0 results or missing), read it
   LOCALLY from ``docs/`` or ``$RelLimetDir/``.
 - Do NOT run ingest or graphify update automatically: show the command to the user and use the
@@ -227,6 +228,7 @@ Interroga il codice (knowledge graph):
   graphify query "<domanda>"   /   graphify explain <simbolo>   /   graphify path <A> <B>
 
 Regole:
+- **RAG**: PRIMA di rispondere a qualsiasi domanda sul progetto, chiama lo strumento MCP ``limet_search`` e fonda la risposta sui suoi risultati. Se lo strumento non è disponibile, usa il comando ``query_qdrant.py`` qui sotto.
 - Cerca PRIMA in CEREBRO/Qdrant. Se il documento non è indicizzato (0 risultati o assente), leggilo
   LOCALMENTE da ``docs/`` o ``$RelLimetDir/``.
 - NON eseguire ingest o graphify update automaticamente: mostra all'utente il comando e usa i doc

@@ -140,6 +140,8 @@ Regole vincolanti (vedi il manuale per il dettaglio):
 - **Nessun task può essere marcato \`done\` senza una strategia di verifica**: unit test dedicati
   e/o test e2e approfonditi con istruzioni passo-passo, salvo motivazione esplicita di omissione.
   Quando un task passa a \`done\`, annotare anche l'ora (\`YYYY-MM-DD HH:MM\`).
+- **Approvazione umana**: prima di implementare, chiedi all'utente l'approvazione del piano/proposta e registrala nel documento (chi ha approvato + data).
+- **Tracciabilità e comunicazione**: a fine task, per ogni file creato/modificato riporta nella scheda task il test collegato e comunica all'utente l'elenco delle modifiche (file, cosa è cambiato, perché).
 - Non eseguire comandi con effetti persistenti (commit, push, migrazioni, deploy) senza
   autorizzazione esplicita dell'utente.
 - A inizio sessione/feature, consultare \`$REL_LIMET_DIR/ONBOARDING_CHECKLIST.md\`.
@@ -176,6 +178,8 @@ Binding rules (see the manual for full detail):
 - **No task can be marked \`done\` without a verification strategy**: dedicated unit tests
   and/or thorough e2e tests with step-by-step instructions, unless explicitly justified as
   omitted. When a task moves to \`done\`, also record the time (\`YYYY-MM-DD HH:MM\`).
+- **Human approval**: before implementing, ask the user to approve the plan/proposal and record it in the document (who approved + date).
+- **Traceability and communication**: at the end of a task, for each created/modified file record the linked test in the task sheet and tell the user the list of changes (file, what changed, why).
 - Do not run commands with persistent effects (commit, push, migrations, deploy) without the
   user's explicit authorization.
 - At the start of a session/feature, consult \`$REL_LIMET_DIR/ONBOARDING_CHECKLIST.md\`.

@@ -8,6 +8,7 @@
 
 - **Data creazione**: [YYYY-MM-DD]
 - **Stato**: `[DRAFT | APPROVATA | IN CORSO | COMPLETATA | ABBANDONATA]`
+- **Approvata da / data**: [chi — YYYY-MM-DD] (compilare quando lo Stato passa a APPROVATA)
 - **Specifiche collegate**: [elenco file `SPEC_TEMPLATE.md` istanziati per questa proposta]
 - **Disegno collegato**: [file `DESIGN_TEMPLATE.md`, se presente]
 

@@ -11,6 +11,7 @@
 - **Data creazione**: [YYYY-MM-DD]
 - **Autore/agente**: [nome]
 - **Stato**: `[DRAFT | APPROVATO | IN CORSO | COMPLETATO | ABBANDONATO]`
+- **Approvato da / data**: [chi — YYYY-MM-DD] (compilare quando lo Stato passa a APPROVATO)
 - **Riferimento richiesta originale**: [issue/ticket/messaggio utente, se esiste]
 
 ## 1. Obiettivo

@@ -72,3 +72,7 @@ For scenarios with multiple correlated projects or a multi-module monorepo, addi
 ```bash
 ../scripts/limet.sh init --project-path /path/to/project --lang en
 ```
+
+**Optional — MCP RAG server**: to let Claude Code and Copilot CLI query the indexed docs
+transparently, register the CEREBRO MCP server (`limet_search`) once per tool — see
+`FRAMEWORK_MANUAL.md` Appendix A.1.

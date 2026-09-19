@@ -72,3 +72,7 @@ Per scenari con più progetti correlati o un monorepo a moduli, usare in aggiunt
 ```bash
 ../scripts/limet.sh init --project-path /percorso/progetto --lang it
 ```
+
+**Opzionale — server MCP RAG**: per far interrogare in modo trasparente i documenti indicizzati a
+Claude Code e Copilot CLI, registrare il server MCP di CEREBRO (`limet_search`) una volta per tool
+— vedi `FRAMEWORK_MANUAL.md` Appendice A.1.

@@ -15,9 +15,9 @@
 > Files created/modified, with path and project; brief indication of what code was
 > inserted/changed and why. Fill in (or refine) once the work is done.
 
-| Project | File (path) | Created/Modified | What changes and why |
-| ------- | ----------- | ---------------- | -------------------- |
-| ...     | `src/...`   | created          | [...]                |
+| Project | File (path) | Created/Modified | What changes and why | Linked test |
+| ------- | ----------- | ---------------- | -------------------- | ----------- |
+| ...     | `src/...`   | created          | [...]                | `XxxTest`   |
 
 ## Metadata
 

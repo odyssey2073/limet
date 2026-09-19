@@ -423,6 +423,18 @@ python scripts\query_qdrant.py --project miaapp search "architettura" --limit 3
 query dal browser — una sola interfaccia per Claude Code e GitHub Copilot. Vedi `INSTALL.md` nel
 repo CEREBRO per come avviarla e usarla.
 
+**Server MCP (RAG trasparente)**: `scripts\limet_mcp.py` in CEREBRO espone un unico tool
+`limet_search` (embedding della query via Ollama → search su Qdrant) così Claude Code e Copilot CLI
+interrogano i documenti senza digitare il comando manuale. Si registra una volta per tool:
+
+- Claude Code: `.mcp.json` nel progetto, o `claude mcp add limet -- python <path-a-limet_mcp.py>`.
+- Copilot CLI: `copilot mcp add limet -- python <path-a-limet_mcp.py>`, o `.github/mcp.json` nel
+  progetto.
+
+Claude Code può inoltre auto-iniettare il RAG a ogni prompt con un hook `UserPromptSubmit`
+(`scripts\limet_rag.py`, configurato in `.claude/settings.json`). Copilot CLI non ha un hook
+equivalente: si affida al tool `limet_search` + l'istruzione in `AGENTS.md`.
+
 **Troubleshooting rapido**:
 
 | Sintomo | Causa probabile | Fix |

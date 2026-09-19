@@ -11,6 +11,7 @@
 - **Creation date**: [YYYY-MM-DD]
 - **Author/agent**: [name]
 - **Status**: `[DRAFT | APPROVED | IN PROGRESS | COMPLETED | ABANDONED]`
+- **Approved by / date**: [who — YYYY-MM-DD] (fill when Status → APPROVED)
 - **Original request reference**: [issue/ticket/user message, if any]
 
 ## 1. Objective

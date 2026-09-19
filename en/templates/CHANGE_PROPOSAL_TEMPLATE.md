@@ -8,6 +8,7 @@
 
 - **Creation date**: [YYYY-MM-DD]
 - **Status**: `[DRAFT | APPROVED | IN PROGRESS | COMPLETED | ABANDONED]`
+- **Approved by / date**: [who — YYYY-MM-DD] (fill when Status → APPROVED)
 - **Linked specs**: [list of `SPEC_TEMPLATE.md` instances created for this proposal]
 - **Linked design**: [`DESIGN_TEMPLATE.md` file, if any]
 

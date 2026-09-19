@@ -15,9 +15,9 @@
 > File creati/modificati, con path e progetto; indicazione sintetica del codice inserito/
 > modificato e del perché. Da compilare (o rifinire) a lavoro concluso.
 
-| Progetto | File (path) | Creato/Modificato | Cosa cambia e perché |
-| -------- | ----------- | ----------------- | -------------------- |
-| ...      | `src/...`   | creato            | [...]                |
+| Progetto | File (path) | Creato/Modificato | Cosa cambia e perché | Test collegato |
+| -------- | ----------- | ----------------- | -------------------- | -------------- |
+| ...      | `src/...`   | creato            | [...]                | `XxxTest`      |
 
 ## Metadati
 

@@ -17,7 +17,10 @@
 
 ## Phase 1 — Structural reconnaissance (deterministic discovery)
 
-1. Query the graph: `graphify query`, `graphify path`, `graphify explain` for modules, entrypoints, dependencies.
+1. Query the graph: `graphify query`, `graphify path`, `graphify explain` for modules, entrypoints,
+   dependencies. Use `graphify affected "<symbol>"` (reverse traversal) to see what a change would
+   impact, and `graphify god-nodes` to find the most-connected nodes (architectural hubs) for the
+   module map.
 2. Read `graphify-out/GRAPH_REPORT.md` as the starting map.
 3. List the **real** modules/packages from the filesystem (do not infer from names).
 4. **Large codebases**: parallelize — build the dependency graph first, then analyze high-value
@@ -32,7 +35,9 @@ Use the C4 model for the right level of detail:
 - **L3 Component** — for new or changed services.
 - **L4 Code** — only for complex/critical components.
 
-Diagrams in **Mermaid** (text, rendered everywhere). Add the main **end-to-end flows**.
+Diagrams in **Mermaid** (text, rendered everywhere). Add the main **end-to-end flows**. Validate
+every Mermaid/C4 diagram renders (syntax check) before finalizing — a broken diagram is worse than
+none.
 
 ## Phase 3 — Architectural decisions (ADR)
 
