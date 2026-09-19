@@ -55,6 +55,26 @@ Command forms (Surefire/JUnit):
 - Whole class: `./mvnw test -Dtest=MyClassTest`
 - Single method: `./mvnw test -Dtest=MyClassTest#myMethod`
 
-| # | Description | Command — whole class | Command — single method |
-| - | ----------- | --------------------- | ----------------------- |
-| 1 | [...]       | `./mvnw test -Dtest=...` | `./mvnw test -Dtest=...#...` |
+For each test: the state to check **before** (pre-test) and **after** (post-test) — e.g. DB rows
+via SQL, a file on disk, a config value, cache content, an external service — plus the two
+commands. Omit pre/post when not applicable.
+
+### Test 1 — [short description]
+
+- **Pre-test** (expected state before):
+  ```sql
+  SELECT count(*) FROM employee;  -- expected 0
+  ```
+- **Command — whole class**: `./mvnw test -Dtest=MyClassTest`
+- **Command — single method**: `./mvnw test -Dtest=MyClassTest#myMethod`
+- **Post-test** (expected state after):
+  ```sql
+  SELECT count(*) FROM employee;  -- expected 5
+  ```
+
+### Test 2 — [...]
+
+- **Pre-test**: [...]
+- **Command — whole class**: `./mvnw test -Dtest=...`
+- **Command — single method**: `./mvnw test -Dtest=...#...`
+- **Post-test**: [...]

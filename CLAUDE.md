@@ -35,8 +35,8 @@ Regole:
 
 ## BUILD & TEST — policy
 
-- **Non eseguire** build né test in autonomia.
-- **Fornire all'utente** il comando con il Maven Wrapper da eseguire in **Git Bash** (`./mvnw package`, `./mvnw test`), poi **attendere l'esito** prima di procedere. Usa sempre `./mvnw`, mai `.\mvnw.cmd`.
+- **MAI eseguire build o test in autonomia** — l'output riempie il contesto di rumore. MAI lanciare `./mvnw package` o `./mvnw test`.
+- Quando serve, **fornisci all'utente** il comando Maven Wrapper (Git Bash), chiedigli di eseguirlo e di comunicare l'esito, poi **resta in standby** finché l'esito non arriva. Usa sempre `./mvnw`, mai `.\mvnw.cmd`.
 
 ## TASK LIST — policy
 

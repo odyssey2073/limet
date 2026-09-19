@@ -27,9 +27,10 @@ risk it carries.
 ### 1.3 Separation between writing and executing
 
 The agent proposes/writes changes and commands; the execution of build/test/deploy can remain
-under the user's or pipeline's control, with logs pasted back for later debugging. Never run
-commands with persistent effects (commit, push, migrations, deploy) without explicit
-authorization.
+under the user's or pipeline's control, with logs pasted back for later debugging. **The agent must
+never run a build or tests on its own** — it gives the user the command, asks them to run it and
+report the outcome, and stays on standby until the outcome arrives. Never run commands with
+persistent effects (commit, push, migrations, deploy) without explicit authorization.
 
 ### 1.4 Retroactive documentation updates
 
@@ -163,7 +164,10 @@ For every task that introduces or modifies behavior (not just comments/documenta
   pass" — they must fail if the bug/defect returns);
 - document the planned cases in `TEST_PLAN_TEMPLATE.md` before or during implementation, and the
   actual outcome in `TEST_EXECUTION_TEMPLATE.md` after execution (which can be performed by the
-  user, not necessarily by the agent — see §1.3).
+  user, not necessarily by the agent — see §1.3);
+- for tests that touch stateful resources (DB, files, cache, external services), record the state
+  to verify **before** (pre) and **after** (post) the test — e.g. SQL queries on the DB — not only
+  the return/HTTP response.
 
 ### 5.2 Thorough e2e tests
 
@@ -177,6 +181,8 @@ include:
   something deviates);
 - **How to verify the outcome** objectively (check queries, expected logs, expected response) —
   avoid "verify that it works" without measurable criteria;
+- **Pre/post state check**: the state to verify before the steps and after the steps (DB rows via
+  SQL, files, config, cache, external services) — not only the final response;
 - **Rollback/cleanup** if the test leaves residual state in the system.
 
 It does not need to be automated: it can be a manual checklist, as long as it is detailed enough

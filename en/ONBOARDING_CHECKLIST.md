@@ -34,13 +34,15 @@
       approved).
 - [ ] No command with persistent effects (commit, push, migration, deploy) has been run without
       explicit authorization.
+- [ ] No build or test has been run by the agent — it delegates the command to the user and waits
+      on standby for the outcome.
 
 ## 5. Verification (mandatory — see manual §1.5/§5)
 
 - [ ] Unit tests have been written/extended for the modified behavior.
 - [ ] It has been assessed whether a thorough e2e test is needed; if so, it has been documented
-      with `E2E_VERIFICATION_TEMPLATE.md` (preconditions, numbered steps, expected result per
-      step, objective verification criteria, rollback).
+      with `E2E_VERIFICATION_TEMPLATE.md` (preconditions, pre/post state check, numbered steps,
+      expected result per step, objective verification criteria, rollback).
 - [ ] If a test was not planned, the justification is explicit in the task document (§5.3).
 - [ ] The actual test outcome (not just the planned one) has been recorded in
       `TEST_EXECUTION_TEMPLATE.md`.

@@ -56,6 +56,26 @@ Forme di comando (Surefire/JUnit):
 - Intera classe: `./mvnw test -Dtest=MiaClasseTest`
 - Singolo metodo: `./mvnw test -Dtest=MiaClasseTest#mioMetodo`
 
-| # | Descrizione | Comando — intera classe | Comando — singolo metodo |
-| - | ----------- | ----------------------- | ------------------------ |
-| 1 | [...]       | `./mvnw test -Dtest=...` | `./mvnw test -Dtest=...#...` |
+Per ogni test: lo stato da verificare **prima** (pre-test) e **dopo** (post-test) — es. righe DB
+via SQL, un file su disco, un valore di config, contenuto di cache, un servizio esterno — più i
+due comandi. Ometti pre/post se non applicabile.
+
+### Test 1 — [breve descrizione]
+
+- **Pre-test** (stato atteso prima):
+  ```sql
+  SELECT count(*) FROM employee;  -- atteso 0
+  ```
+- **Comando — intera classe**: `./mvnw test -Dtest=MiaClasseTest`
+- **Comando — singolo metodo**: `./mvnw test -Dtest=MiaClasseTest#mioMetodo`
+- **Post-test** (stato atteso dopo):
+  ```sql
+  SELECT count(*) FROM employee;  -- atteso 5
+  ```
+
+### Test 2 — [...]
+
+- **Pre-test**: [...]
+- **Comando — intera classe**: `./mvnw test -Dtest=...`
+- **Comando — singolo metodo**: `./mvnw test -Dtest=...#...`
+- **Post-test**: [...]

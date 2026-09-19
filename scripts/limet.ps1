@@ -163,6 +163,7 @@ Regole vincolanti (vedi il manuale per il dettaglio):
   Quando un task passa a ``done``, annotare anche l'ora (``YYYY-MM-DD HH:MM``).
 - **Approvazione umana**: prima di implementare, chiedi all'utente l'approvazione del piano/proposta e registrala nel documento (chi ha approvato + data).
 - **Tracciabilità e comunicazione**: a fine task, per ogni file creato/modificato riporta nella scheda task il test collegato e comunica all'utente l'elenco delle modifiche (file, cosa è cambiato, perché).
+- **MAI eseguire build o test**: non lanciare MAI build (``./mvnw package``) né test (``./mvnw test``) in autonomia — l'output riempie il contesto di rumore. Quando serve, dai all'utente il comando, chiedi di eseguirlo e di comunicare l'esito, e resta in standby finché non arriva.
 - Non eseguire comandi con effetti persistenti (commit, push, migrazioni, deploy) senza
   autorizzazione esplicita dell'utente.
 - A inizio sessione/feature, consultare ``$relLimetDir/ONBOARDING_CHECKLIST.md``.
@@ -200,6 +201,7 @@ Binding rules (see the manual for full detail):
   omitted. When a task moves to ``done``, also record the time (``YYYY-MM-DD HH:MM``).
 - **Human approval**: before implementing, ask the user to approve the plan/proposal and record it in the document (who approved + date).
 - **Traceability and communication**: at the end of a task, for each created/modified file record the linked test in the task sheet and tell the user the list of changes (file, what changed, why).
+- **NEVER run builds or tests**: never run a build (``./mvnw package``) or tests (``./mvnw test``) on your own — the output floods the context with noise. When needed, give the user the command, ask them to run it and report the outcome, and stay on standby until it arrives.
 - Do not run commands with persistent effects (commit, push, migrations, deploy) without the
   user's explicit authorization.
 - At the start of a session/feature, consult ``$relLimetDir/ONBOARDING_CHECKLIST.md``.

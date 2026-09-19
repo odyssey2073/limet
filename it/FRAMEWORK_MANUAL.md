@@ -28,8 +28,10 @@ al rischio che comporta.
 ### 1.3 Separazione tra scrivere ed eseguire
 
 L'agente propone/scrive modifiche e comandi; l'esecuzione di build/test/deploy può restare a cura
-dell'utente o della pipeline, con i log incollati per il debug successivo. Non eseguire mai
-comandi con effetti persistenti (commit, push, migrazioni, deploy) senza autorizzazione esplicita.
+dell'utente o della pipeline, con i log incollati per il debug successivo. **L'agente non deve MAI
+eseguire build o test in autonomia** — dà all'utente il comando, chiede di eseguirlo e di comunicare
+l'esito, e resta in standby finché l'esito non arriva. Non eseguire mai comandi con effetti
+persistenti (commit, push, migrazioni, deploy) senza autorizzazione esplicita.
 
 ### 1.4 Aggiornamento a ritroso della documentazione
 
@@ -166,7 +168,10 @@ Per ogni task che introduce o modifica comportamento (non solo commenti/document
   la build" — devono fallire se il bug/difetto torna);
 - documentare i casi previsti in `TEST_PLAN_TEMPLATE.md` prima o durante l'implementazione, e
   l'esito reale in `TEST_EXECUTION_TEMPLATE.md` dopo l'esecuzione (che può essere effettuata
-  dall'utente, non necessariamente dall'agente — vedi §1.3).
+  dall'utente, non necessariamente dall'agente — vedi §1.3);
+- per i test che toccano risorse con stato (DB, file, cache, servizi esterni), registrare lo stato
+  da verificare **prima** (pre) e **dopo** (post) il test — es. query SQL sul DB — non solo la
+  risposta di ritorno/HTTP.
 
 ### 5.2 Test e2e approfonditi
 
@@ -180,6 +185,8 @@ deve sempre includere:
   qualcosa si discosta);
 - **Come verificare l'esito** in modo oggettivo (query di controllo, log attesi, risposta attesa)
   — evitare "verificare che funzioni" senza criteri misurabili;
+- **Controllo pre/post dello stato**: lo stato da verificare prima dei passi e dopo i passi (righe
+  DB via SQL, file, config, cache, servizi esterni) — non solo la risposta finale;
 - **Rollback/pulizia** se il test lascia stato residuo nel sistema.
 
 Non è necessario che sia automatizzato: può essere una checklist manuale, purché sufficientemente

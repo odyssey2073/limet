@@ -14,6 +14,16 @@
 - [...]
 - [dati/utenti/ruoli necessari]
 
+## Stato pre-verifica (controllo PRIMA dei passi)
+
+> Stato da verificare prima di eseguire i passi — es. righe DB (SQL), un file, un valore di config,
+> contenuto di cache, un servizio esterno.
+
+- **Controllo**: [...]
+  ```sql
+  SELECT count(*) FROM employee;  -- atteso 0
+  ```
+
 ## Passi di verifica
 
 1. [Passo 1 — azione precisa: dove cliccare/cosa chiamare/cosa inserire]
@@ -22,10 +32,15 @@
    - **Esito atteso**: [...]
 3. [...]
 
-## Verifica dati persistiti (se applicabile)
+## Stato post-verifica (controllo DOPO i passi)
 
-[Come controllare che il dato sia stato effettivamente salvato/aggiornato correttamente — es.
-query di sola lettura, ispezione risposta API, log applicativo.]
+> Stato da verificare dopo aver eseguito i passi — es. righe DB (SQL), un file, un valore di
+> config, contenuto di cache, un servizio esterno.
+
+- **Controllo**: [...]
+  ```sql
+  SELECT count(*) FROM employee;  -- atteso 5
+  ```
 
 ## Casi limite da verificare
 

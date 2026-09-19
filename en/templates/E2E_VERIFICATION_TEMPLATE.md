@@ -14,6 +14,16 @@
 - [...]
 - [required data/users/roles]
 
+## Pre-verification state (check BEFORE the steps)
+
+> State to verify before running the steps — e.g. DB rows (SQL), a file, a config value, cache
+> content, an external service.
+
+- **Check**: [...]
+  ```sql
+  SELECT count(*) FROM employee;  -- expected 0
+  ```
+
 ## Verification steps
 
 1. [Step 1 — precise action: where to click/what to call/what to enter]
@@ -22,10 +32,15 @@
    - **Expected outcome**: [...]
 3. [...]
 
-## Persisted data verification (if applicable)
+## Post-verification state (check AFTER the steps)
 
-[How to check that the data was actually saved/updated correctly — e.g. read-only query, API
-response inspection, application log.]
+> State to verify after running the steps — e.g. DB rows (SQL), a file, a config value, cache
+> content, an external service.
+
+- **Check**: [...]
+  ```sql
+  SELECT count(*) FROM employee;  -- expected 5
+  ```
 
 ## Edge cases to verify
 

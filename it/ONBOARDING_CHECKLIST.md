@@ -33,13 +33,15 @@
       eventualmente approvato).
 - [ ] Nessun comando con effetti persistenti (commit, push, migrazioni, deploy) è stato eseguito
       senza autorizzazione esplicita.
+- [ ] Nessuna build o test è stato eseguito dall'agente — delega il comando all'utente e resta in
+      standby finché l'esito non arriva.
 
 ## 5. Verifica (obbligatoria — vedi §1.5/§5 del manuale)
 
 - [ ] Sono stati scritti/estesi unit test per il comportamento modificato.
 - [ ] È stato valutato se serve un test e2e approfondito; se sì, è stato documentato con
-      `E2E_VERIFICATION_TEMPLATE.md` (precondizioni, passi numerati, risultato atteso per passo,
-      criteri di verifica oggettivi, rollback).
+      `E2E_VERIFICATION_TEMPLATE.md` (precondizioni, controllo pre/post dello stato, passi
+      numerati, risultato atteso per passo, criteri di verifica oggettivi, rollback).
 - [ ] Se un test non è stato previsto, la motivazione è esplicita nel documento di task (§5.3).
 - [ ] L'esito reale dei test (non solo quello previsto) è stato registrato in
       `TEST_EXECUTION_TEMPLATE.md`.
