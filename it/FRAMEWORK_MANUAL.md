@@ -536,6 +536,17 @@ installato nella cartella `limet/scripts/` di ogni progetto da `limet init`.
   `module-map.md`, `glossary.md` (dai template in `docs/_templates/`).
 - `limet/changes/` e `limet/archive/` — i documenti LIMET prodotti nel ciclo di vita (§3).
 
+L'indicizzazione è **ricorsiva**: ogni sottocartella delle cartelle registrate viene ingerita,
+quindi `docs/features/` o `docs/bugfixes/` sono indicizzate esattamente come la radice `docs/`.
+Solo due percorsi vengono saltati: `docs/_templates/` (scaffolding dei template) e `.obsidian/`
+(stato dell'editor).
+
+**Aggiunta documenti via launcher**: la UI web `scripts/limet-launcher.py` offre l'azione
+"Documentazione → Aggiungi documenti" che copia i file selezionati in `docs/` (opzionalmente nella
+sottocartella scelta in "Sotto-cartella": `features`, `bugfixes`, o nessuna) e poi esegue
+`limet-index update` — così i file vengono scritti su disco **e** indicizzati su Qdrant
+(`graphify update` rieseguito).
+
 **Workspace / multi-progetto**: eseguendo `limet-index init -Workspace` sulla cartella padre si crea
 una collection `CRB_<ws>` per `limet-workspace/changes/`, `limet-workspace/archive/` e
 `MODULE_MAP.md`. Ogni progetto sotto il workspace la rileva automaticamente e registra `CRB_<ws>`

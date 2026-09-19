@@ -529,6 +529,16 @@ rebuild** them. That is the role of the transversal script `scripts/limet-index.
   `glossary.md` (from the templates in `docs/_templates/`).
 - `limet/changes/` and `limet/archive/` — the LIMET documents produced over the lifecycle (§3).
 
+Indexing is **recursive**: every subfolder of the registered folders is ingested, so
+`docs/features/` or `docs/bugfixes/` are indexed exactly like `docs/` root. Only two paths are
+skipped: `docs/_templates/` (template scaffolding) and `.obsidian/` (editor state).
+
+**Adding documents via launcher**: the web UI `scripts/limet-launcher.py` offers a
+"Documentazione → Aggiungi documenti" action that copies the selected files into `docs/`
+(optionally into the subfolder chosen in "Sotto-cartella": `features`, `bugfixes`, or none) and
+then runs `limet-index update` — so the files are written to disk **and** indexed into Qdrant
+(`graphify update` re-runs too).
+
 **Workspace / multi-project**: running `limet-index init -Workspace` on the parent folder creates a
 `CRB_<ws>` collection for `limet-workspace/changes/`, `limet-workspace/archive/` and
 `MODULE_MAP.md`. Each project under the workspace auto-detects it and registers `CRB_<ws>` as an
