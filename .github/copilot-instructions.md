@@ -32,3 +32,24 @@ Regole:
 - interroga il grafo prima di modificare funzioni con molte dipendenze;
 - se il grafo non è aggiornato, lancia `graphify update .` prima di usarlo.
 <!-- GRAPHIFY:END -->
+
+## BUILD & TEST — policy
+
+- **Non eseguire** build né test in autonomia.
+- **Fornire all'utente** il comando con il Maven Wrapper da eseguire in **Git Bash** (`./mvnw package`, `./mvnw test`), poi **attendere l'esito** prima di procedere. Usa sempre `./mvnw`, mai `.\mvnw.cmd`.
+
+## TASK LIST — policy
+
+- Quando generi un `PLAN.md` da `PLAN_TEMPLATE.md`, genera **sempre** anche `TASK_LIST.md` (derivato da §6) **senza chiedere** conferma.
+- **Mai** chiedere "Vuoi TASK_LIST.md separato?" o simili: la generazione è automatica.
+
+## TEST — policy
+
+- Quando generi un `PLAN.md`, crea **sempre** anche `TEST_PLAN.md` (da `TEST_PLAN_TEMPLATE.md`), `E2E_VERIFICATION.md` (da `E2E_VERIFICATION_TEMPLATE.md`) e, a test eseguiti, `TEST_EXECUTION.md` (da `TEST_EXECUTION_TEMPLATE.md`), **senza chiedere**.
+- Ogni test riporta **comando esatto di riesecuzione** (es. `./mvnw test -Dtest=...`) e **descrizione**, così l'utente può rieseguirlo.
+- Al termine, archivia `TEST_PLAN.md`, `E2E_VERIFICATION.md` e `TEST_EXECUTION.md` in `limet/archive/<data-slug>/` insieme al resto.
+- Prima di dare all'utente un comando di test: **indica cosa fa il test e in quale classe si trova**, poi fornisci **entrambi i comandi** — tutta la classe (`-Dtest=ClasseTest`) e il singolo metodo (`-Dtest=ClasseTest#metodo`).
+
+## COMUNICAZIONE TASK — policy
+
+- Quando implementi un `taskX`: (1) **comunica all'utente** che lo stai implementando; (2) **spiega in cosa consiste**; (3) al termine, **elenca quali modifiche e dove** sono state fatte (file e, se utile, righe).

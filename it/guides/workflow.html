@@ -61,6 +61,9 @@
   .step .d code { background: rgba(0,0,0,.3); padding: 1px 5px; border-radius: 5px; font-family: var(--mono); font-size: 12px; }
   .note { margin-top: 10px; font-size: 12.5px; color: var(--warn); line-height: 1.5; }
   .note::before { content: "⚠ "; }
+  .code { margin-top: 10px; background: #0b0e13; border: 1px solid var(--border); border-radius: 9px; font-family: var(--mono); font-size: 12.5px; padding: 12px 14px; position: relative; overflow-x: auto; white-space: pre; color: #c7d2e0; }
+  .code button.copy { position: absolute; top: 8px; right: 8px; background: var(--bg2); border: 1px solid var(--border); color: var(--muted); border-radius: 7px; padding: 4px 9px; font-size: 11px; cursor: pointer; }
+  .code button.copy:hover { color: var(--text); border-color: var(--accent); }
 
   .navb { display: flex; gap: 10px; margin-top: 6px; }
   .navb button {
@@ -111,33 +114,39 @@ const SCENARIOS = [
       { t: "Avvia il launcher web", tag: "Launcher", d: "Apri il terminale ed esegui <code>python <LIMET_HOME>\\scripts\\limet-launcher.py</code> → si apre il browser su <code>http://127.0.0.1:8799</code>." },
       { t: "Compila il form", tag: "Launcher", d: "Azione <b>Crea</b> · <b>Percorso</b> = cartella del progetto · <b>Lingua</b> = it/en · <b>Modalità</b> = Progetto · spunta <b>Strumenti di contesto</b>." },
       { t: "Crea", tag: "Launcher", d: "Clicca <b>Crea progetto</b>. Attendi il log fino a <b>Fatto. Il progetto è pronto.</b>" },
-      { t: "Apri con l'agente", tag: "Agente", d: "Apri la cartella con Claude Code (<code>claude</code>) o Copilot (<code>gh copilot</code>): legge <code>AGENTS.md</code> e sa interrogare CEREBRO/Graphify.", n: "Controlla che AGENTS.md contenga i blocchi LIMET e LIMET-CONTEXT." }
+      { t: "Apri con l'agente", tag: "Agente", d: "Apri la cartella con Claude Code (<code>claude</code>) o Copilot (<code>gh copilot</code>): legge <code>AGENTS.md</code> e sa interrogare CEREBRO/Graphify.", n: "Controlla che AGENTS.md contenga i blocchi LIMET e LIMET-CONTEXT." },
+      { t: "Genera i documenti approfonditi", tag: "Agente", d: "Copia questo prompt all'agente per analizzare la codebase e creare (o aggiornare) la doc suite, seguendo il playbook <code>limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md</code>:", c: "Segui limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md e analizza la codebase (parti da Graphify + codice), istanzia i template in docs/_templates/ (MODULE_MAP_TEMPLATE.md, ARCHITECTURE_TEMPLATE.md, CONVENTIONS_TEMPLATE.md, GLOSSARY_TEMPLATE.md) e produci/aggiorna in docs/:\n\n- module-map.md\n- architecture.md   (C4, con diagrammi Mermaid)\n- decisions.md      (ADR)\n- dependencies.md\n- conventions.md\n- glossary.md\n\nUsa citazioni file:line, segnala le incertezze. Se un documento esiste già, AGGIORNALO (non riscriverlo). Poi esegui limet-index update." }
     ] },
   { id: "feature", title: "2 · Nuova feature",
     desc: "La feature si sviluppa lavorando con l'agente nel progetto (template in limet/changes/); il launcher interviene solo alla fine per il re-index.",
     steps: [
       { t: "Apri il progetto con l'agente", tag: "Utente", d: "Apri la cartella con Claude Code (<code>claude</code>) o Copilot (<code>gh copilot</code>): l'agente legge <code>AGENTS.md</code> (blocco LIMET + LIMET-CONTEXT) e sa come applicare LIMET." },
-      { t: "Assegna la feature", tag: "Utente", d: "Descrivi all'agente cosa vuoi costruire." },
-      { t: "Esplorazione (contesto)", tag: "Agente", d: "L'agente interroga il <b>knowledge graph</b> (codice) e <b>CEREBRO</b> (documenti) per raccogliere contesto, senza che tu faccia nulla." },
-      { t: "Proposta", tag: "Agente", d: "L'agente crea <code>limet/changes/0002-slug/PLAN.md</code> (o <code>CHANGE_PROPOSAL.md</code> + <code>SPEC.md</code> + <code>DESIGN.md</code> per modifiche ampie)." },
+      { t: "Assegna la feature", tag: "Utente", d: "Dai all'agente la descrizione (e il documento caricato) con questo prompt — istanzia i template e genera piano, specifica e task in un colpo:", c: "Analizza la descrizione e il documento in docs/, poi genera in limet/changes/NNNN-slug/ istanziando i template in limet/templates/:\n\n- PLAN.md  (da PLAN_TEMPLATE.md) — il perché\n  oppure, per modifiche ampie: CHANGE_PROPOSAL.md + SPEC.md + DESIGN.md\n  (da CHANGE_PROPOSAL_TEMPLATE.md + SPEC_TEMPLATE.md + DESIGN_TEMPLATE.md)\n- TASK_LIST.md  (da TASK_LIST_TEMPLATE.md) — con strategia di test per ogni task; TASK.md (da TASK_TEMPLATE.md) per un task complesso\n\nPoi fermati e chiedimi l'approvazione prima di implementare." },
+      { t: "Carica il documento della feature", tag: "Launcher", d: "Se hai un documento che descrive la feature (PDF/Markdown, es. requisiti), caricalo: launcher → azione <b>Documentazione</b> → <b>Aggiungi documenti</b>, sotto-cartella <b>features</b>. Verrà copiato in <code>docs/features/</code> e indicizzato in CEREBRO." },
+      { t: "Esplorazione (contesto)", tag: "Agente", d: "L'agente interroga il <b>knowledge graph</b> (codice) e <b>CEREBRO</b> (documenti), e legge il documento caricato in <code>docs/</code> (col nome che hai specificato) + la tua descrizione." },
+      { t: "Proposta", tag: "Agente", d: "Basandosi sulla tua descrizione e sul documento caricato, l'agente crea <code>limet/changes/0002-slug/PLAN.md</code> (o <code>CHANGE_PROPOSAL.md</code> per modifiche ampie)." },
+      { t: "Specifica della feature", tag: "Agente", d: "L'agente crea <code>SPEC.md</code>: il documento che <b>descrive la nuova feature</b> (cosa fa, requisiti verificabili). Verrà archiviato in <code>limet/archive/</code> e indicizzato in CEREBRO." },
       { t: "Review", tag: "Utente", d: "Leggi e approva il piano. Ogni ambiguità deve essere una domanda con risposta, mai assunta." },
       { t: "Scomposizione in task", tag: "Agente", d: "L'agente crea <code>TASK_LIST.md</code> con strategia di test per ogni task." },
       { t: "Implementazione", tag: "Agente", d: "L'agente implementa nel perimetro dichiarato. Nessun effetto persistente (commit/push/deploy) senza tua autorizzazione." },
-      { t: "Verifica (obbligatoria)", tag: "Agente", d: "L'agente compila <code>TEST_PLAN.md</code> + <code>TEST_EXECUTION.md</code> + <code>E2E_VERIFICATION.md</code>." },
-      { t: "Sintesi non tecnica", tag: "Agente", d: "<code>NON_TECHNICAL_SUMMARY.md</code> (se serve)." },
-      { t: "Archivio", tag: "Agente", d: "L'agente compila <code>ARCHIVE_ENTRY.md</code> e sposta la cartella da <code>limet/changes/</code> a <code>limet/archive/</code>." },
+      { t: "Verifica (obbligatoria)", tag: "Agente", d: "L'agente compila <code>TEST_PLAN.md</code> (da <code>TEST_PLAN_TEMPLATE.md</code>) + <code>TEST_EXECUTION.md</code> (da <code>TEST_EXECUTION_TEMPLATE.md</code>) + <code>E2E_VERIFICATION.md</code> (da <code>E2E_VERIFICATION_TEMPLATE.md</code>)." },
+      { t: "Sintesi non tecnica", tag: "Agente", d: "<code>NON_TECHNICAL_SUMMARY.md</code> (da <code>NON_TECHNICAL_SUMMARY_TEMPLATE.md</code>, se serve)." },
+      { t: "Archivio", tag: "Agente", d: "L'agente compila <code>ARCHIVE_ENTRY.md</code> (da <code>ARCHIVE_ENTRY_TEMPLATE.md</code>) e sposta la cartella da <code>limet/changes/</code> a <code>limet/archive/</code>." },
+      { t: "Aggiorna i documenti", tag: "Agente", d: "Dopo l'implementazione, aggiorna la doc suite (copia il prompt):", c: "Aggiorna i documenti approfonditi in docs/ per riflettere le modifiche appena fatte. Segui limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md. Se un documento esiste già, AGGIORNALO (non riscriverlo). Poi esegui limet-index update." },
       { t: "Re-index", tag: "Launcher", d: "Azione <b>Re-index</b> → i documenti archiviati diventano ricercabili nel contesto RAG." }
     ] },
   { id: "bug", title: "3 · Bug fix",
     desc: "Il difetto si corregge lavorando con l'agente nel progetto (documenti in limet/changes/); il launcher interviene solo alla fine per il re-index.",
     steps: [
       { t: "Apri il progetto con l'agente", tag: "Utente", d: "Apri la cartella con Claude Code (<code>claude</code>) o Copilot (<code>gh copilot</code>): l'agente legge <code>AGENTS.md</code> (blocco LIMET + LIMET-CONTEXT) e sa già come lavorare e interrogare CEREBRO/Graphify." },
-      { t: "Assegna il bug", tag: "Utente", d: "Descrivi il difetto all'agente: cosa succede e cosa ti aspetti." },
-      { t: "Segnala il difetto", tag: "Agente", d: "L'agente crea <code>limet/changes/NNNN-slug/BUG_REPORT.md</code> (osservato / atteso / riproduzione)." },
+      { t: "Assegna il bug", tag: "Utente", d: "Dai all'agente la descrizione (e il documento caricato) con questo prompt — istanzia i template:", c: "Analizza la descrizione e il documento in docs/, poi genera in limet/changes/NNNN-slug/ istanziando i template in limet/templates/:\n\n- BUG_REPORT.md (da BUG_REPORT_TEMPLATE.md) — osservato / atteso / riproduzione\n- PLAN.md (da PLAN_TEMPLATE.md) — fix proposto\n- TASK_LIST.md (da TASK_LIST_TEMPLATE.md) — con test di regressione; TASK.md (da TASK_TEMPLATE.md) per un task complesso\n\nPoi fermati e chiedimi l'approvazione prima di implementare." },
+      { t: "Carica il documento del bug", tag: "Launcher", d: "Se hai un documento/log/screenshot del difetto, caricalo: launcher → azione <b>Documentazione</b> → <b>Aggiungi documenti</b>, sotto-cartella <b>bugfixes</b>. Verrà copiato in <code>docs/bugfixes/</code> e indicizzato." },
+      { t: "Segnala il difetto", tag: "Agente", d: "Basandosi sulla tua descrizione e sul documento caricato, l'agente crea <code>limet/changes/NNNN-slug/BUG_REPORT.md</code> (osservato / atteso / riproduzione)." },
       { t: "Isola la causa", tag: "Agente", d: "L'agente interroga il <b>knowledge graph</b> (Graphify) per localizzare il difetto e le sue dipendenze." },
       { t: "Proposta fix", tag: "Agente", d: "L'agente crea <code>PLAN.md</code> + <code>TASK_LIST.md</code> con test di regressione mirati." },
-      { t: "Correggi e testa", tag: "Agente", d: "L'agente applica il fix e i test di regressione (il bug non deve tornare)." },
-      { t: "Archivia", tag: "Agente", d: "<code>ARCHIVE_ENTRY.md</code> + sposta la cartella in <code>limet/archive/</code>." },
+      { t: "Correggi e testa", tag: "Agente", d: "L'agente applica il fix e i test di regressione, compilando <code>TEST_PLAN.md</code> + <code>TEST_EXECUTION.md</code> (da <code>TEST_PLAN_TEMPLATE.md</code>/<code>TEST_EXECUTION_TEMPLATE.md</code>)." },
+      { t: "Archivia", tag: "Agente", d: "<code>ARCHIVE_ENTRY.md</code> (da <code>ARCHIVE_ENTRY_TEMPLATE.md</code>) + sposta la cartella in <code>limet/archive/</code>." },
+      { t: "Aggiorna i documenti", tag: "Agente", d: "Se il fix cambia architettura/convenzioni, aggiorna la doc suite (copia il prompt):", c: "Aggiorna i documenti approfonditi in docs/ per riflettere le modifiche appena fatte. Segui limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md. Se un documento esiste già, AGGIORNALO (non riscriverlo). Poi esegui limet-index update." },
       { t: "Re-index", tag: "Launcher", d: "Apri il launcher → azione <b>Re-index</b> → i documenti archiviati diventano ricercabili nel contesto RAG per le prossime sessioni." }
     ] },
   { id: "workspace", title: "4 · Workspace multi-progetto",
@@ -147,7 +156,8 @@ const SCENARIOS = [
       { t: "Compila MODULE_MAP", tag: "Utente", d: "Compila <code>limet-workspace/MODULE_MAP.md</code>: elenco progetti/moduli, ruoli, dipendenze e contratti." },
       { t: "Inizializza i figli", tag: "Launcher", d: "Azione <b>Crea</b> (Modalità Progetto) su ogni progetto figlio: auto-rileva il workspace come extra-collection." },
       { t: "Apri il workspace con l'agente", tag: "Utente", d: "Per coordinare una modifica che tocca più progetti, apri la cartella workspace con l'agente: legge <code>AGENTS.md</code> e <code>MODULE_MAP.md</code>." },
-      { t: "Modifica cross-progetto", tag: "Agente", d: "L'agente crea <code>limet-workspace/changes/NNNN-slug/CROSS_PROJECT_CHANGE.md</code> con ordine produttore→consumatori." },
+      { t: "Modifica cross-progetto", tag: "Agente", d: "L'agente crea <code>limet-workspace/changes/NNNN-slug/CROSS_PROJECT_CHANGE.md</code> (da <code>CROSS_PROJECT_CHANGE_TEMPLATE.md</code>) con ordine produttore→consumatori." },
+      { t: "Aggiorna i documenti", tag: "Agente", d: "Aggiorna <code>module-map.md</code> e la doc suite del workspace (copia il prompt):", c: "Aggiorna docs/ (da ARCHITECTURE_TEMPLATE.md, CONVENTIONS_TEMPLATE.md, GLOSSARY_TEMPLATE.md) e limet-workspace/MODULE_MAP.md (da MODULE_MAP_TEMPLATE.md) per riflettere le modifiche. Segui limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md. Se un documento esiste già, AGGIORNALO. Poi esegui limet-index update." },
       { t: "Chiusura + re-index", tag: "Launcher", d: "Quando tutti i progetti sono 'done' + e2e ok: <b>Re-index</b> sia sul workspace sia sui progetti." }
     ] },
   { id: "maint", title: "5 · Manutenzione / re-index",
@@ -163,17 +173,18 @@ const SCENARIOS = [
       { t: "Apri il progetto con l'agente", tag: "Utente", d: "Apri la cartella con Claude Code o Copilot: l'agente legge <code>AGENTS.md</code> e sa dove stanno i documenti." },
       { t: "Assegna l'aggiornamento", tag: "Utente", d: "Chiedi all'agente di fissare un termine ambiguo nel glossario." },
       { t: "Rileva l'ambiguità", tag: "Agente", d: "Un termine/concetto/acronimo usato in modi confusi (§7 del manuale)." },
-      { t: "Aggiorna il glossario", tag: "Agente", d: "L'agente compila <code>docs/glossary.md</code> (termini, concetti tecnici, acronimi)." },
+      { t: "Aggiorna il glossario", tag: "Agente", d: "L'agente compila <code>docs/glossary.md</code> istanziando <code>GLOSSARY_TEMPLATE.md</code> (termini, concetti tecnici, acronimi)." },
       { t: "Re-index", tag: "Launcher", d: "Apri il launcher → azione <b>Re-index</b> → il glossario entra nel contesto RAG." }
     ] },
   { id: "cross-feature", title: "7 · Feature cross-progetto",
     desc: "Feature che attraversa più progetti: si coordina con l'agente nel workspace, poi si re-indicizza.",
     steps: [
       { t: "Apri il workspace con l'agente", tag: "Utente", d: "Apri la cartella workspace con l'agente: legge <code>AGENTS.md</code> e <code>MODULE_MAP.md</code> per coordinare i progetti coinvolti." },
-      { t: "Documento ombrello", tag: "Agente", d: "L'agente crea <code>limet-workspace/changes/NNNN-slug/CROSS_PROJECT_CHANGE.md</code>." },
+      { t: "Documento ombrello", tag: "Agente", d: "L'agente crea <code>limet-workspace/changes/NNNN-slug/CROSS_PROJECT_CHANGE.md</code> (da <code>CROSS_PROJECT_CHANGE_TEMPLATE.md</code>)." },
       { t: "Definisci il contratto", tag: "Agente", d: "Forma del contratto condiviso (API/schema/evento) scritta prima nel doc workspace." },
       { t: "Ciclo per-progetto", tag: "Agente", d: "Ogni progetto fa il proprio ciclo nei propri <code>limet/changes/</code> (link, non duplica)." },
-      { t: "Sintesi", tag: "Agente", d: "<code>NON_TECHNICAL_SUMMARY.md</code> a livello workspace." },
+      { t: "Sintesi", tag: "Agente", d: "<code>NON_TECHNICAL_SUMMARY.md</code> (da <code>NON_TECHNICAL_SUMMARY_TEMPLATE.md</code>) a livello workspace." },
+      { t: "Aggiorna i documenti", tag: "Agente", d: "Aggiorna <code>module-map.md</code> e la doc suite (copia il prompt):", c: "Aggiorna docs/ (da ARCHITECTURE_TEMPLATE.md, CONVENTIONS_TEMPLATE.md, GLOSSARY_TEMPLATE.md) e limet-workspace/MODULE_MAP.md (da MODULE_MAP_TEMPLATE.md) per riflettere la feature cross-progetto. Segui limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md. Se un documento esiste già, AGGIORNALO. Poi esegui limet-index update." },
       { t: "Chiusura + re-index", tag: "Launcher", d: "Tutti 'done' + e2e ok → <b>Re-index</b> a entrambi i livelli." }
     ] },
   { id: "monorepo", title: "8 · Monorepo multi-modulo",
@@ -183,7 +194,8 @@ const SCENARIOS = [
       { t: "Mappa i moduli", tag: "Utente", d: "Compila <code>MODULE_MAP.md</code>: i moduli sono della stessa repo ('own repository?' = no)." },
       { t: "Inizializza i moduli", tag: "Launcher", d: "Azione <b>Crea</b> su ogni modulo (sotto-cartella)." },
       { t: "Apri il monorepo con l'agente", tag: "Utente", d: "Per il cambio contratto, apri la root (o il modulo) con l'agente: legge <code>MODULE_MAP.md</code> e rispetta l'ordine produttore→consumatori." },
-      { t: "Cambio contratto", tag: "Agente", d: "Singolo commit/PR ammesso, ma ordine logico produttore → consumatori.", n: "Il vincolo di verifica e2e tra moduli resta obbligatorio." }
+      { t: "Cambio contratto", tag: "Agente", d: "Singolo commit/PR ammesso, ma ordine logico produttore → consumatori.", n: "Il vincolo di verifica e2e tra moduli resta obbligatorio." },
+      { t: "Aggiorna i documenti", tag: "Agente", d: "Aggiorna <code>module-map.md</code> e la doc suite (copia il prompt):", c: "Aggiorna docs/ (da ARCHITECTURE_TEMPLATE.md, CONVENTIONS_TEMPLATE.md, GLOSSARY_TEMPLATE.md) e limet-workspace/MODULE_MAP.md (da MODULE_MAP_TEMPLATE.md) per riflettere il cambio contratto. Segui limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md. Se un documento esiste già, AGGIORNALO. Poi esegui limet-index update." }
     ] },
   { id: "manual", title: "9 · Quando serve il manuale",
     desc: "La guida copre l'uso operativo. Questa mappa dice dove guardare nel manuale per il 'perché' e i casi limite.",
@@ -221,6 +233,11 @@ function doneCount(s) {
   const v = JSON.parse(localStorage.getItem("limet-guide:" + s.id) || "[]");
   return s.steps.filter((_, i) => v[i]).length;
 }
+function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function copy(btn, text) {
+  const ok = () => { btn.textContent = "copiato ✓"; setTimeout(() => btn.textContent = "copia", 1200); };
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(ok).catch(ok); else ok();
+}
 
 function render() {
   const s = SCENARIOS[state.idx];
@@ -234,7 +251,8 @@ function render() {
     el.className = "step" + (saved[i] ? " done" : "");
     const note = st.n ? `<div class="note">${st.n}</div>` : "";
     const tag = st.tag ? `<span class="tag ${st.tag.toLowerCase()}">${st.tag}</span>` : "";
-    el.innerHTML = `<div class="row"><input type="checkbox" ${saved[i] ? "checked" : ""}><div class="body"><div class="t">${i + 1}. ${st.t}${tag}</div><div class="d">${st.d}</div>${note}</div></div>`;
+    const code = st.c ? `<div class="code"><button class="copy">copia</button>${esc(st.c)}</div>` : "";
+    el.innerHTML = `<div class="row"><input type="checkbox" ${saved[i] ? "checked" : ""}><div class="body"><div class="t">${i + 1}. ${st.t}${tag}</div><div class="d">${st.d}</div>${code}${note}</div></div>`;
     el.querySelector("input").onchange = (e) => {
       const cur = JSON.parse(localStorage.getItem(storageKey()) || "[]");
       cur[i] = e.target.checked;
@@ -242,6 +260,8 @@ function render() {
       el.classList.toggle("done", e.target.checked);
       updateBar(); renderSide();
     };
+    const cp = el.querySelector("button.copy");
+    if (cp) cp.onclick = () => copy(cp, st.c);
     stepsEl.appendChild(el);
   });
   document.getElementById("prev").disabled = state.idx === 0;

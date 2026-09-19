@@ -4,6 +4,21 @@
 > multiple context sources are needed, or there are decisions to make explicit before writing
 > code.
 
+## 0. Summary
+
+### Purpose (non-technical)
+
+[What this task does and why, in plain language for people who don't read code.]
+
+### Changes (technical)
+
+> Files created/modified, with path and project; brief indication of what code was
+> inserted/changed and why. Fill in (or refine) once the work is done.
+
+| Project | File (path) | Created/Modified | What changes and why |
+| ------- | ----------- | ---------------- | -------------------- |
+| ...     | `src/...`   | created          | [...]                |
+
 ## Metadata
 
 - **Reference**: task #[N] of `TASK_LIST_TEMPLATE.md` (or associated plan/proposal)

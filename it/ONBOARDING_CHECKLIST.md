@@ -16,6 +16,8 @@
 
 - [ ] Ho usato le fonti di contesto disponibili (documentale/strutturale/dati reali — vedi
       §2 del manuale) secondo il criterio di combinazione (§2.4), non a caso.
+- [ ] Ho cercato PRIMA in CEREBRO/Qdrant; se il documento non era indicizzato, l'ho letto
+      localmente in `docs/` (o `limet/`).
 - [ ] Ogni ambiguità trovata è stata registrata come domanda contestuale (§1.2), non assunta.
 
 ## 3. Pianificazione

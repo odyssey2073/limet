@@ -15,10 +15,10 @@
 
 ## Task table
 
-| # | Title | Status | Depends on | Detail | Notes |
-| - | ----- | ------ | ---------- | ------ | ----- |
-| 1 | [...] | pending | — | [link to task sheet, if any] | |
-| 2 | [...] | pending | #1 | | |
+| # | Title | Non-technical purpose | Status | Depends on | Detail | Notes |
+| - | ----- | --------------------- | ------ | ---------- | ------ | ----- |
+| 1 | [...] | [one line: what it does] | pending | — | [link to task sheet, if any] | |
+| 2 | [...] | [...] | pending | #1 | | |
 
 ---
 

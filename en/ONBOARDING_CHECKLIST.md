@@ -17,6 +17,8 @@
 
 - [ ] I have used the available context sources (documentary/structural/real data — see §2 of
       the manual) following the combination criterion (§2.4), not at random.
+- [ ] I searched CEREBRO/Qdrant first; if the document wasn't indexed, I read it locally in
+      `docs/` (or `limet/`).
 - [ ] Every ambiguity found has been recorded as a contextual question (§1.2), not assumed.
 
 ## 3. Planning

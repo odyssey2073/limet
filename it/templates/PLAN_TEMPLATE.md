@@ -47,7 +47,8 @@
 
 ## 6. Todo/elenco attività
 
-> Il dettaglio granulare va in `TASK_LIST_TEMPLATE.md`.
+> Il dettaglio granulare va in `TASK_LIST_TEMPLATE.md`. **Genera sempre** il
+> `TASK_LIST.md` separato da questa sezione — non chiedere mai se crearlo.
 
 1. [attività 1]
 
@@ -56,6 +57,11 @@
 - **Unit test previsti**: [sì/no + dove — tipicamente `TEST_PLAN_TEMPLATE.md`] — se "no",
   motivare esplicitamente.
 - **Test e2e previsti**: [sì/no + riferimento a `E2E_VERIFICATION_TEMPLATE.md`] — se "no",
+  motivare esplicitamente.
+- **Genera sempre** `TEST_PLAN.md` (da `TEST_PLAN_TEMPLATE.md`),
+  `E2E_VERIFICATION.md` (da `E2E_VERIFICATION_TEMPLATE.md`) e, a esecuzione avvenuta,
+  `TEST_EXECUTION.md` (da `TEST_EXECUTION_TEMPLATE.md`), ciascuno con comandi esatti di
+  riesecuzione e descrizioni dei test. Archivia tutti e tre in `limet/archive/<data-slug>/`.
   motivare esplicitamente.
 
 ## 8. Rischi e impatti

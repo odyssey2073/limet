@@ -33,6 +33,8 @@
   input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245,158,11,.15); }
   textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border); color: var(--text); border-radius: 9px; padding: 10px 12px; font-size: 13px; font-family: var(--mono); min-height: 70px; resize: vertical; outline: none; }
   textarea:focus { border-color: var(--accent); }
+  select { width: 100%; background: var(--bg2); border: 1px solid var(--border); color: var(--text); border-radius: 9px; padding: 10px 12px; font-size: 14px; outline: none; }
+  select:focus { border-color: var(--accent); }
   .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
 
   .pills { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -46,6 +48,7 @@
   .pill.danger.on { border-color: var(--danger); color: #fca5a5; background: rgba(239,68,68,.12); }
   #action { flex-direction: column; }
   #action .pill { flex: none; }
+  .pill.disabled { opacity: .45; cursor: not-allowed; }
 
   .check { display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--border); border-radius: 10px; padding: 13px; background: var(--bg2); cursor: pointer; }
   .check input { margin-top: 2px; accent-color: var(--accent); }
@@ -62,6 +65,8 @@
   }
   button.go.danger { background: linear-gradient(180deg, #ef4444, #b91c1c); color: #fff; }
   button.go:disabled { opacity: .5; cursor: not-allowed; }
+  .closebtn { position: fixed; top: 14px; right: 14px; background: var(--bg2); border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 13px; z-index: 20; }
+  .closebtn:hover { color: var(--text); border-color: var(--danger); }
 
   #log {
     display: none; margin-top: 22px; background: #0b0e13; border: 1px solid var(--border); border-radius: 10px;
@@ -73,6 +78,7 @@
 </style>
 </head>
 <body>
+<button type="button" id="closeBtn" class="closebtn">✕ Chiudi</button>
 <div class="card">
   <header>
     <div class="logo">🟧</div>
@@ -87,7 +93,7 @@
         <label class="pill on"><input type="radio" name="action" value="create" checked>Crea</label>
         <label class="pill"><input type="radio" name="action" value="update">Re-index</label>
         <label class="pill"><input type="radio" name="action" value="status">Status</label>
-        <label class="pill"><input type="radio" name="action" value="docs">Documentazione</label>
+        <label class="pill disabled" id="docsPill"><input type="radio" name="action" value="docs" disabled>Documentazione</label>
         <label class="pill danger"><input type="radio" name="action" value="remove">Rimuovi</label>
       </div>
     </div>
@@ -136,7 +142,15 @@
       <div class="field">
         <label for="docs">Documenti di progetto (uno per riga)</label>
         <textarea id="docs" placeholder="C:\Progetti\myapp\spec.pdf&#10;C:\Progetti\myapp\notes\"></textarea>
-        <div class="hint">File o cartelle da copiare in <code>docs/</code> e indicizzare in CEREBRO.</div>
+        <div class="hint">File o cartelle da copiare nella cartella documenti registrata per il progetto in CEREBRO.</div>
+      </div>
+      <div class="field">
+        <label for="category">Sotto-cartella</label>
+        <select id="category">
+          <option value="">(nessuna — docs/)</option>
+          <option value="features">features</option>
+          <option value="bugfixes">bugfixes</option>
+        </select>
       </div>
       <button type="button" class="go" id="addDocsBtn" disabled>Aggiungi documenti</button>
       <button type="button" class="go" id="genDocsBtn" style="margin-top:10px" disabled>Genera documentazione</button>
@@ -177,20 +191,88 @@
     btn.textContent = BTN[a];
     btn.classList.toggle('danger', a === 'remove');
   }
+  function enableDocs() {
+    $('docsPill').classList.remove('disabled');
+    document.querySelector('input[name="action"][value="docs"]').disabled = false;
+  }
+  function disableDocs() {
+    $('docsPill').classList.add('disabled');
+    document.querySelector('input[name="action"][value="docs"]').disabled = true;
+  }
+  $('path').addEventListener('input', disableDocs);
+
   document.getElementById('action').addEventListener('change', refresh);
+
+  let graphifyOk = false;
+
+  function renderStatus() {
+    const c = $('cerebro').value.trim();
+    $('status').innerHTML =
+      'Graphify: ' + (graphifyOk ? '<b class="ok">trovato</b>' : '<b class="ko">non trovato</b>') +
+      ' &nbsp;·&nbsp; CEREBRO_HOME: ' + (c ? '<b class="ok">' + c + '</b>' : '<b class="ko">non impostato</b>');
+  }
 
   async function info() {
     try {
       const r = await fetch('/api/info'); const d = await r.json();
-      if (d.cerebro_home) $('cerebro').value = d.cerebro_home;
-      $('status').innerHTML =
-        'Graphify: ' + (d.graphify ? '<b class="ok">trovato</b>' : '<b class="ko">non trovato</b>') +
-        ' &nbsp;·&nbsp; CEREBRO_HOME: ' + (d.cerebro_home ? '<b class="ok">' + d.cerebro_home + '</b>' : '<b class="ko">non impostato</b>');
+      graphifyOk = d.graphify;
+      if (d.cerebro_home && !$('cerebro').value) { $('cerebro').value = d.cerebro_home; }
+      renderStatus();
+      autoDetect();
     } catch (e) {
       $('status').innerHTML = '<b class="ko">Server non raggiungibile</b>';
     }
   }
   info();
+
+  $('cerebro').addEventListener('input', renderStatus);
+
+  function savePrefs() {
+    try {
+      localStorage.setItem('limet.cerebro', $('cerebro').value);
+      localStorage.setItem('limet.path', $('path').value);
+    } catch (e) {}
+  }
+  function loadPrefs() {
+    try {
+      const c = localStorage.getItem('limet.cerebro');
+      const p = localStorage.getItem('limet.path');
+      if (c) $('cerebro').value = c;
+      if (p) $('path').value = p;
+    } catch (e) {}
+  }
+  $('cerebro').addEventListener('input', savePrefs);
+  $('path').addEventListener('input', savePrefs);
+  loadPrefs();
+  renderStatus();
+
+  // Auto-detection: if the project already exists (registered in CEREBRO and/or its Qdrant
+  // collection exists), default to "Re-index" instead of "Crea".
+  function selectAction(value) {
+    const input = document.querySelector('input[name="action"][value="' + value + '"]');
+    if (input && !input.disabled) { input.checked = true; refresh(); }
+  }
+  function setCreateDisabled(disabled) {
+    const input = document.querySelector('input[name="action"][value="create"]');
+    const pill = input.closest('.pill');
+    input.disabled = disabled;
+    pill.classList.toggle('disabled', disabled);
+  }
+  async function autoDetect() {
+    const path = $('path').value.trim();
+    if (!path) return;
+    try {
+      const r = await fetch('/api/check?path=' + encodeURIComponent(path) + '&cerebro=' + encodeURIComponent($('cerebro').value.trim()));
+      const d = await r.json();
+      if (d.error) return;
+      if (d.cerebro_home && !$('cerebro').value) { $('cerebro').value = d.cerebro_home; renderStatus(); }
+      if (d.registered || d.collection_created) { selectAction('update'); enableDocs(); setCreateDisabled(true); }
+      else { selectAction('create'); setCreateDisabled(false); }
+    } catch (e) {}
+  }
+  $('path').addEventListener('change', autoDetect);
+  $('cerebro').addEventListener('change', autoDetect);
+  autoDetect();
 
   async function streamRun(payload) {
     const log = $('log');
@@ -230,6 +312,7 @@
       if (!txt.includes('[ERRORE]')) {
         $('next').innerHTML = nextSteps(action);
         $('next').style.display = 'block';
+        if (action === 'create') enableDocs();
       }
     } catch (err) {
       $('log').textContent += '\n[ERRORE] ' + err + '\n';
@@ -268,7 +351,8 @@
     const docs = $('docs').value.split('\n').map(s => s.trim()).filter(Boolean);
     if (!path) { alert('Inserisci il percorso del progetto.'); return; }
     if (!docs.length) { alert('Inserisci almeno un documento.'); return; }
-    await streamRun({ action: 'adddocs', path, docs, cerebro_home: $('cerebro').value.trim() });
+    const txt = await streamRun({ action: 'adddocs', path, docs, category: $('category').value, cerebro_home: $('cerebro').value.trim() });
+    if (!txt.includes('[ERRORE]')) $('docs').value = '';
   };
 
   $('genDocsBtn').onclick = async () => {
@@ -285,6 +369,12 @@
   }
 
   refresh();
+
+  $('closeBtn').onclick = async () => {
+    if (!confirm('Chiudere il launcher?')) return;
+    try { await fetch('/api/shutdown'); } catch (e) {}
+    document.body.innerHTML = '<h2 style="text-align:center;margin-top:100px;color:var(--muted)">Launcher chiuso. Puoi chiudere questa scheda.</h2>';
+  };
 </script>
 </body>
 </html>

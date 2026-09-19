@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import time
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
@@ -32,6 +33,14 @@ ACTIONS = ("create", "update", "status", "remove", "instructions", "adddocs")
 
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
+
+CREATE_NO_WINDOW = 0x08000000 if IS_WIN else 0
+
+
+def _subprocess_env():
+    env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
+    return env
 
 
 def slugify(name):
@@ -68,6 +77,35 @@ def _docs_dir(slug, path, cerebro):
 
 def script_path(name):
     return os.path.join(HERE, name + (".ps1" if IS_WIN else ".sh"))
+
+
+def _read_env_file(path):
+    """Read KEY=VALUE pairs from a project-local .env file (stdlib only)."""
+    values = {}
+    env_file = os.path.join(path, ".env")
+    if not os.path.isfile(env_file):
+        return values
+    try:
+        with open(env_file, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                values[k.strip()] = v.strip().strip('"').strip("'")
+    except Exception:
+        pass
+    return values
+
+
+def _resolve_cerebro_home(path, explicit=""):
+    """CEREBRO_HOME: explicit arg > process env > project .env."""
+    if explicit:
+        return explicit
+    env = os.environ.get("CEREBRO_HOME", "")
+    if env:
+        return env
+    return _read_env_file(path).get("CEREBRO_HOME", "")
 
 
 def read_html():
@@ -107,10 +145,10 @@ def build_commands(params):
     lang = params.get("lang", "en")
     workspace = bool(params.get("workspace"))
     context = bool(params.get("context"))
-    cerebro_home = params.get("cerebro_home") or ""
+    cerebro_home = _resolve_cerebro_home(path, params.get("cerebro_home") or "")
 
     if action == "instructions":
-        return [("Generate documentation", _index_cmd("instructions", path, cerebro_home, lang))]
+        return [("Generate instruction files", _index_cmd("instructions", path, cerebro_home, lang))]
     if action == "adddocs":
         return [("Re-index", _index_cmd("update", path, cerebro_home))]
     if action == "update":
@@ -198,10 +236,11 @@ class Handler(BaseHTTPRequestHandler):
         elif parsed.path == "/api/check":
             q = parse_qs(parsed.query)
             path = q.get("path", [""])[0].strip()
-            cerebro = q.get("cerebro", [os.environ.get("CEREBRO_HOME", "")])[0].strip()
+            cerebro = q.get("cerebro", [""])[0].strip()
             if not path:
                 self._json({"error": "path required"}, 400)
                 return
+            cerebro = _resolve_cerebro_home(path, cerebro)
             slug = slugify(os.path.basename(path.rstrip("\\/")) or path)
             collection = "CRB_" + slug
             registered = False
@@ -218,7 +257,8 @@ class Handler(BaseHTTPRequestHandler):
             docs_dir = _docs_dir(slug, path, cerebro)
             existing_docs = []
             if os.path.isdir(docs_dir):
-                for root, _dirs, files in os.walk(docs_dir):
+                for root, dirs, files in os.walk(docs_dir):
+                    dirs[:] = [d for d in dirs if d != "_templates"]
                     for fn in files:
                         if fn.lower().endswith((".md", ".txt", ".pdf", ".epub", ".docx", ".xlsx", ".pptx", ".html", ".htm")):
                             existing_docs.append(os.path.relpath(os.path.join(root, fn), docs_dir))
@@ -233,7 +273,15 @@ class Handler(BaseHTTPRequestHandler):
                 "docs_dir": docs_dir,
                 "docs_count": len(existing_docs),
                 "existing_docs": existing_docs[:20],
+                "cerebro_home": cerebro,
             })
+        elif parsed.path == "/api/shutdown":
+            self._json({"ok": "shutting down"})
+
+            def _shutdown():
+                time.sleep(0.3)
+                os._exit(0)
+            threading.Thread(target=_shutdown).start()
         else:
             self.send_response(404)
             self.end_headers()
@@ -267,7 +315,7 @@ class Handler(BaseHTTPRequestHandler):
             "update": "Fatto. Indici aggiornati.",
             "status": "Fatto.",
             "remove": "Fatto. Progetto rimosso dal registry (la collection Qdrant resta).",
-            "instructions": "Fatto. Documentazione generata (CLAUDE.md + copilot-instructions.md).",
+            "instructions": "Fatto. Istruzioni generate (CLAUDE.md + copilot-instructions.md) — l'agente le userà per creare/aggiornare i documenti approfonditi.",
             "adddocs": "Fatto. Documenti aggiunti e indicizzati.",
         }[action]
 
@@ -276,8 +324,11 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if action == "adddocs":
                 _slug = slugify(os.path.basename(path.rstrip("\\/")) or path)
-                _cerebro = (params.get("cerebro_home") or "").strip()
+                _cerebro = _resolve_cerebro_home(path, params.get("cerebro_home") or "")
                 docs_dir = _docs_dir(_slug, path, _cerebro)
+                category = (params.get("category") or "").strip()
+                if category:
+                    docs_dir = os.path.join(docs_dir, category)
                 os.makedirs(docs_dir, exist_ok=True)
                 copied = 0
                 for d in (params.get("docs") or []):
@@ -287,7 +338,11 @@ class Handler(BaseHTTPRequestHandler):
                     if os.path.isdir(d):
                         for root, _dirs, files in os.walk(d):
                             for fn in files:
-                                shutil.copy2(os.path.join(root, fn), os.path.join(docs_dir, fn))
+                                src = os.path.join(root, fn)
+                                rel = os.path.relpath(src, d)
+                                dst = os.path.join(docs_dir, rel)
+                                os.makedirs(os.path.dirname(dst), exist_ok=True)
+                                shutil.copy2(src, dst)
                                 copied += 1
                     else:
                         shutil.copy2(d, os.path.join(docs_dir, os.path.basename(d)))
@@ -303,6 +358,8 @@ class Handler(BaseHTTPRequestHandler):
                     encoding="utf-8",
                     errors="replace",
                     bufsize=1,
+                    env=_subprocess_env(),
+                    creationflags=CREATE_NO_WINDOW,
                 )
                 for line in proc.stdout:
                     self._chunk(line)

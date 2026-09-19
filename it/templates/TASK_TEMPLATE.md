@@ -4,6 +4,21 @@
 > è ovvia, servono più fonti di contesto, o ci sono decisioni da esplicitare prima di scrivere
 > codice.
 
+## 0. Sintesi
+
+### Scopo (non tecnico)
+
+[Cosa fa questo task e perché, in linguaggio semplice per chi non legge codice.]
+
+### Modifiche (tecnico)
+
+> File creati/modificati, con path e progetto; indicazione sintetica del codice inserito/
+> modificato e del perché. Da compilare (o rifinire) a lavoro concluso.
+
+| Progetto | File (path) | Creato/Modificato | Cosa cambia e perché |
+| -------- | ----------- | ----------------- | -------------------- |
+| ...      | `src/...`   | creato            | [...]                |
+
 ## Metadati
 
 - **Riferimento**: task #[N] di `TASK_LIST_TEMPLATE.md` (o piano/proposta associata)

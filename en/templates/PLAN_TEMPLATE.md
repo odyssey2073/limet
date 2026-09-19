@@ -47,7 +47,8 @@
 
 ## 6. Todo/activity list
 
-> Granular detail goes in `TASK_LIST_TEMPLATE.md`.
+> Granular detail goes in `TASK_LIST_TEMPLATE.md`. **Always** generate the
+> separate `TASK_LIST.md` from this section — never ask whether to create it.
 
 1. [activity 1]
 
@@ -57,6 +58,10 @@
   explicitly justify.
 - **E2e tests planned**: [yes/no + reference to `E2E_VERIFICATION_TEMPLATE.md`] — if "no",
   explicitly justify.
+- **Always** produce `TEST_PLAN.md` (from `TEST_PLAN_TEMPLATE.md`),
+  `E2E_VERIFICATION.md` (from `E2E_VERIFICATION_TEMPLATE.md`), and, after execution,
+  `TEST_EXECUTION.md` (from `TEST_EXECUTION_TEMPLATE.md`), each with exact re-runnable commands
+  and test descriptions. Archive all three in `limet/archive/<date-slug>/`.
 
 ## 8. Risks and impacts
 

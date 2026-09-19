@@ -45,3 +45,17 @@ casi limite noti.]
 
 - **Scrittura test**: [...]
 - **Esecuzione**: [...]
+
+## Comandi di test rieseguibili
+
+> Comando esatto per rieseguire ogni test, con breve descrizione — così chiunque (o una sessione
+> futura) può riprodurre la verifica senza ridedurla.
+
+Forme di comando (Surefire/JUnit):
+
+- Intera classe: `./mvnw test -Dtest=MiaClasseTest`
+- Singolo metodo: `./mvnw test -Dtest=MiaClasseTest#mioMetodo`
+
+| # | Descrizione | Comando — intera classe | Comando — singolo metodo |
+| - | ----------- | ----------------------- | ------------------------ |
+| 1 | [...]       | `./mvnw test -Dtest=...` | `./mvnw test -Dtest=...#...` |

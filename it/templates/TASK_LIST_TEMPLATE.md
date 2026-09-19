@@ -15,10 +15,10 @@
 
 ## Tabella task
 
-| # | Titolo | Stato | Dipende da | Dettaglio | Note |
-| - | ------ | ----- | ---------- | --------- | ---- |
-| 1 | [...]  | pending | — | [link a scheda task singolo, se presente] | |
-| 2 | [...]  | pending | #1 | | |
+| # | Titolo | Scopo (non tecnico) | Stato | Dipende da | Dettaglio | Note |
+| - | ------ | ------------------- | ----- | ---------- | --------- | ---- |
+| 1 | [...]  | [una riga: cosa fa] | pending | — | [link a scheda task singolo, se presente] | |
+| 2 | [...]  | [...] | pending | #1 | | |
 
 ---
 

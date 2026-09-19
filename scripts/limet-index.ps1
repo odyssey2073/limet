@@ -191,36 +191,12 @@ Rules:
 "@
     }
 
-    # Per-project
-    if ($Lang -eq 'it') {
-        return @"
-<!-- LIMET-CONTEXT:START -->
-## Strumenti di contesto del progetto (CEREBRO RAG + Graphify)
-
-La documentazione di questo progetto è indicizzata nella collection Qdrant ``CRB_$Slug``$wsNote.
-Il codice è indicizzato nel knowledge graph Graphify.
-
-Interroga la documentazione (RAG semantico):
-  python "$QueryCmd" --project $Slug search "<query>" --limit 5
-
-Interroga il codice (knowledge graph):
-  graphify query "<domanda>"   /   graphify explain <simbolo>   /   graphify path <A> <B>
-
-Mantieni gli indici aggiornati (dopo aver prodotto o archiviato documenti, o dopo modifiche al codice):
-  $RelLimetDir/scripts/limet-index.ps1 update -ProjectPath .    (oppure .../limet-index.sh update)
-  graphify update .
-
-Regole:
-- Dopo aver archiviato una modifica in $RelLimetDir/archive/, esegui ``limet-index update`` per re-indicizzare.
-- Se Qdrant, Ollama o Graphify non sono raggiungibili, segnalalo e procedi senza contesto RAG/graph.
-<!-- LIMET-CONTEXT:END -->
-"@
-    }
+    # Per-project (bilingual IT+EN)
     return @"
 <!-- LIMET-CONTEXT:START -->
-## Project context tools (CEREBRO RAG + Graphify)
+## Project context tools (CEREBRO RAG + Graphify) · Strumenti di contesto del progetto
 
-This project's documentation is indexed in Qdrant collection ``CRB_$Slug``$wsNote.
+**EN** — This project's documentation is indexed in Qdrant collection ``CRB_$Slug``$wsNote.
 Its code is indexed in the Graphify knowledge graph.
 
 Query the documentation (semantic RAG):
@@ -229,13 +205,37 @@ Query the documentation (semantic RAG):
 Query the code (knowledge graph):
   graphify query "<question>"   /   graphify explain <symbol>   /   graphify path <A> <B>
 
-Keep the indexes current (after producing or archiving documents, or after code changes):
-  $RelLimetDir/scripts/limet-index.ps1 update -ProjectPath .    (or .../limet-index.sh update)
-  graphify update .
-
 Rules:
-- After archiving a change into $RelLimetDir/archive/, run ``limet-index update`` to re-index the collection.
-- If Qdrant, Ollama or Graphify are unreachable, say so and continue without RAG/graph context.
+- Search CEREBRO/Qdrant FIRST. If the document is not indexed (0 results or missing), read it
+  LOCALLY from ``docs/`` or ``$RelLimetDir/``.
+- Do NOT run ingest or graphify update automatically: show the command to the user and use the
+  local docs until they are indexed.
+- When re-indexing is needed (after producing/archiving documents or code changes), show the command:
+    $RelLimetDir/scripts/limet-index.ps1 update -ProjectPath .    (or .../limet-index.sh update)
+    graphify update .
+- If Qdrant, Ollama or Graphify are unreachable, say so and proceed with the local docs.
+
+---
+
+**IT** — La documentazione di questo progetto è indicizzata nella collection Qdrant ``CRB_$Slug``$wsNote.
+Il codice è indicizzato nel knowledge graph Graphify.
+
+Interroga la documentazione (RAG semantico):
+  python "$QueryCmd" --project $Slug search "<query>" --limit 5
+
+Interroga il codice (knowledge graph):
+  graphify query "<domanda>"   /   graphify explain <simbolo>   /   graphify path <A> <B>
+
+Regole:
+- Cerca PRIMA in CEREBRO/Qdrant. Se il documento non è indicizzato (0 risultati o assente), leggilo
+  LOCALMENTE da ``docs/`` o ``$RelLimetDir/``.
+- NON eseguire ingest o graphify update automaticamente: mostra all'utente il comando e usa i doc
+  locali finché non sono indicizzati.
+- Quando serve re-indicizzare (dopo aver prodotto/archiviato documenti o modificato il codice),
+  mostra il comando:
+    $RelLimetDir/scripts/limet-index.ps1 update -ProjectPath .    (oppure .../limet-index.sh update)
+    graphify update .
+- Se Qdrant, Ollama o Graphify non sono raggiungibili, segnalalo e procedi con i doc locali.
 <!-- LIMET-CONTEXT:END -->
 "@
 }
@@ -333,35 +333,42 @@ function Get-ProjectBlock {
         }
     }
     if (-not $fileList) {
-        $fileList = if ($Lang -eq 'it') { '  - (compila docs/ con architecture.md, conventions.md, glossary.md)' } else { '  - (fill docs/ with architecture.md, conventions.md, glossary.md)' }
+        $fileList = '  - (fill docs/ with architecture.md, conventions.md, glossary.md · compila docs/ con architecture.md, conventions.md, glossary.md)'
     }
 
-    if ($Lang -eq 'it') {
-        return @"
-<!-- PROJECT:START -->
-## Panoramica del progetto
-
-Progetto ``$Slug`` — collection CEREBRO ``CRB_$Slug``.
-
-Documentazione approfondita (indicizzata in CEREBRO — interroga con il comando sopra):
-$fileList
-
-Grafo del codice (Graphify): ``graphify-out/`` (report: ``graphify-out/GRAPH_REPORT.md``).
-Prima di modifiche strutturali, consulta la documentazione in ``docs/`` e il grafo.
-<!-- PROJECT:END -->
-"@
-    }
     return @"
 <!-- PROJECT:START -->
-## Project overview
+## Project overview · Panoramica del progetto
 
-Project ``$Slug`` — CEREBRO collection ``CRB_$Slug``.
+**EN** — Project ``$Slug`` — CEREBRO collection ``CRB_$Slug``.
 
 In-depth documentation (indexed in CEREBRO — query it with the command above):
 $fileList
 
 Code graph (Graphify): ``graphify-out/`` (report: ``graphify-out/GRAPH_REPORT.md``).
-Before structural changes, consult the docs in ``docs/`` and the graph.
+
+---
+
+**IT** — Progetto ``$Slug`` — collection CEREBRO ``CRB_$Slug``.
+
+Documentazione approfondita (indicizzata in CEREBRO — interroga con il comando sopra):
+$fileList
+
+Grafo del codice (Graphify): ``graphify-out/`` (report: ``graphify-out/GRAPH_REPORT.md``).
+
+## Documentation to maintain · Documentazione da mantenere
+
+**EN** — Follow ``limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md`` and, starting from Graphify and the source
+code, produce or update in ``docs/``: ``module-map.md``, ``architecture.md``, ``decisions.md``,
+``dependencies.md``, ``conventions.md``, ``glossary.md`` (with ``file:line`` citations and Mermaid diagrams). If a
+document already exists, UPDATE it. Also maintain ``docs/NON_TECHNICAL_SUMMARY.md`` (plain-language project
+description) and update it after each relevant change/bugfix. Then show the user the ``limet-index update`` command (don't run it automatically).
+
+**IT** — Segui ``limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md`` e, partendo da Graphify e dal codice
+sorgente, produci o aggiorna in ``docs/``: ``module-map.md``, ``architecture.md``, ``decisions.md``,
+``dependencies.md``, ``conventions.md``, ``glossary.md`` (con citazioni ``file:line`` e diagrammi
+Mermaid). Se un documento esiste già, AGGIORNALO. Mantieni anche ``docs/NON_TECHNICAL_SUMMARY.md``
+(descrizione del progetto in linguaggio semplice) e aggiornalo dopo ogni modifica/bugfix rilevante. Poi mostra all'utente il comando ``limet-index update`` (non eseguirlo automaticamente).
 <!-- PROJECT:END -->
 "@
 }
@@ -502,8 +509,36 @@ if ($Command -eq 'update') {
 
 # --- instructions -----------------------------------------------------------------------------
 
+function Set-NonTechnicalSummary {
+    param([string]$ProjectRoot, [string]$Name)
+    $target = Join-Path (Join-Path $ProjectRoot 'docs') 'NON_TECHNICAL_SUMMARY.md'
+    if (Test-Path $target) { return }
+    New-Item -ItemType Directory -Force -Path (Split-Path $target) | Out-Null
+    $content = @"
+# Sintesi non tecnica — $Name
+
+> Descrizione del progetto in linguaggio non tecnico, per chi non legge codice.
+> L'agente aggiorna questo documento dopo ogni modifica/bugfix rilevante.
+
+## Cosa fa il progetto
+
+[1-2 frasi: scopo e valore per l'utente finale.]
+
+## Funzionalità principali
+
+[Elenco in linguaggio semplice delle feature disponibili.]
+
+## Modifiche recenti
+
+- [data] — [cosa è cambiato, in termini non tecnici]
+"@
+    Set-Content -Path $target -Value $content -NoNewline
+    Write-Host "Created: docs/NON_TECHNICAL_SUMMARY.md"
+}
+
 if ($Command -eq 'instructions') {
     Write-InstructionFiles -ProjectRoot $ProjectPath -Lang $Lang -Slug $slug -RelLimetDir $relLimetDir -QueryCmd $queryCmd
+    Set-NonTechnicalSummary -ProjectRoot $ProjectPath -Name (Split-Path -Leaf $ProjectPath)
     Write-Host ""
     Write-Host "LIMET-INDEX instructions complete: enriched CLAUDE.md + .github/copilot-instructions.md written for '$ProjectPath'."
 }

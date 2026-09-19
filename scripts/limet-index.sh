@@ -160,35 +160,11 @@ Rules:
 EOF
     fi
   else
-    if [ "$lang" = "it" ]; then
-      read -r -d '' block <<EOF || true
+    read -r -d '' block <<EOF || true
 <!-- LIMET-CONTEXT:START -->
-## Strumenti di contesto del progetto (CEREBRO RAG + Graphify)
+## Project context tools (CEREBRO RAG + Graphify) · Strumenti di contesto del progetto
 
-La documentazione di questo progetto è indicizzata nella collection Qdrant \`CRB_$slug\`$ws_note.
-Il codice è indicizzato nel knowledge graph Graphify.
-
-Interroga la documentazione (RAG semantico):
-  python "$query" --project $slug search "<query>" --limit 5
-
-Interroga il codice (knowledge graph):
-  graphify query "<domanda>"   /   graphify explain <simbolo>   /   graphify path <A> <B>
-
-Mantieni gli indici aggiornati (dopo aver prodotto o archiviato documenti, o dopo modifiche al codice):
-  $rel/scripts/limet-index.ps1 update -ProjectPath .    (oppure .../limet-index.sh update)
-  graphify update .
-
-Regole:
-- Dopo aver archiviato una modifica in $rel/archive/, esegui \`limet-index update\` per re-indicizzare.
-- Se Qdrant, Ollama o Graphify non sono raggiungibili, segnalalo e procedi senza contesto RAG/graph.
-<!-- LIMET-CONTEXT:END -->
-EOF
-    else
-      read -r -d '' block <<EOF || true
-<!-- LIMET-CONTEXT:START -->
-## Project context tools (CEREBRO RAG + Graphify)
-
-This project's documentation is indexed in Qdrant collection \`CRB_$slug\`$ws_note.
+**EN** — This project's documentation is indexed in Qdrant collection \`CRB_$slug\`$ws_note.
 Its code is indexed in the Graphify knowledge graph.
 
 Query the documentation (semantic RAG):
@@ -197,16 +173,39 @@ Query the documentation (semantic RAG):
 Query the code (knowledge graph):
   graphify query "<question>"   /   graphify explain <symbol>   /   graphify path <A> <B>
 
-Keep the indexes current (after producing or archiving documents, or after code changes):
-  $rel/scripts/limet-index.ps1 update -ProjectPath .    (or .../limet-index.sh update)
-  graphify update .
-
 Rules:
-- After archiving a change into $rel/archive/, run \`limet-index update\` to re-index the collection.
-- If Qdrant, Ollama or Graphify are unreachable, say so and continue without RAG/graph context.
+- Search CEREBRO/Qdrant FIRST. If the document is not indexed (0 results or missing), read it
+  LOCALLY from \`docs/\` or \`$rel/\`.
+- Do NOT run ingest or graphify update automatically: show the command to the user and use the
+  local docs until they are indexed.
+- When re-indexing is needed (after producing/archiving documents or code changes), show the command:
+    $rel/scripts/limet-index.ps1 update -ProjectPath .    (or .../limet-index.sh update)
+    graphify update .
+- If Qdrant, Ollama or Graphify are unreachable, say so and proceed with the local docs.
+
+---
+
+**IT** — La documentazione di questo progetto è indicizzata nella collection Qdrant \`CRB_$slug\`$ws_note.
+Il codice è indicizzato nel knowledge graph Graphify.
+
+Interroga la documentazione (RAG semantico):
+  python "$query" --project $slug search "<query>" --limit 5
+
+Interroga il codice (knowledge graph):
+  graphify query "<domanda>"   /   graphify explain <simbolo>   /   graphify path <A> <B>
+
+Regole:
+- Cerca PRIMA in CEREBRO/Qdrant. Se il documento non è indicizzato (0 risultati o assente), leggilo
+  LOCALMENTE da \`docs/\` o \`$rel/\`.
+- NON eseguire ingest o graphify update automaticamente: mostra all'utente il comando e usa i doc
+  locali finché non sono indicizzati.
+- Quando serve re-indicizzare (dopo aver prodotto/archiviato documenti o modificato il codice),
+  mostra il comando:
+    $rel/scripts/limet-index.ps1 update -ProjectPath .    (oppure .../limet-index.sh update)
+    graphify update .
+- Se Qdrant, Ollama o Graphify non sono raggiungibili, segnalalo e procedi con i doc locali.
 <!-- LIMET-CONTEXT:END -->
 EOF
-    fi
   fi
 
   mkdir -p "$(dirname "$target")"
@@ -263,13 +262,34 @@ get_project_block() {
     file_list="$(find "$docs_dir" -type f -name '*.md' 2>/dev/null | grep -v '/_templates/' | head -8 | while read -r f; do rel="${f#"$docs_dir"/}"; printf "  - \`docs/%s\`\n" "$rel"; done)"
   fi
   if [ -z "$file_list" ]; then
-    if [ "$lang" = "it" ]; then file_list='  - (compila docs/ con architecture.md, conventions.md, glossary.md)'; else file_list='  - (fill docs/ with architecture.md, conventions.md, glossary.md)'; fi
+    file_list='  - (fill docs/ with architecture.md, conventions.md, glossary.md · compila docs/ con architecture.md, conventions.md, glossary.md)'
   fi
-  if [ "$lang" = "it" ]; then
-    printf '%s\n' "<!-- PROJECT:START -->" "## Panoramica del progetto" "" "Progetto \`$slug\` — collection CEREBRO \`CRB_$slug\`." "" "Documentazione approfondita (indicizzata in CEREBRO — interroga con il comando sopra):" "$file_list" "" "Grafo del codice (Graphify): \`graphify-out/\` (report: \`graphify-out/GRAPH_REPORT.md\`)." "Prima di modifiche strutturali, consulta la documentazione in \`docs/\` e il grafo." "<!-- PROJECT:END -->"
-  else
-    printf '%s\n' "<!-- PROJECT:START -->" "## Project overview" "" "Project \`$slug\` — CEREBRO collection \`CRB_$slug\`." "" "In-depth documentation (indexed in CEREBRO — query it with the command above):" "$file_list" "" "Code graph (Graphify): \`graphify-out/\` (report: \`graphify-out/GRAPH_REPORT.md\`)." "Before structural changes, consult the docs in \`docs/\` and the graph." "<!-- PROJECT:END -->"
-  fi
+  printf '%s\n' \
+    "<!-- PROJECT:START -->" \
+    "## Project overview · Panoramica del progetto" \
+    "" \
+    "**EN** — Project \`$slug\` — CEREBRO collection \`CRB_$slug\`." \
+    "" \
+    "In-depth documentation (indexed in CEREBRO — query it with the command above):" \
+    "$file_list" \
+    "" \
+    "Code graph (Graphify): \`graphify-out/\` (report: \`graphify-out/GRAPH_REPORT.md\`)." \
+    "" \
+    "---" \
+    "" \
+    "**IT** — Progetto \`$slug\` — collection CEREBRO \`CRB_$slug\`." \
+    "" \
+    "Documentazione approfondita (indicizzata in CEREBRO — interroga con il comando sopra):" \
+    "$file_list" \
+    "" \
+    "Grafo del codice (Graphify): \`graphify-out/\` (report: \`graphify-out/GRAPH_REPORT.md\`)." \
+    "" \
+    "## Documentation to maintain · Documentazione da mantenere" \
+    "" \
+    "**EN** — Follow \`limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md\` and, starting from Graphify and the source code, produce or update in \`docs/\`: \`module-map.md\`, \`architecture.md\`, \`decisions.md\`, \`dependencies.md\`, \`conventions.md\`, \`glossary.md\` (with \`file:line\` citations and Mermaid diagrams). If a document already exists, UPDATE it. Also maintain \`docs/NON_TECHNICAL_SUMMARY.md\` (plain-language project description) and update it after each relevant change/bugfix. Then show the user the \`limet-index update\` command (don't run it automatically)." \
+    "" \
+    "**IT** — Segui \`limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md\` e, partendo da Graphify e dal codice sorgente, produci o aggiorna in \`docs/\`: \`module-map.md\`, \`architecture.md\`, \`decisions.md\`, \`dependencies.md\`, \`conventions.md\`, \`glossary.md\` (con citazioni \`file:line\` e diagrammi Mermaid). Se un documento esiste già, AGGIORNALO. Mantieni anche \`docs/NON_TECHNICAL_SUMMARY.md\` (descrizione del progetto in linguaggio semplice) e aggiornalo dopo ogni modifica/bugfix rilevante. Poi mostra all'utente il comando \`limet-index update\` (non eseguirlo automaticamente)." \
+    "<!-- PROJECT:END -->"
 }
 
 write_instruction_files() {
@@ -370,8 +390,34 @@ fi
 
 # --- instructions -----------------------------------------------------------------------------
 
+ensure_non_technical_summary() {
+  local root="$1" name="$2" target="$root/docs/NON_TECHNICAL_SUMMARY.md"
+  [ -f "$target" ] && return 0
+  mkdir -p "$(dirname "$target")"
+  cat > "$target" <<EOF
+# Sintesi non tecnica — $name
+
+> Descrizione del progetto in linguaggio non tecnico, per chi non legge codice.
+> L'agente aggiorna questo documento dopo ogni modifica/bugfix rilevante.
+
+## Cosa fa il progetto
+
+[1-2 frasi: scopo e valore per l'utente finale.]
+
+## Funzionalità principali
+
+[Elenco in linguaggio semplice delle feature disponibili.]
+
+## Modifiche recenti
+
+- [data] — [cosa è cambiato, in termini non tecnici]
+EOF
+  echo "Created: docs/NON_TECHNICAL_SUMMARY.md"
+}
+
 if [ "$COMMAND" = "instructions" ]; then
   write_instruction_files "$PROJECT_PATH" "$LANG_EDITION" "$SLUG"
+  ensure_non_technical_summary "$PROJECT_PATH" "$(basename "$PROJECT_PATH")"
   echo ""
   echo "LIMET-INDEX instructions complete: enriched CLAUDE.md + .github/copilot-instructions.md written for '$PROJECT_PATH'."
 fi

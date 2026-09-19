@@ -44,3 +44,17 @@
 
 - **Test authoring**: [...]
 - **Execution**: [...]
+
+## Re-runnable test commands
+
+> Exact command to re-run each test, with a short description — so anyone (or a future session)
+> can reproduce the verification without re-deriving it.
+
+Command forms (Surefire/JUnit):
+
+- Whole class: `./mvnw test -Dtest=MyClassTest`
+- Single method: `./mvnw test -Dtest=MyClassTest#myMethod`
+
+| # | Description | Command — whole class | Command — single method |
+| - | ----------- | --------------------- | ----------------------- |
+| 1 | [...]       | `./mvnw test -Dtest=...` | `./mvnw test -Dtest=...#...` |
