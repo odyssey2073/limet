@@ -21,7 +21,7 @@
 #
 # Usage:
 #   limet-index.sh init   --project-path <path> [--lang it|en] [--workspace] [--cerebro-home <dir>]
-#   limet-index.sh update --project-path <path> [--workspace] [--cerebro-home <dir>]
+#   limet-index.sh update --project-path <path> [--force] [--prune] [--workspace] [--cerebro-home <dir>]
 #   limet-index.sh status --project-path <path> [--cerebro-home <dir>]
 #   limet-index.sh remove --project-path <path> [--cerebro-home <dir>]
 
@@ -34,6 +34,8 @@ PROJECT_PATH=""
 LANG_EDITION="en"
 WORKSPACE=0
 CEREBRO_HOME_ARG=""
+FORCE=0
+PRUNE=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -41,6 +43,8 @@ while [ $# -gt 0 ]; do
     --lang) LANG_EDITION="$2"; shift 2 ;;
     --workspace) WORKSPACE=1; shift ;;
     --cerebro-home) CEREBRO_HOME_ARG="$2"; shift 2 ;;
+    --force) FORCE=1; shift ;;
+    --prune) PRUNE=1; shift ;;
     *) echo "Unknown argument: $1" >&2; exit 1 ;;
   esac
 done
@@ -385,7 +389,10 @@ if [ "$COMMAND" = "update" ]; then
     fi
   fi
 
-  invoke_cerebro "$INGEST_PY" --project "$SLUG"
+  INGEST_ARGS=(--project "$SLUG")
+  [ "$FORCE" = "1" ] && INGEST_ARGS+=(--force)
+  [ "$PRUNE" = "1" ] && INGEST_ARGS+=(--prune)
+  invoke_cerebro "$INGEST_PY" "${INGEST_ARGS[@]}"
   write_instruction_files "$PROJECT_PATH" "$LANG_EDITION" "$SLUG"
   echo "LIMET-INDEX update complete for '$PROJECT_PATH' (collection: CRB_$SLUG)."
 fi

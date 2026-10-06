@@ -18,7 +18,7 @@ import sys
 import threading
 import time
 import webbrowser
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 import re
 import urllib.error
@@ -35,6 +35,40 @@ QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 
 CREATE_NO_WINDOW = 0x08000000 if IS_WIN else 0
+
+# --- running-job tracking (for the "Stop" button) ------------------------------------------------
+# One job at a time, local single-user tool: a global slot is enough. Guarded by RUN_LOCK since
+# /api/run (writer) and /api/stop (reader/killer) run on different threads (ThreadingHTTPServer).
+RUN_LOCK = threading.Lock()
+RUNNING = {"proc": None, "stop_requested": False}
+
+
+def _popen_tree(argv):
+    """Start argv in its own process group/job (Windows) or session (POSIX) so the whole tree
+    (e.g. powershell -> graphify / python ingest_docs.py) can be killed together on Stop."""
+    kwargs = dict(
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+        encoding="utf-8", errors="replace", bufsize=1, env=_subprocess_env(),
+    )
+    if IS_WIN:
+        kwargs["creationflags"] = CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
+    else:
+        kwargs["preexec_fn"] = os.setsid
+    return subprocess.Popen(argv, **kwargs)
+
+
+def _kill_tree(proc):
+    """Best-effort kill of the whole process tree started by _popen_tree."""
+    if proc is None or proc.poll() is not None:
+        return
+    try:
+        if IS_WIN:
+            subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"],
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            os.killpg(os.getpgid(proc.pid), 15)  # SIGTERM
+    except Exception:
+        pass
 
 
 def _subprocess_env():
@@ -116,7 +150,7 @@ def read_html():
 # --- command building --------------------------------------------------------------------------
 
 
-def _index_cmd(sub, path, cerebro_home, lang="en", workspace=False):
+def _index_cmd(sub, path, cerebro_home, lang="en", workspace=False, force=False, prune=False):
     """Build the limet-index command (init/update/status/remove) for this platform."""
     if IS_WIN:
         cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
@@ -125,6 +159,11 @@ def _index_cmd(sub, path, cerebro_home, lang="en", workspace=False):
             cmd += ["-Lang", lang]
             if sub == "init" and workspace:
                 cmd += ["-Workspace"]
+        if sub == "update":
+            if force:
+                cmd += ["-Force"]
+            if prune:
+                cmd += ["-Prune"]
         if cerebro_home:
             cmd += ["-CerebroHome", cerebro_home]
         return cmd
@@ -133,6 +172,11 @@ def _index_cmd(sub, path, cerebro_home, lang="en", workspace=False):
         cmd += ["--lang", lang]
         if sub == "init" and workspace:
             cmd += ["--workspace"]
+    if sub == "update":
+        if force:
+            cmd += ["--force"]
+        if prune:
+            cmd += ["--prune"]
     if cerebro_home:
         cmd += ["--cerebro-home", cerebro_home]
     return cmd
@@ -145,14 +189,16 @@ def build_commands(params):
     lang = params.get("lang", "en")
     workspace = bool(params.get("workspace"))
     context = bool(params.get("context"))
+    force = bool(params.get("force"))
+    prune = bool(params.get("prune"))
     cerebro_home = _resolve_cerebro_home(path, params.get("cerebro_home") or "")
 
     if action == "instructions":
         return [("Generate instruction files", _index_cmd("instructions", path, cerebro_home, lang))]
     if action == "adddocs":
-        return [("Re-index", _index_cmd("update", path, cerebro_home))]
+        return [("Re-index", _index_cmd("update", path, cerebro_home, force=force, prune=prune))]
     if action == "update":
-        return [("LIMET re-index", _index_cmd("update", path, cerebro_home))]
+        return [("LIMET re-index", _index_cmd("update", path, cerebro_home, force=force, prune=prune))]
     if action == "status":
         return [("LIMET status", _index_cmd("status", path, cerebro_home))]
     if action == "remove":
@@ -288,6 +334,16 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
+        if parsed.path == "/api/stop":
+            with RUN_LOCK:
+                proc = RUNNING.get("proc")
+                RUNNING["stop_requested"] = True
+            if proc is not None and proc.poll() is None:
+                _kill_tree(proc)
+                self._json({"stopped": True})
+            else:
+                self._json({"stopped": False, "message": "Nessun processo in esecuzione."})
+            return
         if parsed.path != "/api/run":
             self.send_response(404)
             self.end_headers()
@@ -321,6 +377,9 @@ class Handler(BaseHTTPRequestHandler):
 
         self._start_stream()
         ok = True
+        with RUN_LOCK:
+            RUNNING["stop_requested"] = False
+            RUNNING["proc"] = None
         try:
             if action == "adddocs":
                 _slug = slugify(os.path.basename(path.rstrip("\\/")) or path)
@@ -349,21 +408,23 @@ class Handler(BaseHTTPRequestHandler):
                         copied += 1
                 self._chunk("\nCopiati %d file in %s\n" % (copied, docs_dir))
             for label, argv in build_commands(params):
+                with RUN_LOCK:
+                    if RUNNING["stop_requested"]:
+                        break
                 self._chunk("\n=== %s ===\n" % label)
-                proc = subprocess.Popen(
-                    argv,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    text=True,
-                    encoding="utf-8",
-                    errors="replace",
-                    bufsize=1,
-                    env=_subprocess_env(),
-                    creationflags=CREATE_NO_WINDOW,
-                )
+                proc = _popen_tree(argv)
+                with RUN_LOCK:
+                    RUNNING["proc"] = proc
                 for line in proc.stdout:
                     self._chunk(line)
                 proc.wait()
+                with RUN_LOCK:
+                    RUNNING["proc"] = None
+                    stopped = RUNNING["stop_requested"]
+                if stopped:
+                    self._chunk("\n[FERMATO] '%s' interrotto su richiesta dell'utente.\n" % label)
+                    ok = False
+                    break
                 if proc.returncode != 0:
                     self._chunk("\n[ERRORE] '%s' exited with code %s — stopped.\n" % (label, proc.returncode))
                     ok = False
@@ -373,6 +434,9 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as e:
             self._chunk("\n[ERRORE] %s\n" % e)
             ok = False
+        finally:
+            with RUN_LOCK:
+                RUNNING["proc"] = None
         self._end_stream()
 
 
@@ -384,7 +448,7 @@ def main():
     httpd = None
     while httpd is None:
         try:
-            httpd = HTTPServer((HOST, port), Handler)
+            httpd = ThreadingHTTPServer((HOST, port), Handler)
         except OSError:
             port += 1
 

@@ -156,6 +156,18 @@
       <button type="button" class="go" id="genDocsBtn" style="margin-top:10px" disabled>Genera documentazione</button>
     </div>
 
+    <div id="updateFields" style="display:none">
+      <div class="field">
+        <label>Modalità re-index</label>
+        <div class="pills" id="reindexMode">
+          <label class="pill on"><input type="radio" name="reindexMode" value="normal" checked>Incrementale</label>
+          <label class="pill"><input type="radio" name="reindexMode" value="force">Forza tutto</label>
+          <label class="pill"><input type="radio" name="reindexMode" value="prune">Incrementale + pulizia</label>
+        </div>
+        <div class="hint" id="reindexHint">Incrementale: indicizza solo i file nuovi/modificati (più veloce, nulla viene cancellato).</div>
+      </div>
+    </div>
+
     <div class="field">
       <label for="cerebro">CEREBRO_HOME</label>
       <input type="text" id="cerebro" placeholder="C:\Progetti\CEREBRO" autocomplete="off" spellcheck="false">
@@ -165,6 +177,7 @@
     <div class="status" id="status">Caricamento…</div>
 
     <button class="go" id="go">Crea progetto</button>
+    <button type="button" class="go danger" id="stopBtn" style="display:none;margin-top:8px">■ Ferma</button>
   </form>
 
   <pre id="log"></pre>
@@ -182,15 +195,25 @@
   });
 
   const actionInputs = () => document.querySelector('input[name="action"]');
+  const REINDEX_HINTS = {
+    normal: 'Incrementale: indicizza solo i file nuovi/modificati (più veloce, nulla viene cancellato).',
+    force: 'Forza tutto: ignora la cache e re-indicizza ogni file da zero (come il comportamento precedente).',
+    prune: 'Incrementale + pulizia: come Incrementale, ma rimuove anche dalla collection i chunk dei file cancellati/spostati.'
+  };
   function refresh() {
     const a = document.querySelector('input[name="action"]:checked').value;
     $('createFields').style.display = a === 'create' ? '' : 'none';
+    $('updateFields').style.display = a === 'update' ? '' : 'none';
     $('docsFields').style.display = a === 'docs' ? '' : 'none';
     const btn = $('go');
     btn.style.display = a === 'docs' ? 'none' : '';
     btn.textContent = BTN[a];
     btn.classList.toggle('danger', a === 'remove');
   }
+  document.getElementById('reindexMode').addEventListener('change', () => {
+    const mode = document.querySelector('input[name="reindexMode"]:checked').value;
+    $('reindexHint').textContent = REINDEX_HINTS[mode];
+  });
   function enableDocs() {
     $('docsPill').classList.remove('disabled');
     document.querySelector('input[name="action"][value="docs"]').disabled = false;
@@ -295,6 +318,7 @@
   $('f').addEventListener('submit', async (e) => {
     e.preventDefault();
     const action = document.querySelector('input[name="action"]:checked').value;
+    const reindexMode = document.querySelector('input[name="reindexMode"]:checked').value;
     const payload = {
       action,
       path: $('path').value.trim(),
@@ -302,14 +326,18 @@
       workspace: document.querySelector('input[name="mode"]:checked').value === 'workspace',
       context: $('context').checked,
       cerebro_home: $('cerebro').value.trim(),
+      force: action === 'update' && reindexMode === 'force',
+      prune: action === 'update' && reindexMode === 'prune',
     };
     if (!payload.path) { alert('Inserisci il percorso del progetto.'); return; }
     if (action === 'remove' && !confirm('Rimuovere il progetto dal registry CEREBRO?\n(la collection Qdrant resta, cancellabile a parte)')) return;
+    if (action === 'update' && reindexMode === 'prune' && !confirm('La modalità "Incrementale + pulizia" cancella dalla collection Qdrant i chunk dei file non più presenti. Continuare?')) return;
 
     const btn = $('go'); btn.disabled = true;
+    $('stopBtn').style.display = '';
     try {
       const txt = await streamRun(payload);
-      if (!txt.includes('[ERRORE]')) {
+      if (!txt.includes('[ERRORE]') && !txt.includes('[FERMATO]')) {
         $('next').innerHTML = nextSteps(action);
         $('next').style.display = 'block';
         if (action === 'create') enableDocs();
@@ -317,7 +345,21 @@
     } catch (err) {
       $('log').textContent += '\n[ERRORE] ' + err + '\n';
     } finally {
-      btn.disabled = false; refresh();
+      btn.disabled = false; $('stopBtn').style.display = 'none'; refresh();
+    }
+  });
+
+  $('stopBtn').addEventListener('click', async () => {
+    if (!confirm('Interrompere l\'operazione in corso?')) return;
+    $('stopBtn').disabled = true;
+    try {
+      const r = await fetch('/api/stop', { method: 'POST' });
+      const d = await r.json();
+      if (!d.stopped) { $('log').textContent += '\n(' + (d.message || 'Niente da fermare.') + ')\n'; }
+    } catch (e) {
+      $('log').textContent += '\n[ERRORE] stop: ' + e + '\n';
+    } finally {
+      $('stopBtn').disabled = false;
     }
   });
 

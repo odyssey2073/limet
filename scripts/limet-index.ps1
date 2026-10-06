@@ -41,9 +41,18 @@
 .PARAMETER CerebroHome
     CEREBRO installation folder. Defaults to $env:CEREBRO_HOME.
 
+.PARAMETER Force
+    (update only) Ignore ingest_docs.py's local cache and re-embed every file, even if unchanged.
+
+.PARAMETER Prune
+    (update only, off by default) Also remove indexed chunks for files deleted/moved since the
+    last run. Nothing is ever deleted from Qdrant unless this switch is passed.
+
 .EXAMPLE
     .\limet-index.ps1 init   -ProjectPath C:\Progetti\myapp -Lang en
     .\limet-index.ps1 update -ProjectPath C:\Progetti\myapp
+    .\limet-index.ps1 update -ProjectPath C:\Progetti\myapp -Force
+    .\limet-index.ps1 update -ProjectPath C:\Progetti\myapp -Prune
     .\limet-index.ps1 status -ProjectPath C:\Progetti\myapp
     .\limet-index.ps1 init   -ProjectPath C:\Progetti\myws -Workspace
 #>
@@ -61,7 +70,11 @@ param(
 
     [switch]$Workspace,
 
-    [string]$CerebroHome
+    [string]$CerebroHome,
+
+    [switch]$Force,
+
+    [switch]$Prune
 )
 
 $ErrorActionPreference = 'Continue'
@@ -504,7 +517,10 @@ if ($Command -eq 'update') {
         }
     }
 
-    Invoke-Cerebro $ingestPy @('--project', $slug)
+    $ingestArgs = @('--project', $slug)
+    if ($Force) { $ingestArgs += '--force' }
+    if ($Prune) { $ingestArgs += '--prune' }
+    Invoke-Cerebro $ingestPy $ingestArgs
     Write-InstructionFiles -ProjectRoot $ProjectPath -Lang $Lang -Slug $slug -RelLimetDir $relLimetDir -QueryCmd $queryCmd
     Write-Host "LIMET-INDEX update complete for '$ProjectPath' (collection: CRB_$slug)."
 }
