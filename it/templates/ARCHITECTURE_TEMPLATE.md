@@ -4,7 +4,8 @@
 > (da Graphify via `graphify .`). Il report contiene il grafo visuale/machine-readable di simboli,
 > moduli e chiamate; questo documento aggiunge il *perché*: decisioni, confini e invarianti che
 > un'analisi statica non può dedurre. Entrambi sono indicizzati nella collection CEREBRO del
-> progetto. Mantieni i due coerenti — se il codice cambia, esegui di nuovo `limet-index update`.
+> progetto. Se il codice cambia, ricorda all'utente: Launcher → Percorso progetto → Re-index →
+> Incrementale → clic Re-index. L'agente non esegue il re-index.
 
 ## Quadro d'insieme
 

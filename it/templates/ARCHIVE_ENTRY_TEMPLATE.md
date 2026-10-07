@@ -41,6 +41,7 @@ delle scelte fatte.]
 
 ## Re-indicizzazione del contesto
 
-- [ ] Dopo l'archiviazione, eseguire `limet/scripts/limet-index.ps1 update` (o
-      `limet-index.sh update`) per re-indicizzare la collection RAG del progetto (CEREBRO), così
-      la modifica archiviata diventa contesto ricercabile per le sessioni future.
+- [ ] Ricordare all'utente di aggiornare gli indici: Launcher → Percorso progetto/workspace →
+      Re-index → Incrementale → clic Re-index. Il re-index spetta all'utente, mai all'agente.
+      Ripetere periodicamente il promemoria dopo modifiche a codice/documenti, al termine di
+      un task o dell'archiviazione. La modifica archiviata diventa ricercabile dopo il re-index.

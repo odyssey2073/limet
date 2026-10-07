@@ -4,7 +4,8 @@
 > (produced by Graphify via `graphify .`). The report holds the machine-readable/visual graph of
 > symbols, modules and calls; this document adds the *why*: the decisions, boundaries and
 > invariants that a static analysis cannot infer. Both are indexed into the project's CEREBRO
-> collection. Keep the two consistent — if the code changes, re-run `limet-index update`.
+> collection. If code changes, remind the user: Launcher → project path → Re-index →
+> Incrementale → click Re-index. The agent does not run re-indexing.
 
 ## High-level picture
 

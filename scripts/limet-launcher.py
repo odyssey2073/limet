@@ -155,9 +155,9 @@ def _index_cmd(sub, path, cerebro_home, lang="en", workspace=False, force=False,
     if IS_WIN:
         cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
                script_path("limet-index"), sub, "-ProjectPath", path]
-        if sub in ("init", "instructions"):
+        if sub in ("init", "instructions", "update"):
             cmd += ["-Lang", lang]
-            if sub == "init" and workspace:
+            if workspace:
                 cmd += ["-Workspace"]
         if sub == "update":
             if force:
@@ -168,9 +168,9 @@ def _index_cmd(sub, path, cerebro_home, lang="en", workspace=False, force=False,
             cmd += ["-CerebroHome", cerebro_home]
         return cmd
     cmd = ["bash", script_path("limet-index"), sub, "--project-path", path]
-    if sub in ("init", "instructions"):
+    if sub in ("init", "instructions", "update"):
         cmd += ["--lang", lang]
-        if sub == "init" and workspace:
+        if workspace:
             cmd += ["--workspace"]
     if sub == "update":
         if force:
@@ -188,17 +188,31 @@ def build_commands(params):
     path = params["path"]
     lang = params.get("lang", "en")
     workspace = bool(params.get("workspace"))
+    if action in ("update", "instructions", "adddocs"):
+        workspace = workspace or os.path.isdir(os.path.join(path, "limet-workspace"))
     context = bool(params.get("context"))
     force = bool(params.get("force"))
     prune = bool(params.get("prune"))
     cerebro_home = _resolve_cerebro_home(path, params.get("cerebro_home") or "")
 
     if action == "instructions":
-        return [("Generate instruction files", _index_cmd("instructions", path, cerebro_home, lang))]
+        return [("Generate instruction files", _index_cmd("instructions", path, cerebro_home, lang, workspace))]
     if action == "adddocs":
-        return [("Re-index", _index_cmd("update", path, cerebro_home, force=force, prune=prune))]
+        # Auto-decide bootstrap vs incremental re-index: if the project's CEREBRO collection
+        # doesn't exist yet, run the full "create" sequence (LIMET init + Graphify/CEREBRO init)
+        # so a single click works both for a brand-new project and for one already set up.
+        # Otherwise, "update" already does everything needed in one pass: incremental Qdrant
+        # ingest (deterministic upsert, no duplicates), `graphify update .`, and regeneration of
+        # CLAUDE.md / copilot-instructions.md — this is what used to require the separate
+        # "Genera documentazione" button, now folded in here.
+        slug = slugify(os.path.basename(path.rstrip("\\/")) or path)
+        if not _collection_exists(f"CRB_{slug}"):
+            bootstrap_params = dict(params, action="create", context=True, workspace=workspace)
+            return build_commands(bootstrap_params)
+        return [("Re-index (documenti + Graphify + istruzioni)",
+                 _index_cmd("update", path, cerebro_home, lang=lang, workspace=workspace, force=force, prune=prune))]
     if action == "update":
-        return [("LIMET re-index", _index_cmd("update", path, cerebro_home, force=force, prune=prune))]
+        return [("LIMET re-index", _index_cmd("update", path, cerebro_home, lang=lang, workspace=workspace, force=force, prune=prune))]
     if action == "status":
         return [("LIMET status", _index_cmd("status", path, cerebro_home))]
     if action == "remove":
@@ -407,6 +421,27 @@ class Handler(BaseHTTPRequestHandler):
                         shutil.copy2(d, os.path.join(docs_dir, os.path.basename(d)))
                         copied += 1
                 self._chunk("\nCopiati %d file in %s\n" % (copied, docs_dir))
+
+                # Censisci anche i percorsi originali sottomessi in projects.json (merge additivo,
+                # mai sovrascrittura), cosi' restano tracciati come fonte anche se un domani la
+                # copia locale viene spostata/rimossa. L'indicizzazione vera e propria resta
+                # affidata al passo "update" sotto (che ri-legge projects.json).
+                orig_docs = [d.strip() for d in (params.get("docs") or []) if d.strip() and os.path.exists(d.strip())]
+                if orig_docs and _cerebro:
+                    venv_python = os.path.join(_cerebro, ".venv", "Scripts", "python.exe") if IS_WIN \
+                        else os.path.join(_cerebro, ".venv", "bin", "python")
+                    register_py = os.path.join(_cerebro, "scripts", "register_project.py")
+                    if os.path.exists(venv_python) and os.path.exists(register_py):
+                        reg_argv = [venv_python, register_py, "add", _slug, "--docs"] + orig_docs
+                        self._chunk("\n=== Censimento percorsi in projects.json ===\n")
+                        reg_proc = _popen_tree(reg_argv)
+                        for line in reg_proc.stdout:
+                            self._chunk(line)
+                        reg_proc.wait()
+                        if reg_proc.returncode != 0:
+                            self._chunk("\n[AVVISO] Censimento percorsi in projects.json fallito (exit %s) — la copia e' comunque avvenuta.\n" % reg_proc.returncode)
+                    else:
+                        self._chunk("\n[AVVISO] venv/register_project.py di CEREBRO non trovati in '%s' — percorsi non censiti in projects.json.\n" % _cerebro)
             for label, argv in build_commands(params):
                 with RUN_LOCK:
                     if RUNNING["stop_requested"]:

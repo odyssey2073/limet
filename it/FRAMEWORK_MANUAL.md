@@ -556,17 +556,23 @@ sottocartella scelta in "Sotto-cartella": `features`, `bugfixes`, o nessuna) e p
 
 **Workspace / multi-progetto**: eseguendo `limet-index init -Workspace` sulla cartella padre si crea
 una collection `CRB_<ws>` per `limet-workspace/changes/`, `limet-workspace/archive/` e
-`MODULE_MAP.md`. Ogni progetto sotto il workspace la rileva automaticamente e registra `CRB_<ws>`
+`MODULE_MAP.md` e `docs/` della root. Graphify genera anche il grafo del codice dell'intero workspace
+con estrazione locale AST (`extract --code-only`), senza chiamate LLM. Se il grafo manca, anche
+Re-index lo ricrea; altrimenti lo aggiorna. Il report viene copiato in `docs/architecture/`.
+Se una collection viene eliminata o è vuota, CEREBRO ignora la cache locale e ricostruisce le
+fonti censite. Ogni progetto sotto il workspace la rileva automaticamente e registra `CRB_<ws>`
 come extra collection, così `query_qdrant.py --project <slug>` interroga entrambe. Vedi Appendice C.
 
-**Cross-tool**: `limet-index` è una semplice CLI senza file per-tool; i comandi di query e
-manutenzione sono scritti una volta nel blocco `AGENTS.md`, letti da Copilot nativamente e da
-Claude Code via l'import `@AGENTS.md` (§9).
+**Cross-tool**: `AGENTS.md` contiene i blocchi condivisi del framework, del contesto e del progetto.
+`limet-index` sincronizza gli stessi blocchi anche in `CLAUDE.md` e
+`.github/copilot-instructions.md`, preservando i contenuti personalizzati fuori dai blocchi.
+Claude Code mantiene l'import `@AGENTS.md` (§9). La modalità workspace usa LIMET-WORKSPACE.
 
-**Hook del ciclo di vita**: dopo aver archiviato una modifica (fase 7 / `ARCHIVE_ENTRY_TEMPLATE.md`),
-esegui `limet-index update` così i documenti archiviati diventano contesto ricercabile. È il
-corrispettivo in scrittura del routing in lettura di §2.4 / A.3, e degrada con grazia (§7): senza
-CEREBRO/Graphify i documenti restano su disco e ricercabili con full-text.
+**Promemoria del ciclo di vita**: il re-index spetta all'utente, mai all'agente. Dopo modifiche
+a codice/documenti, l'agente lo ricorda periodicamente, al termine di un task o dell'archiviazione:
+Launcher → Percorso progetto/workspace → Re-index → Incrementale → clic Re-index.
+Per modifiche cross-progetto ricorda anche gli indici dei figli. Non avvia ingest o aggiornamenti
+Graphify. Fino al re-index, i documenti locali restano consultabili anche se il RAG non è aggiornato.
 
 ---
 

@@ -142,7 +142,7 @@
       <div class="field">
         <label for="docs">Documenti di progetto (uno per riga)</label>
         <textarea id="docs" placeholder="C:\Progetti\myapp\spec.pdf&#10;C:\Progetti\myapp\notes\"></textarea>
-        <div class="hint">File o cartelle da copiare nella cartella documenti registrata per il progetto in CEREBRO.</div>
+        <div class="hint">File o cartelle da copiare nella cartella documenti registrata per il progetto in CEREBRO. I percorsi indicati vengono inoltre censiti in projects.json (si aggiungono a quelli già registrati, nessuno viene rimosso) e poi indicizzati in Qdrant.</div>
       </div>
       <div class="field">
         <label for="category">Sotto-cartella</label>
@@ -152,8 +152,8 @@
           <option value="bugfixes">bugfixes</option>
         </select>
       </div>
-      <button type="button" class="go" id="addDocsBtn" disabled>Aggiungi documenti</button>
-      <button type="button" class="go" id="genDocsBtn" style="margin-top:10px" disabled>Genera documentazione</button>
+      <button type="button" class="go" id="addDocsBtn" disabled>Aggiungi documenti e aggiorna indice</button>
+      <div class="hint">Un unico passo: copia i file, li censisce in projects.json, poi indicizza (nuova collection se non esiste ancora, altrimenti aggiornamento incrementale) e aggiorna Graphify + CLAUDE.md/copilot-instructions.md.</div>
     </div>
 
     <div id="updateFields" style="display:none">
@@ -372,9 +372,10 @@
       const d = await r.json();
       if (d.error) { $('checkStatus').innerHTML = '<b class="ko">' + d.error + '</b>'; return; }
       const ok = (b) => b ? '<b class="ok">✓</b>' : '<b class="ko">✗</b>';
-      const allOk = d.registered && d.qdrant_up && d.ollama_up && d.collection_created;
+      // collection_created non è più un requisito bloccante: se manca, "Aggiungi documenti e
+      // aggiorna indice" la crea da sé (bootstrap automatico) in un unico click.
+      const allOk = d.registered && d.qdrant_up && d.ollama_up;
       $('addDocsBtn').disabled = !allOk;
-      $('genDocsBtn').disabled = !allOk;
       const docsMsg = !allOk ? ''
         : (d.docs_count > 0
           ? '<br><b>Ci sono già ' + d.docs_count + ' documenti</b> in <code>docs/</code>. Vuoi aggiungerne altri?'
@@ -383,7 +384,7 @@
         'CEREBRO registrato ' + ok(d.registered) + ' · Qdrant ' + ok(d.qdrant_up) + ' · Ollama ' + ok(d.ollama_up) + ' · Collection ' + ok(d.collection_created) +
         '<br><code>' + d.collection + '</code> · docs: <code>' + d.docs_dir + '</code>' + docsMsg +
         (allOk
-          ? '<br><b class="ok">CEREBRO pronto: puoi aggiungere documenti e generare la documentazione.</b>'
+          ? '<br><b class="ok">CEREBRO pronto: puoi aggiungere documenti.</b>'
           : '<br><b class="ko">Configura CEREBRO per il progetto (azione "Crea") prima di procedere.</b>');
     } catch (err) { $('checkStatus').innerHTML = '<b class="ko">Errore: ' + err + '</b>'; }
   };
@@ -393,14 +394,9 @@
     const docs = $('docs').value.split('\n').map(s => s.trim()).filter(Boolean);
     if (!path) { alert('Inserisci il percorso del progetto.'); return; }
     if (!docs.length) { alert('Inserisci almeno un documento.'); return; }
-    const txt = await streamRun({ action: 'adddocs', path, docs, category: $('category').value, cerebro_home: $('cerebro').value.trim() });
+    const lang = document.querySelector('input[name="lang"]:checked').value;
+    const txt = await streamRun({ action: 'adddocs', path, docs, category: $('category').value, lang, cerebro_home: $('cerebro').value.trim() });
     if (!txt.includes('[ERRORE]')) $('docs').value = '';
-  };
-
-  $('genDocsBtn').onclick = async () => {
-    const path = $('path').value.trim();
-    if (!path) { alert('Inserisci il percorso del progetto.'); return; }
-    await streamRun({ action: 'instructions', path, lang: document.querySelector('input[name="lang"]:checked').value, cerebro_home: $('cerebro').value.trim() });
   };
 
   function nextSteps(a) {

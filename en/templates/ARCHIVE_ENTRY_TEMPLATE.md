@@ -42,6 +42,7 @@ itself.]
 
 ## Re-index context
 
-- [ ] After archiving, run `limet/scripts/limet-index.ps1 update` (or `limet-index.sh update`) to
-      re-index the project's RAG collection (CEREBRO), so the archived change becomes searchable
-      context for future sessions.
+- [ ] Remind the user to update indexes: Launcher → project/workspace path →
+      Re-index → Incrementale → click Re-index. Re-indexing belongs to the user, never the agent.
+      Repeat this reminder periodically after code/document changes, at task completion or
+      archiving. The archived change becomes searchable after re-indexing.

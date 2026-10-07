@@ -547,17 +547,23 @@ then runs `limet-index update` — so the files are written to disk **and** inde
 
 **Workspace / multi-project**: running `limet-index init -Workspace` on the parent folder creates a
 `CRB_<ws>` collection for `limet-workspace/changes/`, `limet-workspace/archive/` and
-`MODULE_MAP.md`. Each project under the workspace auto-detects it and registers `CRB_<ws>` as an
+`MODULE_MAP.md` and root `docs/`. Graphify also generates a workspace-wide code graph using local
+AST extraction (`extract --code-only`), without LLM calls. Re-index rebuilds a missing graph or
+updates an existing one; the report is copied into `docs/architecture/`. If a collection is
+missing or empty, CEREBRO ignores its local cache and rebuilds registered sources.
+Each project under the workspace auto-detects it and registers `CRB_<ws>` as an
 extra collection, so `query_qdrant.py --project <slug>` searches both. See Appendix C.
 
-**Cross-tool**: `limet-index` is a plain CLI with no per-tool files; the query/maintenance commands
-are written once in the `AGENTS.md` block, read by Copilot natively and by Claude Code via the
-`@AGENTS.md` import (§9).
+**Cross-tool**: `AGENTS.md` contains the shared framework, context and project blocks.
+`limet-index` synchronizes these same blocks into `CLAUDE.md` and
+`.github/copilot-instructions.md`, preserving custom content outside managed blocks.
+Claude Code retains the `@AGENTS.md` import (§9). Workspace mode uses LIMET-WORKSPACE.
 
-**Lifecycle hook**: after archiving a change (phase 7 / `ARCHIVE_ENTRY_TEMPLATE.md`), run
-`limet-index update` so the archived documents become searchable context. This is the write-side
-counterpart of the read-side routing in §2.4 / A.3, and it degrades gracefully (§7): without
-CEREBRO/Graphify the documents remain on disk and full-text searchable.
+**Lifecycle reminder**: re-indexing belongs to the user, never the agent. After code/document
+changes, the agent periodically reminds the user, at task completion or archiving:
+Launcher → project/workspace path → Re-index → Incrementale → click Re-index.
+For cross-project changes, also remind the user to update child indexes. Do not run ingest or
+Graphify updates. Until re-indexing, local documents remain available even if RAG is stale.
 
 ---
 

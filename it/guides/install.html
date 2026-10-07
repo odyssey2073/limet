@@ -121,7 +121,7 @@ const SECTIONS = [
   { id: "graphify", title: "Graphify (knowledge graph del codice)", desc: "Analisi statica (AST) del codice. Qui installi solo la CLI: la generazione/aggiornamento del grafo la fa LIMET (launcher).",
     steps: [
       { t: "Cos'è e come funziona", d: "Graphify è il <b>knowledge graph del codice</b>: analizza staticamente (AST) il sorgente e costruisce un grafo di simboli/moduli/chiamate, interrogabile in linguaggio naturale. In LIMET copre il contesto <b>§2.2 (strutturale)</b>: 'dove è implementato X / chi dipende da Y'." },
-      { t: "Installa la CLI", c: "uv tool install graphifyy   # consigliato\n# alternative: pipx install graphifyy  /  pip install graphifyy" },
+      { t: "Installa la CLI con supporto SQL", d: "Installa Graphify 0.9.48 con il parser SQL nello stesso ambiente della CLI. Senza l'extra <code>[sql]</code>, i file SQL possono essere esclusi dal grafo con l'avviso <code>tree_sitter_sql not installed</code>. <code>--force</code> reinstalla anche una CLI già presente.", c: 'uv tool install --force "graphifyy[sql]==0.9.48"' },
       { t: "Registra la skill per l'assistente", d: "Rileva automaticamente l'assistente in uso (Claude Code, Copilot, ecc.).", c: "graphify install            # a livello utente\ngraphify install --project   # solo per il progetto corrente" },
       { t: "Fatto", d: "La generazione del grafo e del report architetturale la fa <b>LIMET</b> (launcher, azione <b>Crea</b>); l'aggiornamento dopo modifiche al codice lo fa l'azione <b>Re-index</b>. Per avviare il launcher:", c: "python <LIMET_HOME>\\scripts\\limet-launcher.py" }
     ] },

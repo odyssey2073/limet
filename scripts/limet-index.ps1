@@ -9,7 +9,7 @@
 .DESCRIPTION
     Bridges the write-side gap between LIMET, CEREBRO and Graphify:
 
-    - init   : creates docs/, copies codebase-doc templates, runs `graphify .` to generate the
+    - init   : creates docs/, copies codebase-doc templates, runs `graphify extract . --code-only` to generate the
                architectural report, registers the project in CEREBRO (`CRB_<slug>`), ingests the
                docs (docs/ + limet/changes/ + limet/archive/), and writes a marked context block
                (`<!-- LIMET-CONTEXT:START/END -->`) into AGENTS.md (single source of truth).
@@ -21,7 +21,7 @@
     Collection model:
     - Per-project: one collection `CRB_<slug>` (docs = docs/, limet/changes/, limet/archive/).
     - Workspace  : one collection `CRB_<ws>` (docs = limet-workspace/changes/, limet-workspace/
-                   archive/, limet-workspace/MODULE_MAP.md). A project that lives under a
+                   archive/, limet-workspace/MODULE_MAP.md, docs/), plus a root code graph. A project that lives under a
                    workspace folder gets the workspace collection registered as an extra
                    collection (auto-detected), so `query_qdrant.py --project <slug>` searches both.
 
@@ -176,11 +176,11 @@ La documentazione di coordinamento di questo workspace è indicizzata nella coll
 Interroga la documentazione (RAG semantico):
   python "$QueryCmd" --project $Slug search "<query>" --limit 5
 
-Mantieni l'indice aggiornato (dopo aver archiviato modifiche cross-progetto):
-  $RelLimetDir/scripts/limet-index.ps1 update -ProjectPath .    (oppure .../limet-index.sh update)
-
 Regole:
-- Dopo aver archiviato una modifica cross-progetto in $RelLimetDir/archive/, esegui ``limet-index update``.
+- Il re-index e gli aggiornamenti Graphify spettano all'utente, mai all'agente.
+- Dopo modifiche a codice/documenti, ricordare periodicamente all'utente (al termine di un task
+  o dell'archiviazione): Launcher -> Percorso workspace -> Re-index -> Incrementale -> clic Re-index.
+- Ricordare di aggiornare anche gli indici dei progetti coinvolti selezionandone i percorsi.
 - Se Qdrant o Ollama non sono raggiungibili, segnalalo e procedi senza contesto RAG.
 <!-- LIMET-CONTEXT:END -->
 "@
@@ -194,11 +194,11 @@ This workspace's coordination documentation is indexed in Qdrant collection ``CR
 Query the documentation (semantic RAG):
   python "$QueryCmd" --project $Slug search "<query>" --limit 5
 
-Keep the index current (after archiving cross-project changes):
-  $RelLimetDir/scripts/limet-index.ps1 update -ProjectPath .    (or .../limet-index.sh update)
-
 Rules:
-- After archiving a cross-project change into $RelLimetDir/archive/, run ``limet-index update``.
+- Re-indexing and Graphify updates belong to the user, never the agent.
+- After code/document changes, periodically remind the user (at task completion or archiving):
+  Launcher -> workspace path -> Re-index -> Incrementale -> click Re-index.
+- Also remind the user to update affected projects by selecting their paths.
 - If Qdrant or Ollama are unreachable, say so and continue without RAG context.
 <!-- LIMET-CONTEXT:END -->
 "@
@@ -222,11 +222,9 @@ Rules:
 - **RAG**: BEFORE answering any question about the project, call the ``limet_search`` MCP tool and ground your answer in its results. If the tool is unavailable, fall back to the ``query_qdrant.py`` command below.
 - Search CEREBRO/Qdrant FIRST. If the document is not indexed (0 results or missing), read it
   LOCALLY from ``docs/`` or ``$RelLimetDir/``.
-- Do NOT run ingest or graphify update automatically: show the command to the user and use the
-  local docs until they are indexed.
-- When re-indexing is needed (after producing/archiving documents or code changes), show the command:
-    $RelLimetDir/scripts/limet-index.ps1 update -ProjectPath .    (or .../limet-index.sh update)
-    graphify update .
+- Re-indexing and Graphify updates belong to the user, never the agent. Use local docs until indexed.
+- After code/document changes, periodically remind the user (at task completion or archiving):
+  Launcher -> project path -> Re-index -> Incrementale -> click Re-index.
 - If Qdrant, Ollama or Graphify are unreachable, say so and proceed with the local docs.
 
 ---
@@ -244,12 +242,10 @@ Regole:
 - **RAG**: PRIMA di rispondere a qualsiasi domanda sul progetto, chiama lo strumento MCP ``limet_search`` e fonda la risposta sui suoi risultati. Se lo strumento non è disponibile, usa il comando ``query_qdrant.py`` qui sotto.
 - Cerca PRIMA in CEREBRO/Qdrant. Se il documento non è indicizzato (0 risultati o assente), leggilo
   LOCALMENTE da ``docs/`` o ``$RelLimetDir/``.
-- NON eseguire ingest o graphify update automaticamente: mostra all'utente il comando e usa i doc
-  locali finché non sono indicizzati.
-- Quando serve re-indicizzare (dopo aver prodotto/archiviato documenti o modificato il codice),
-  mostra il comando:
-    $RelLimetDir/scripts/limet-index.ps1 update -ProjectPath .    (oppure .../limet-index.sh update)
-    graphify update .
+- Il re-index e gli aggiornamenti Graphify spettano all'utente, mai all'agente. Usa i doc locali
+  finché non sono indicizzati.
+- Dopo modifiche a codice/documenti, ricordare periodicamente all'utente (al termine di un task
+  o dell'archiviazione): Launcher -> Percorso progetto -> Re-index -> Incrementale -> clic Re-index.
 - Se Qdrant, Ollama o Graphify non sono raggiungibili, segnalalo e procedi con i doc locali.
 <!-- LIMET-CONTEXT:END -->
 "@
@@ -325,10 +321,13 @@ function Get-LimetBlock {
     $agents = Join-Path $ProjectRoot 'AGENTS.md'
     if (-not (Test-Path $agents)) { return $null }
     $text = Get-Content -Raw -ErrorAction SilentlyContinue $agents
-    $start = $text.IndexOf('<!-- LIMET:START -->')
-    $end = $text.IndexOf('<!-- LIMET:END -->')
+    if ($null -eq $text) { return $null }
+    $startMarker = if ($Workspace) { '<!-- LIMET-WORKSPACE:START -->' } else { '<!-- LIMET:START -->' }
+    $endMarker = if ($Workspace) { '<!-- LIMET-WORKSPACE:END -->' } else { '<!-- LIMET:END -->' }
+    $start = $text.IndexOf($startMarker)
+    $end = $text.IndexOf($endMarker)
     if ($start -ge 0 -and $end -ge 0) {
-        $end += '<!-- LIMET:END -->'.Length
+        $end += $endMarker.Length
         return $text.Substring($start, $end - $start)
     }
     return $null
@@ -342,13 +341,24 @@ function Get-ProjectBlock {
     if (Test-Path $docsDir) {
         $files = Get-ChildItem -Path $docsDir -File -Recurse -Filter *.md -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -notmatch '\\_templates\\' } |
-            Select-Object -First 8
+            Sort-Object FullName
         if ($files) {
             $fileList = ($files | ForEach-Object { $rel = $_.FullName.Substring($docsDir.Length + 1); "  - ``docs\$rel``" }) -join "`n"
         }
     }
     if (-not $fileList) {
         $fileList = '  - (fill docs/ with architecture.md, conventions.md, glossary.md · compila docs/ con architecture.md, conventions.md, glossary.md)'
+    }
+    if ($Workspace) {
+        $graphEn = 'Workspace code graph (Graphify): `graphify-out/graph.json`; report: `docs/architecture/GRAPH_REPORT.md`.'
+        $graphIt = 'Grafo del codice workspace (Graphify): `graphify-out/graph.json`; report: `docs/architecture/GRAPH_REPORT.md`.'
+        $maintenanceEn = 'Maintain limet-workspace/MODULE_MAP.md and cross-project changes using limet-workspace/templates/. Keep each project''s plans, tasks and verification records aligned. Re-indexing belongs to the user, never the agent. After code/document changes, periodically remind the user (at task completion or archiving): Launcher -> workspace path -> Re-index -> Incrementale -> click Re-index. Also remind them to update affected projects.'
+        $maintenanceIt = 'Mantieni limet-workspace/MODULE_MAP.md e le modifiche cross-progetto usando limet-workspace/templates/. Mantieni allineati piani, task e verifiche nei singoli progetti. Il re-index spetta all''utente, mai all''agente. Dopo modifiche a codice/documenti, ricordarlo periodicamente (al termine di un task o dell''archiviazione): Launcher -> Percorso workspace -> Re-index -> Incrementale -> clic Re-index. Ricordare anche gli indici dei progetti coinvolti.'
+    } else {
+        $graphEn = 'Code graph (Graphify): `graphify-out/` (report: `graphify-out/GRAPH_REPORT.md`).'
+        $graphIt = 'Grafo del codice (Graphify): `graphify-out/` (report: `graphify-out/GRAPH_REPORT.md`).'
+        $maintenanceEn = 'Follow limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md to maintain docs/module-map.md, architecture.md, decisions.md, dependencies.md, conventions.md and glossary.md with file:line citations and Mermaid diagrams. UPDATE existing documents. Maintain docs/NON_TECHNICAL_SUMMARY.md after relevant changes. Re-indexing belongs to the user, never the agent. After code/document changes, periodically remind the user (at task completion or archiving): Launcher -> project path -> Re-index -> Incrementale -> click Re-index.'
+        $maintenanceIt = 'Segui limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md per mantenere docs/module-map.md, architecture.md, decisions.md, dependencies.md, conventions.md e glossary.md con citazioni file:line e diagrammi Mermaid. AGGIORNA i documenti esistenti. Mantieni docs/NON_TECHNICAL_SUMMARY.md dopo modifiche rilevanti. Il re-index spetta all''utente, mai all''agente. Dopo modifiche a codice/documenti, ricordarlo periodicamente (al termine di un task o dell''archiviazione): Launcher -> Percorso progetto -> Re-index -> Incrementale -> clic Re-index.'
     }
 
     return @"
@@ -357,33 +367,29 @@ function Get-ProjectBlock {
 
 **EN** — Project ``$Slug`` — CEREBRO collection ``CRB_$Slug``.
 
-In-depth documentation (indexed in CEREBRO — query it with the command above):
+Complete local Markdown inventory under docs/ (excluding _templates; not proof of indexing):
 $fileList
 
-Code graph (Graphify): ``graphify-out/`` (report: ``graphify-out/GRAPH_REPORT.md``).
+For indexed sources, consult CEREBRO's projects.json and query the collection above.
+
+$graphEn
 
 ---
 
 **IT** — Progetto ``$Slug`` — collection CEREBRO ``CRB_$Slug``.
 
-Documentazione approfondita (indicizzata in CEREBRO — interroga con il comando sopra):
+Inventario locale completo dei Markdown in docs/ (esclusi _templates; non attesta l'indicizzazione):
 $fileList
 
-Grafo del codice (Graphify): ``graphify-out/`` (report: ``graphify-out/GRAPH_REPORT.md``).
+Per le fonti indicizzate, consulta projects.json di CEREBRO e interroga la collection indicata sopra.
+
+$graphIt
 
 ## Documentation to maintain · Documentazione da mantenere
 
-**EN** — Follow ``limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md`` and, starting from Graphify and the source
-code, produce or update in ``docs/``: ``module-map.md``, ``architecture.md``, ``decisions.md``,
-``dependencies.md``, ``conventions.md``, ``glossary.md`` (with ``file:line`` citations and Mermaid diagrams). If a
-document already exists, UPDATE it. Also maintain ``docs/NON_TECHNICAL_SUMMARY.md`` (plain-language project
-description) and update it after each relevant change/bugfix. Then show the user the ``limet-index update`` command (don't run it automatically).
+**EN** — $maintenanceEn
 
-**IT** — Segui ``limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md`` e, partendo da Graphify e dal codice
-sorgente, produci o aggiorna in ``docs/``: ``module-map.md``, ``architecture.md``, ``decisions.md``,
-``dependencies.md``, ``conventions.md``, ``glossary.md`` (con citazioni ``file:line`` e diagrammi
-Mermaid). Se un documento esiste già, AGGIORNALO. Mantieni anche ``docs/NON_TECHNICAL_SUMMARY.md``
-(descrizione del progetto in linguaggio semplice) e aggiornalo dopo ogni modifica/bugfix rilevante. Poi mostra all'utente il comando ``limet-index update`` (non eseguirlo automaticamente).
+**IT** — $maintenanceIt
 <!-- PROJECT:END -->
 "@
 }
@@ -395,12 +401,47 @@ function Write-InstructionFiles {
     $contextBlock = Get-ContextBlock -Lang $Lang -Slug $Slug -RelLimetDir $RelLimetDir -QueryCmd $QueryCmd -WorkspaceCollection (Get-WorkspaceCollection $ProjectRoot) -IsWorkspace $Workspace
     $projectBlock = Get-ProjectBlock -Lang $Lang -Slug $Slug -ProjectRoot $ProjectRoot
 
-    foreach ($target in @((Join-Path $ProjectRoot 'CLAUDE.md'), (Join-Path $ProjectRoot '.github\copilot-instructions.md'))) {
+    $startMarker = if ($Workspace) { '<!-- LIMET-WORKSPACE:START -->' } else { '<!-- LIMET:START -->' }
+    $endMarker = if ($Workspace) { '<!-- LIMET-WORKSPACE:END -->' } else { '<!-- LIMET:END -->' }
+    foreach ($target in @((Join-Path $ProjectRoot 'AGENTS.md'), (Join-Path $ProjectRoot 'CLAUDE.md'), (Join-Path $ProjectRoot '.github\copilot-instructions.md'))) {
         if ($limetBlock) {
-            Set-MarkedBlock -TargetFile $target -Block $limetBlock -StartMarker '<!-- LIMET:START -->' -EndMarker '<!-- LIMET:END -->' -Label 'LIMET'
+            Set-MarkedBlock -TargetFile $target -Block $limetBlock -StartMarker $startMarker -EndMarker $endMarker -Label 'LIMET'
         }
         Set-MarkedBlock -TargetFile $target -Block $contextBlock -StartMarker '<!-- LIMET-CONTEXT:START -->' -EndMarker '<!-- LIMET-CONTEXT:END -->' -Label 'LIMET-CONTEXT'
         Set-MarkedBlock -TargetFile $target -Block $projectBlock -StartMarker '<!-- PROJECT:START -->' -EndMarker '<!-- PROJECT:END -->' -Label 'PROJECT'
+    }
+}
+
+function Update-CodeGraph {
+    param([string]$ProjectRoot, [bool]$Initialize)
+
+    $ignore = Join-Path $ProjectRoot '.graphifyignore'
+    if (-not (Test-Path $ignore)) {
+        Set-Content -Path $ignore -Value ("docs/`r`nlimet/`r`nlimet-workspace/`r`n*.groovy`r`n") -NoNewline -ErrorAction Stop
+    }
+    $graph = Join-Path $ProjectRoot 'graphify-out\graph.json'
+    Push-Location $ProjectRoot
+    try {
+        if ($Initialize -or -not (Test-Path $graph)) {
+            & graphify extract . --code-only --no-cluster
+            if ($LASTEXITCODE -ne 0) { throw "graphify extract failed with exit code $LASTEXITCODE." }
+        } else {
+            & graphify update .
+            if ($LASTEXITCODE -ne 0) { throw "graphify update failed with exit code $LASTEXITCODE." }
+        }
+        & graphify cluster-only . --no-label
+        if ($LASTEXITCODE -ne 0) { throw "graphify cluster-only failed with exit code $LASTEXITCODE." }
+    } finally { Pop-Location }
+    if (-not (Test-Path $graph)) {
+        throw "Graphify completed without producing '$graph'."
+    }
+    $report = Join-Path $ProjectRoot 'graphify-out\GRAPH_REPORT.md'
+    if (Test-Path $report) {
+        $archDir = Join-Path $ProjectRoot 'docs\architecture'
+        New-Item -ItemType Directory -Force -Path $archDir -ErrorAction Stop | Out-Null
+        Copy-Item -Force $report (Join-Path $archDir 'GRAPH_REPORT.md') -ErrorAction Stop
+    } else {
+        Write-Warning "Graphify report not found at '$report'; no report copied into docs."
     }
 }
 
@@ -425,12 +466,18 @@ if ($Command -eq 'init' -or $Command -eq 'update') {
 
 if ($Command -eq 'init') {
 
+    $docsDir = Join-Path $ProjectPath 'docs'
+    New-Item -ItemType Directory -Force -Path $docsDir | Out-Null
+    if ($graphifyAvailable) {
+        Update-CodeGraph -ProjectRoot $ProjectPath -Initialize $true
+    }
     if ($Workspace) {
         # Workspace: register + ingest the coordination docs (MODULE_MAP + cross-project changes/archive).
         $wsDocs = @(
             (Join-Path $limetDir 'changes'),
             (Join-Path $limetDir 'archive'),
-            (Join-Path $limetDir 'MODULE_MAP.md')
+            (Join-Path $limetDir 'MODULE_MAP.md'),
+            $docsDir
         )
         $wsAddArgs = @('add', $slug, '--docs') + $wsDocs + @('--root', $ProjectPath)
         Invoke-Cerebro $registerPy $wsAddArgs
@@ -450,29 +497,6 @@ if ($Command -eq 'init') {
         foreach ($t in @('ARCHITECTURE_TEMPLATE.md','CONVENTIONS_TEMPLATE.md','MODULE_MAP_TEMPLATE.md','GLOSSARY_TEMPLATE.md')) {
             $src = Join-Path $localTpl $t
             if (Test-Path $src) { Copy-Item -Force $src (Join-Path $docsTplDir $t) }
-        }
-
-        # .graphifyignore keeps Graphify on code only (docs/limet are CEREBRO's domain).
-        $gi = Join-Path $ProjectPath '.graphifyignore'
-        if (-not (Test-Path $gi)) {
-            Set-Content -Path $gi -Value ("docs/`r`nlimet/`r`nlimet-workspace/`r`n") -NoNewline
-        }
-
-        # Graphify: generate the architectural report, copy it into docs/architecture/.
-        if ($graphifyAvailable) {
-            Push-Location $ProjectPath
-            try {
-                & graphify . 2>$null
-                if ($LASTEXITCODE -ne 0) { Write-Warning "graphify . returned exit code $LASTEXITCODE." }
-                & graphify cluster-only . 2>$null
-                if ($LASTEXITCODE -ne 0) { Write-Warning "graphify cluster-only returned exit code $LASTEXITCODE." }
-            } finally { Pop-Location }
-            $gr = Join-Path $ProjectPath 'graphify-out\GRAPH_REPORT.md'
-            if (Test-Path $gr) {
-                $archDir = Join-Path $docsDir 'architecture'
-                New-Item -ItemType Directory -Force -Path $archDir | Out-Null
-                Copy-Item -Force $gr (Join-Path $archDir 'GRAPH_REPORT.md')
-            }
         }
 
         $docs = @(
@@ -503,18 +527,12 @@ if ($Command -eq 'init') {
 
 if ($Command -eq 'update') {
 
-    if ($graphifyAvailable -and -not $Workspace) {
-        Push-Location $ProjectPath
-        try {
-            & graphify update . 2>$null
-            if ($LASTEXITCODE -ne 0) { Write-Warning "graphify update . returned exit code $LASTEXITCODE." }
-        } finally { Pop-Location }
-        $gr = Join-Path $ProjectPath 'graphify-out\GRAPH_REPORT.md'
-        if (Test-Path $gr) {
-            $archDir = Join-Path $ProjectPath 'docs\architecture'
-            New-Item -ItemType Directory -Force -Path $archDir | Out-Null
-            Copy-Item -Force $gr (Join-Path $archDir 'GRAPH_REPORT.md')
-        }
+    if ($graphifyAvailable) {
+        Update-CodeGraph -ProjectRoot $ProjectPath -Initialize $false
+    }
+    $docsDir = Join-Path $ProjectPath 'docs'
+    if ($Workspace -and (Test-Path $docsDir)) {
+        Invoke-Cerebro $registerPy @('add', $slug, '--docs', $docsDir)
     }
 
     $ingestArgs = @('--project', $slug)

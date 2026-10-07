@@ -169,8 +169,9 @@ Regole vincolanti (vedi il manuale per il dettaglio):
 - A inizio sessione/feature, consultare ``$relLimetDir/ONBOARDING_CHECKLIST.md``.
 - A modifica conclusa e verificata, spostare/archiviare i documenti in ``$relLimetDir/archive/``
   usando ``templates/ARCHIVE_ENTRY_TEMPLATE.md``.
-- Dopo l'archiviazione, eseguire ``$relLimetDir/scripts/limet-index.ps1 update`` (o
-  ``limet-index.sh update``) per re-indicizzare la collection RAG del progetto (CEREBRO).
+- Il re-index e gli aggiornamenti Graphify spettano all'utente, mai all'agente. Dopo modifiche a
+  codice/documenti, ricordarlo periodicamente (al termine di un task o dell'archiviazione):
+  Launcher -> Percorso progetto -> Re-index -> Incrementale -> clic Re-index.
 - Se questo progetto fa parte di un workspace multi-progetto (più repository correlati o più
   moduli), verificare se esiste una cartella ``limet-workspace/`` nella cartella padre condivisa:
   in tal caso consultare ``limet-workspace/MODULE_MAP.md`` prima di modifiche che potrebbero
@@ -207,8 +208,9 @@ Binding rules (see the manual for full detail):
 - At the start of a session/feature, consult ``$relLimetDir/ONBOARDING_CHECKLIST.md``.
 - Once a change is complete and verified, move/archive its documents into
   ``$relLimetDir/archive/`` using ``templates/ARCHIVE_ENTRY_TEMPLATE.md``.
-- After archiving a change, run ``$relLimetDir/scripts/limet-index.ps1 update`` (or
-  ``limet-index.sh update``) to re-index the project's RAG collection (CEREBRO).
+- Re-indexing and Graphify updates belong to the user, never the agent. After code/document
+  changes, periodically remind the user (at task completion or archiving):
+  Launcher -> project path -> Re-index -> Incrementale -> click Re-index.
 - If this project is part of a multi-project workspace (several correlated repositories or
   several modules), check whether a ``limet-workspace/`` folder exists in the shared parent
   folder: if so, consult ``limet-workspace/MODULE_MAP.md`` before changes that might touch other
@@ -250,9 +252,10 @@ Regole vincolanti:
   la verifica di integrazione end-to-end tra progetti è stata eseguita con esito positivo.
 - Vedi ``FRAMEWORK_MANUAL.md`` Appendice C per gli scenari operativi completi (nuovo workspace,
   bug fix cross-progetto, nuova feature cross-progetto).
-- Dopo l'archiviazione di una modifica cross-progetto, eseguire
-  ``$relLimetDir/scripts/limet-index.ps1 update`` per re-indicizzare la collection RAG del
-  workspace.
+- Il re-index e gli aggiornamenti Graphify spettano all'utente, mai all'agente. Dopo modifiche a
+  codice/documenti, ricordarlo periodicamente (al termine di un task o dell'archiviazione):
+  Launcher -> Percorso workspace -> Re-index -> Incrementale -> clic Re-index.
+  Ricordare di aggiornare anche gli indici dei progetti coinvolti selezionandone i percorsi.
 <!-- LIMET-WORKSPACE:END -->
 "@
     'en' = @"
@@ -284,8 +287,10 @@ Binding rules:
   cross-project end-to-end integration verification has passed.
 - See ``FRAMEWORK_MANUAL.md`` Appendix C for the full operational scenarios (new workspace,
   cross-project bug fix, cross-project feature).
-- After archiving a cross-project change, run ``$relLimetDir/scripts/limet-index.ps1 update`` to
-  re-index the workspace RAG collection.
+- Re-indexing and Graphify updates belong to the user, never the agent. After code/document
+  changes, periodically remind the user (at task completion or archiving):
+  Launcher -> workspace path -> Re-index -> Incrementale -> click Re-index.
+  Also remind the user to update affected projects by selecting their paths.
 <!-- LIMET-WORKSPACE:END -->
 "@
 }
@@ -362,6 +367,72 @@ if (-not (Test-Path $claudeFile)) {
 
 Write-Host ""
 Write-Host "LIMET $Command complete for '$ProjectPath' (edition: $Lang$(if ($Workspace) {', workspace mode'}))."
+
+# --- Step 5: keep LIMET artifacts out of git (local-only exclusions, never committed) -----------
+# Uses .git/info/exclude (not .gitignore): local to this clone, never shared/tracked, so it never
+# conflicts with other contributors' settings. Only touched if ProjectPath is actually inside a
+# git working tree; silently skipped otherwise (e.g. project not yet under git).
+function Set-LimetGitExclude {
+    param([string]$ProjectPath, [bool]$Workspace)
+
+    # Two different PowerShell behaviors can turn "git is not a repo here" (a normal, expected
+    # outcome -- not every ProjectPath is under git) into a terminating error when the script-wide
+    # $ErrorActionPreference is 'Stop':
+    #  - PowerShell 7.3+: $PSNativeCommandUseErrorActionPreference promotes a native command's
+    #    non-zero exit code to a terminating error honoring $ErrorActionPreference, independent of
+    #    stderr redirection.
+    #  - Windows PowerShell 5.1 (verified by reproduction): even with `2>$null`, a native command's
+    #    stderr output itself becomes a terminating NativeCommandError when $ErrorActionPreference
+    #    is 'Stop' -- redirecting the stream does not suppress the promotion in 5.1.
+    # Guard against both: disable the 7.3+ preference where it exists, AND locally relax
+    # $ErrorActionPreference to 'Continue' for the native calls (restored in `finally`).
+    $prevNativeErrorPref = $null
+    $hasNativeErrorPref = Test-Path Variable:\PSNativeCommandUseErrorActionPreference
+    if ($hasNativeErrorPref) {
+        $prevNativeErrorPref = $PSNativeCommandUseErrorActionPreference
+        $PSNativeCommandUseErrorActionPreference = $false
+    }
+    $prevEap = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $gitCheck = & git -C $ProjectPath rev-parse --is-inside-work-tree 2>$null
+        if ($LASTEXITCODE -ne 0 -or $gitCheck -ne 'true') {
+            return
+        }
+        $gitDir = (& git -C $ProjectPath rev-parse --absolute-git-dir 2>$null)
+        # --show-prefix gives the path from the repo top-level to $ProjectPath (e.g. "sub/dir/", or
+        # empty if $ProjectPath IS the top-level) — avoids fragile manual path-substring comparisons
+        # (which can misfire on case differences / short vs long Windows paths).
+        $prefix = (& git -C $ProjectPath rev-parse --show-prefix 2>$null)
+        if ($LASTEXITCODE -ne 0 -or -not $gitDir) {
+            return
+        }
+        $gitDir = $gitDir.Trim() -replace '/', '\'
+        $prefix = $prefix.Trim().TrimEnd('/')
+        $relPrefix = if ($prefix) { '/' + $prefix } else { '' }
+
+        $limetFolder = if ($Workspace) { 'limet-workspace' } else { 'limet' }
+        $entries = @(
+            "$relPrefix/AGENTS.md",
+            "$relPrefix/CLAUDE.md",
+            "$relPrefix/$limetFolder/"
+        )
+        $startMarker = '# LIMET:EXCLUDE:START (auto-managed by limet.ps1 -- local only, never committed)'
+        $endMarker = '# LIMET:EXCLUDE:END'
+        $excludeBlock = "$startMarker`n" + ($entries -join "`n") + "`n$endMarker`n"
+        $excludeFile = Join-Path $gitDir 'info\exclude'
+        Set-LimetBlock -TargetFile $excludeFile -Block $excludeBlock -StartMarker $startMarker -EndMarker $endMarker
+        Write-Host "Local git exclude updated: '$excludeFile' (not tracked, this clone only)"
+    } finally {
+        $ErrorActionPreference = $prevEap
+        if ($hasNativeErrorPref) {
+            $PSNativeCommandUseErrorActionPreference = $prevNativeErrorPref
+        }
+    }
+}
+
+Set-LimetGitExclude -ProjectPath $ProjectPath -Workspace $Workspace.IsPresent
+
 if ($Command -eq 'init') {
     if ($Workspace) {
         Write-Host "Next: fill in '$relLimetDir/MODULE_MAP.md', then run 'limet.ps1 init' (without -Workspace) in each individual project/module root."
