@@ -150,7 +150,7 @@ def read_html():
 # --- command building --------------------------------------------------------------------------
 
 
-def _index_cmd(sub, path, cerebro_home, lang="en", workspace=False, force=False, prune=False):
+def _index_cmd(sub, path, cerebro_home, lang="en", workspace=False, force=False, prune=False, skip_graph=False):
     """Build the limet-index command (init/update/status/remove) for this platform."""
     if IS_WIN:
         cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
@@ -164,6 +164,8 @@ def _index_cmd(sub, path, cerebro_home, lang="en", workspace=False, force=False,
                 cmd += ["-Force"]
             if prune:
                 cmd += ["-Prune"]
+            if skip_graph:
+                cmd += ["-SkipGraph"]
         if cerebro_home:
             cmd += ["-CerebroHome", cerebro_home]
         return cmd
@@ -177,6 +179,8 @@ def _index_cmd(sub, path, cerebro_home, lang="en", workspace=False, force=False,
             cmd += ["--force"]
         if prune:
             cmd += ["--prune"]
+        if skip_graph:
+            cmd += ["--skip-graph"]
     if cerebro_home:
         cmd += ["--cerebro-home", cerebro_home]
     return cmd
@@ -209,8 +213,10 @@ def build_commands(params):
         if not _collection_exists(f"CRB_{slug}"):
             bootstrap_params = dict(params, action="create", context=True, workspace=workspace)
             return build_commands(bootstrap_params)
-        return [("Re-index (documenti + Graphify + istruzioni)",
-                 _index_cmd("update", path, cerebro_home, lang=lang, workspace=workspace, force=force, prune=prune))]
+        # Only docs changed: skip the (slow) Graphify code-graph refresh; it stays on "Re-index".
+        return [("Indicizzazione documenti + istruzioni",
+                 _index_cmd("update", path, cerebro_home, lang=lang, workspace=workspace,
+                            force=force, prune=prune, skip_graph=True))]
     if action == "update":
         return [("LIMET re-index", _index_cmd("update", path, cerebro_home, lang=lang, workspace=workspace, force=force, prune=prune))]
     if action == "status":
@@ -399,9 +405,13 @@ class Handler(BaseHTTPRequestHandler):
                 _slug = slugify(os.path.basename(path.rstrip("\\/")) or path)
                 _cerebro = _resolve_cerebro_home(path, params.get("cerebro_home") or "")
                 docs_dir = _docs_dir(_slug, path, _cerebro)
-                category = (params.get("category") or "").strip()
+                category = (params.get("category") or "").strip().replace("\\", "/").strip("/")
                 if category:
-                    docs_dir = os.path.join(docs_dir, category)
+                    parts = [p for p in category.split("/") if p]
+                    if any(p in (".", "..") or ":" in p for p in parts):
+                        self._chunk("\n[ERRORE] Sotto-cartella non valida: usa un percorso relativo dentro docs/.\n")
+                        return
+                    docs_dir = os.path.join(docs_dir, *parts)
                 os.makedirs(docs_dir, exist_ok=True)
                 copied = 0
                 for d in (params.get("docs") or []):

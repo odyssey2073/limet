@@ -226,6 +226,10 @@ Regole vincolanti:
   prima dei consumatori).
 - Ogni progetto coinvolto mantiene comunque i propri documenti (piano/task/test) nella propria
   cartella \`limet/changes/\`: il documento cross-progetto **collega**, non duplica.
+- **Ogni** modulo elencato in \`MODULE_MAP.md\` deve avere il proprio \`AGENTS.md\` + \`limet/\`,
+  anche se è una libreria condivisa o un modulo di soli script (es. SQL) senza codice di dominio.
+  Se la modifica richiede di toccare un modulo che ne è privo, segnalarlo all'utente prima di
+  procedere (installazione con \`limet init\` nella root del modulo).
 - La modifica cross-progetto si chiude solo quando tutti i progetti coinvolti sono a \`done\` **e**
   la verifica di integrazione end-to-end tra progetti è stata eseguita con esito positivo.
 - Vedi \`FRAMEWORK_MANUAL.md\` Appendice C per gli scenari operativi completi (nuovo workspace,
@@ -262,6 +266,10 @@ Binding rules:
   implementation order (normally: contract producer before consumers).
 - Every involved project still keeps its own documents (plan/task/test) in its own
   \`limet/changes/\` folder: the cross-project document **links**, it does not duplicate.
+- **Every** module listed in \`MODULE_MAP.md\` must have its own \`AGENTS.md\` + \`limet/\`, even
+  if it is a shared library or a script-only module (e.g. SQL) with no domain code. If a change
+  requires touching a module that lacks it, tell the user before proceeding (install with
+  \`limet init\` in the module root).
 - The cross-project change is closed only once all involved projects are at \`done\` **and** the
   cross-project end-to-end integration verification has passed.
 - See \`FRAMEWORK_MANUAL.md\` Appendix C for the full operational scenarios (new workspace,
@@ -337,7 +345,7 @@ echo ""
 if [ "$WORKSPACE" = "1" ]; then
   echo "LIMET $COMMAND complete for '$PROJECT_PATH' (edition: $LANG_EDITION, workspace mode)."
   if [ "$COMMAND" = "init" ]; then
-    echo "Next: fill in '$REL_LIMET_DIR/MODULE_MAP.md', then run 'limet.sh init' (without --workspace) in each individual project/module root."
+    echo "Next: fill in '$REL_LIMET_DIR/MODULE_MAP.md', then run 'limet.sh init' (without --workspace) in EVERY project/module listed in it, including shared libraries and script-only modules (e.g. SQL) without domain code."
   fi
 else
   echo "LIMET $COMMAND complete for '$PROJECT_PATH' (edition: $LANG_EDITION)."

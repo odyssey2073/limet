@@ -36,7 +36,8 @@ creato.]
 
 - Ogni progetto/modulo elencato qui ha (o dovrebbe avere) la propria installazione locale di
   LIMET (`AGENTS.md` + `CLAUDE.md` + cartella `limet/`) — vedi `FRAMEWORK_MANUAL.md` §9 e
-  Appendice C.
+  Appendice C. Vale anche per librerie condivise e moduli di soli script (es. SQL) privi di
+  codice di dominio: elencarli qui e installare LIMET anche in loro.
 - Questo documento vive nella cartella di workspace (`limet-workspace/MODULE_MAP.md`), non
   dentro un singolo progetto.
 

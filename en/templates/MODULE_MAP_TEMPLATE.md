@@ -35,6 +35,8 @@ updated and released before the consumers" — describe it here.]
 
 - Every project/module listed here has (or should have) its own local LIMET installation
   (`AGENTS.md` + `CLAUDE.md` + `limet/` folder) — see `FRAMEWORK_MANUAL.md` §9 and Appendix C.
+  This also applies to shared libraries and script-only modules (e.g. SQL) with no domain code:
+  list them here and install LIMET in them too.
 - This document lives in the workspace folder (`limet-workspace/MODULE_MAP.md`), not inside a
   single project.
 

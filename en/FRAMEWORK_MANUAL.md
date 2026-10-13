@@ -826,7 +826,10 @@ Steps:
    `CardStatusChanged` event; taskflow-notifications consumes it"), and the recommended
    build/deploy order (backend first, since it exposes the contract consumed by the other one).
 
-3. Install LIMET normally (without `-Workspace`) in each project:
+3. Install LIMET normally (without `-Workspace`) in **every** project/module listed in
+   `MODULE_MAP.md`, **including shared libraries and script-only modules (e.g. SQL) with no domain
+   code**: if a cross-project change touches them, they need their own `limet/` to track plan,
+   tasks and tests (otherwise traceability ends up in another module):
    ```powershell
    .\limet\scripts\limet.ps1 init -ProjectPath C:\...\taskflow-suite\taskflow-backend -Lang en
    .\limet\scripts\limet.ps1 init -ProjectPath C:\...\taskflow-suite\taskflow-notifications -Lang en

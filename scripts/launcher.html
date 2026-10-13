@@ -142,18 +142,19 @@
       <div class="field">
         <label for="docs">Documenti di progetto (uno per riga)</label>
         <textarea id="docs" placeholder="C:\Progetti\myapp\spec.pdf&#10;C:\Progetti\myapp\notes\"></textarea>
-        <div class="hint">File o cartelle da copiare nella cartella documenti registrata per il progetto in CEREBRO. I percorsi indicati vengono inoltre censiti in projects.json (si aggiungono a quelli già registrati, nessuno viene rimosso) e poi indicizzati in Qdrant.</div>
+        <div class="hint">Compila solo se i documenti NON sono già in <code>docs/</code>: file o cartelle esterni da copiare nella cartella documenti registrata per il progetto in CEREBRO. Se lasci vuoto, viene solo aggiornato l'indice. I percorsi indicati vengono inoltre censiti in projects.json (si aggiungono a quelli già registrati, nessuno viene rimosso) e poi indicizzati in Qdrant. Se i file sono già in <code>docs/</code>, l'indicizzazione li rileva da sola.</div>
       </div>
       <div class="field">
         <label for="category">Sotto-cartella</label>
-        <select id="category">
-          <option value="">(nessuna — docs/)</option>
-          <option value="features">features</option>
-          <option value="bugfixes">bugfixes</option>
-        </select>
+        <input type="text" id="category" list="categoryList" placeholder="es. features/riassegna-pratiche oppure bugfixes/cw-2866" autocomplete="off">
+        <datalist id="categoryList">
+          <option value="features/">
+          <option value="bugfixes/">
+        </datalist>
+        <div class="hint">Percorso relativo dentro <code>docs/</code> dove copiare i file (vuoto = <code>docs/</code>). Vale solo per i documenti indicati sopra; non cambia cosa viene indicizzato.</div>
       </div>
       <button type="button" class="go" id="addDocsBtn" disabled>Aggiungi documenti e aggiorna indice</button>
-      <div class="hint">Un unico passo: copia i file, li censisce in projects.json, poi indicizza (nuova collection se non esiste ancora, altrimenti aggiornamento incrementale) e aggiorna Graphify + CLAUDE.md/copilot-instructions.md.</div>
+      <div class="hint">Un unico passo: copia i file, li censisce in projects.json, poi indicizza (nuova collection se non esiste ancora, altrimenti aggiornamento incrementale, senza rieseguire Graphify) e aggiorna CLAUDE.md/copilot-instructions.md.</div>
     </div>
 
     <div id="updateFields" style="display:none">
@@ -393,7 +394,6 @@
     const path = $('path').value.trim();
     const docs = $('docs').value.split('\n').map(s => s.trim()).filter(Boolean);
     if (!path) { alert('Inserisci il percorso del progetto.'); return; }
-    if (!docs.length) { alert('Inserisci almeno un documento.'); return; }
     const lang = document.querySelector('input[name="lang"]:checked').value;
     const txt = await streamRun({ action: 'adddocs', path, docs, category: $('category').value, lang, cerebro_home: $('cerebro').value.trim() });
     if (!txt.includes('[ERRORE]')) $('docs').value = '';

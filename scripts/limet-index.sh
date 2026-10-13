@@ -36,6 +36,7 @@ WORKSPACE=0
 CEREBRO_HOME_ARG=""
 FORCE=0
 PRUNE=0
+SKIP_GRAPH=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -45,6 +46,7 @@ while [ $# -gt 0 ]; do
     --cerebro-home) CEREBRO_HOME_ARG="$2"; shift 2 ;;
     --force) FORCE=1; shift ;;
     --prune) PRUNE=1; shift ;;
+    --skip-graph) SKIP_GRAPH=1; shift ;;
     *) echo "Unknown argument: $1" >&2; exit 1 ;;
   esac
 done
@@ -414,10 +416,10 @@ fi
 
 if [ "$COMMAND" = "update" ]; then
 
-  if [ "$GRAPHIFY_OK" = "1" ]; then
+  if [ "$GRAPHIFY_OK" = "1" ] && [ "$SKIP_GRAPH" != "1" ]; then
     update_code_graph "$PROJECT_PATH" 0
   fi
-  if [ "$WORKSPACE" = "1" ] && [ -d "$PROJECT_PATH/docs" ]; then
+  if [ -d "$PROJECT_PATH/docs" ]; then
     invoke_cerebro "$REGISTER_PY" add "$SLUG" --docs "$PROJECT_PATH/docs"
   fi
 

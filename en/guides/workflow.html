@@ -154,7 +154,7 @@ const SCENARIOS = [
     steps: [
       { t: "Create the workspace layer", tag: "Launcher", d: "Action <b>Create</b> + Mode <b>Workspace</b>, with <b>Path</b> = parent folder (e.g. C:\\Progetti\\myws)." },
       { t: "Fill MODULE_MAP", tag: "User", d: "Fill <code>limet-workspace/MODULE_MAP.md</code>: projects/modules, roles, dependencies and contracts." },
-      { t: "Initialize the children", tag: "Launcher", d: "Action <b>Create</b> (Project mode) on each child project: auto-detects the workspace as an extra collection." },
+      { t: "Initialize the children", tag: "Launcher", d: "Action <b>Create</b> (Project mode) on <b>every</b> module in MODULE_MAP, including shared libraries and script-only modules (e.g. SQL) with no domain code: auto-detects the workspace as an extra collection." },
       { t: "Open the workspace with the agent", tag: "User", d: "To coordinate a change touching multiple projects, open the workspace folder with the agent: it reads <code>AGENTS.md</code> and <code>MODULE_MAP.md</code>." },
       { t: "Cross-project change", tag: "Agent", d: "The agent creates <code>limet-workspace/changes/NNNN-slug/CROSS_PROJECT_CHANGE.md</code> (from <code>CROSS_PROJECT_CHANGE_TEMPLATE.md</code>) with producer→consumers order." },
       { t: "Update the documents", tag: "Agent", d: "Update <code>module-map.md</code> and the workspace doc suite (copy the prompt):", c: "Update the in-depth documents in docs/ and limet-workspace/MODULE_MAP.md to reflect the changes. Follow limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md. If a document already exists, UPDATE it. Then run limet-index update." },

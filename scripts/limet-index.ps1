@@ -74,7 +74,9 @@ param(
 
     [switch]$Force,
 
-    [switch]$Prune
+    [switch]$Prune,
+
+    [switch]$SkipGraph
 )
 
 $ErrorActionPreference = 'Continue'
@@ -527,11 +529,11 @@ if ($Command -eq 'init') {
 
 if ($Command -eq 'update') {
 
-    if ($graphifyAvailable) {
+    if ($graphifyAvailable -and -not $SkipGraph) {
         Update-CodeGraph -ProjectRoot $ProjectPath -Initialize $false
     }
     $docsDir = Join-Path $ProjectPath 'docs'
-    if ($Workspace -and (Test-Path $docsDir)) {
+    if (Test-Path $docsDir) {
         Invoke-Cerebro $registerPy @('add', $slug, '--docs', $docsDir)
     }
 
