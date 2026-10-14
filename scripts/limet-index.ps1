@@ -180,6 +180,10 @@ Interroga la documentazione (RAG semantico):
 
 Regole:
 - Il re-index e gli aggiornamenti Graphify spettano all'utente, mai all'agente.
+- **Domande sul codice** (dov'è implementato X, chi usa Y, come funziona il flusso Z): PRIMA
+  interroga il grafo con ``graphify query "<domanda>" --graph graphify-out/graph.json`` (oppure
+  ``graphify explain <simbolo>`` / ``graphify path <A> <B>``, stesso ``--graph``); POI conferma
+  righe e usi esatti con una ricerca testuale mirata per modulo (grep). Non partire direttamente da grep.
 - Dopo modifiche a codice/documenti, ricordare periodicamente all'utente (al termine di un task
   o dell'archiviazione): Launcher -> Percorso workspace -> Re-index -> Incrementale -> clic Re-index.
 - Ricordare di aggiornare anche gli indici dei progetti coinvolti selezionandone i percorsi.
@@ -198,6 +202,10 @@ Query the documentation (semantic RAG):
 
 Rules:
 - Re-indexing and Graphify updates belong to the user, never the agent.
+- **Code questions** (where is X implemented, who uses Y, how does flow Z work): FIRST query the
+  graph with ``graphify query "<question>" --graph graphify-out/graph.json`` (or
+  ``graphify explain <symbol>`` / ``graphify path <A> <B>``, same ``--graph``); THEN confirm exact
+  lines and usages with a targeted text search per module (grep). Do not start directly from grep.
 - After code/document changes, periodically remind the user (at task completion or archiving):
   Launcher -> workspace path -> Re-index -> Incrementale -> click Re-index.
 - Also remind the user to update affected projects by selecting their paths.
@@ -225,6 +233,9 @@ Rules:
 - Search CEREBRO/Qdrant FIRST. If the document is not indexed (0 results or missing), read it
   LOCALLY from ``docs/`` or ``$RelLimetDir/``.
 - Re-indexing and Graphify updates belong to the user, never the agent. Use local docs until indexed.
+- **Code questions** (where is X implemented, who uses Y, how does flow Z work): FIRST use
+  ``graphify query`` / ``graphify explain`` / ``graphify path``; THEN confirm exact lines and usages
+  with a targeted text search (grep). Do not start directly from grep.
 - After code/document changes, periodically remind the user (at task completion or archiving):
   Launcher -> project path -> Re-index -> Incrementale -> click Re-index.
 - If Qdrant, Ollama or Graphify are unreachable, say so and proceed with the local docs.
@@ -246,6 +257,9 @@ Regole:
   LOCALMENTE da ``docs/`` o ``$RelLimetDir/``.
 - Il re-index e gli aggiornamenti Graphify spettano all'utente, mai all'agente. Usa i doc locali
   finché non sono indicizzati.
+- **Domande sul codice** (dov'è implementato X, chi usa Y, come funziona il flusso Z): PRIMA usa
+  ``graphify query`` / ``graphify explain`` / ``graphify path``; POI conferma righe e usi esatti con
+  una ricerca testuale mirata (grep). Non partire direttamente da grep.
 - Dopo modifiche a codice/documenti, ricordare periodicamente all'utente (al termine di un task
   o dell'archiviazione): Launcher -> Percorso progetto -> Re-index -> Incrementale -> clic Re-index.
 - Se Qdrant, Ollama o Graphify non sono raggiungibili, segnalalo e procedi con i doc locali.
