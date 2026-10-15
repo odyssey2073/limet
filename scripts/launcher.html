@@ -98,7 +98,7 @@
       </div>
     </div>
 
-    <div class="field">
+    <div class="field" id="pathField">
       <label for="path">Percorso progetto</label>
       <input type="text" id="path" placeholder="C:\Progetti\myapp" autocomplete="off" spellcheck="false">
       <div class="hint">Cartella del progetto. Per "Crea", se non esiste verrà creata.</div>
@@ -130,6 +130,16 @@
             <span class="d">Registra il progetto in CEREBRO (Qdrant), indicizza i documenti e genera il report architetturale Graphify.</span>
           </span>
         </label>
+      </div>
+    </div>
+
+    <div id="relatedFields" style="display:none">
+      <div class="field">
+        <label for="relPaths">Progetti correlati (facoltativo, un percorso per riga)</label>
+        <textarea id="relPaths" placeholder="D:\Altro\progettoB&#10;E:\Altro\progettoC" spellcheck="false"></textarea>
+        <div class="hint">Per progetti in cartelle diverse che vanno gestiti come in relazione: indica gli <b>altri</b> progetti, già creati con <b>Crea</b>. Alla fine di <b>Crea</b> / <b>Re-index</b> il progetto sopra viene collegato a quelli elencati: ognuno cerca anche nella documentazione degli altri (nessun Re-index aggiuntivo) e viene aggiunto un blocco <code>LIMET-RELATED</code> in AGENTS.md, CLAUDE.md e copilot-instructions.md. Lasciare vuoto per non collegare nulla. Vale per la documentazione (RAG): i grafi Graphify restano per progetto. I nomi delle cartelle finali devono essere diversi.</div>
+        <button type="button" class="go danger" id="relUnlinkBtn" style="margin-top:8px">Scollega</button>
+        <div class="hint"><b>Scollega</b>: con progetti elencati rimuove i collegamenti tra questo progetto e quelli; con la lista vuota lo scollega da tutti. <b>Rimuovi</b> scollega già in automatico.</div>
       </div>
     </div>
 
@@ -206,8 +216,10 @@
     $('createFields').style.display = a === 'create' ? '' : 'none';
     $('updateFields').style.display = a === 'update' ? '' : 'none';
     $('docsFields').style.display = a === 'docs' ? '' : 'none';
+    const isWs = a === 'create' && document.querySelector('input[name="mode"]:checked').value === 'workspace';
+    $('relatedFields').style.display = ((a === 'create' && !isWs) || a === 'update') ? '' : 'none';
     const btn = $('go');
-    btn.style.display = a === 'docs' ? 'none' : '';
+    btn.style.display = (a === 'docs') ? 'none' : '';
     btn.textContent = BTN[a];
     btn.classList.toggle('danger', a === 'remove');
   }
@@ -226,6 +238,7 @@
   $('path').addEventListener('input', disableDocs);
 
   document.getElementById('action').addEventListener('change', refresh);
+  document.getElementById('mode').addEventListener('change', refresh);
 
   let graphifyOk = false;
 
@@ -290,6 +303,12 @@
       const d = await r.json();
       if (d.error) return;
       if (d.cerebro_home && !$('cerebro').value) { $('cerebro').value = d.cerebro_home; renderStatus(); }
+      if (d.registered && d.root_matches === false) {
+        // Same slug already registered for a different folder: block Create/Re-index to avoid mixing projects.
+        setCreateDisabled(true); disableDocs();
+        $('status').innerHTML = '<b class="ko">Collisione di slug:</b> <code>' + d.slug + '</code> è già registrato per un\'altra cartella. Rinomina la cartella finale del progetto.';
+        return;
+      }
       if (d.registered || d.collection_created) { selectAction('update'); enableDocs(); setCreateDisabled(true); }
       else { selectAction('create'); setCreateDisabled(false); }
     } catch (e) {}
@@ -331,6 +350,11 @@
       prune: action === 'update' && reindexMode === 'prune',
     };
     if (!payload.path) { alert('Inserisci il percorso del progetto.'); return; }
+    const rel = relList();
+    if ((action === 'create' || action === 'update') && rel.length && !(action === 'create' && payload.workspace)) {
+      if (action === 'create' && !payload.context) { alert('Per collegare progetti correlati attiva "Strumenti di contesto" (serve la registrazione in CEREBRO).'); return; }
+      payload.related = rel;
+    }
     if (action === 'remove' && !confirm('Rimuovere il progetto dal registry CEREBRO?\n(la collection Qdrant resta, cancellabile a parte)')) return;
     if (action === 'update' && reindexMode === 'prune' && !confirm('La modalità "Incrementale + pulizia" cancella dalla collection Qdrant i chunk dei file non più presenti. Continuare?')) return;
 
@@ -397,6 +421,25 @@
     const lang = document.querySelector('input[name="lang"]:checked').value;
     const txt = await streamRun({ action: 'adddocs', path, docs, category: $('category').value, lang, cerebro_home: $('cerebro').value.trim() });
     if (!txt.includes('[ERRORE]')) $('docs').value = '';
+  };
+
+  // --- Progetti correlati (campo facoltativo di Crea / Re-index) ---
+  function relList() { return $('relPaths').value.split('\n').map(s => s.trim()).filter(Boolean); }
+  $('relUnlinkBtn').onclick = async () => {
+    const path = $('path').value.trim();
+    if (!path) { alert('Inserisci il percorso del progetto.'); return; }
+    const rel = relList();
+    if (!confirm(rel.length
+      ? 'Rimuovere i collegamenti tra questo progetto e quelli elencati?'
+      : 'Scollegare questo progetto da TUTTI i progetti correlati?')) return;
+    const b = $('relUnlinkBtn'); b.disabled = true;
+    try {
+      await streamRun({ action: 'unrelate', paths: [path].concat(rel), cerebro_home: $('cerebro').value.trim() });
+    } catch (err) {
+      $('log').textContent += '\n[ERRORE] ' + err + '\n';
+    } finally {
+      b.disabled = false;
+    }
   };
 
   function nextSteps(a) {

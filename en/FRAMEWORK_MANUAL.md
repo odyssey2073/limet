@@ -626,6 +626,31 @@ LIMET.
    .\scripts\limet.ps1 update -ProjectPath C:\Projects\TaskFlow -Lang en
    ```
 
+### B.1-bis Documenting an existing project with little or no documentation
+
+**Scenario**: the project exists but has no (or almost no) documents. LIMET derives the doc suite
+from the code with the playbook `limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md` (Graphify +
+sources); the team validates it; the user indexes it. Step-by-step guide: `guides/workflow.html`,
+scenario "Documenting an existing project".
+
+1. Launcher → **Create** with context tools (creates `docs/`, `docs/_templates/`, the code graph,
+   CEREBRO registration).
+2. Optional: **Documentation** to load existing material (md, txt, pdf, epub, docx, xlsx, pptx, html).
+3. The agent follows the playbook one module at a time and writes the documents below; anything not
+   visible in the code is marked `[to be confirmed]` / `[ask the team]`, never invented.
+4. The user resolves the markers, then Launcher → **Re-index → Incremental**.
+
+| Document | Path |
+|---|---|
+| module map, architecture, dependencies, conventions, glossary, decisions (ADR), non-technical summary | `<project>/docs/` (`module-map.md`, `architecture.md`, `dependencies.md`, `conventions.md`, `glossary.md`, `decisions.md`, `NON_TECHNICAL_SUMMARY.md`) |
+| Graphify architectural report | `<project>/docs/architecture/GRAPH_REPORT.md` (copy; `graphify-out/` is not indexed) |
+| Workspace-wide map and documents | `<workspace-root>/docs/` and `limet-workspace/MODULE_MAP.md`; each child module keeps its own `docs/` |
+| Related projects in separate folders | each one in its own `docs/`, then link with the **Related projects** field of Create / Re-index |
+
+Notes: `decisions.md` and `dependencies.md` have no template in `docs/_templates/` (the agent follows
+the playbook). `limet/changes/` and `limet/archive/` are for features and bug fixes, not for the
+base documentation.
+
 ### B.2 Creating a new project with LIMET (from scratch)
 
 **Scenario**: starting the "TaskFlow" project from zero, with LIMET active from the very first
@@ -772,6 +797,31 @@ Recurring example used in this appendix: the fictional "TaskFlow" project (intro
 Appendix B) is extended with a second, correlated project, **"TaskFlow-Notifications"** (a
 satellite service that sends notifications when a card changes status), which consumes a
 contract (API/event) exposed by TaskFlow.
+
+### C.0-bis — Related projects in non-nested folders ("Related projects" field of Create / Re-index)
+
+If the projects live in different folders **with no common parent folder**, you do not need the
+workspace level: use the optional **Related projects** field of the Launcher's **Create** / **Re-index**.
+
+1. Create the first project with **Create** (Project mode). The final folder names of the projects
+   must differ (the slug is derived from the name).
+2. Create the second one with **Create**, filling **Related projects** with the path of the first
+   (one per line if more): at the end of Create (and indexing) the projects are linked in a single
+   step. To link already-created projects: **Re-index** with the same field filled. The listed
+   projects must already be created with Create (registered, collection in Qdrant); linking does not
+   index anything by itself.
+3. Each project gets the others' collections in `projects.json` (`collections` field):
+   `query_qdrant.py --project <slug>` and `limet_search` search all of them. No extra Re-index needed.
+   A `LIMET-RELATED` block in `AGENTS.md`, `CLAUDE.md` and `.github/copilot-instructions.md`
+   tells the agent.
+4. The **Scollega** (Unlink) button under the field removes the links (listed projects: between this
+   one and them; empty list: from all). **Remove** on a project unlinks it from the others
+   automatically. The field is not available in Workspace mode.
+
+Guarantees: full validation before writing (project registered, consistent root, no duplicate slug,
+collection present in Qdrant), atomic write with a `projects.json.bak` copy and rollback on error;
+Re-index and re-init never drop the links. Limit: only documentation (RAG) is linked; Graphify code
+graphs stay per project. Helper: `scripts/limet_related.py` (tests: `python -m unittest tests.test_limet_related`).
 
 ### C.0 — The "workspace" level in brief
 

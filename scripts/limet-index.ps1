@@ -522,8 +522,11 @@ if ($Command -eq 'init') {
         )
         $addArgs = @('add', $slug, '--docs') + $docs + @('--root', $ProjectPath)
         $wsColl = Get-WorkspaceCollection $ProjectPath
-        if ($wsColl) { $addArgs += @('--collections', $wsColl) }
         Invoke-Cerebro $registerPy $addArgs
+        # Merge (never replace) the workspace collection: 'add --collections' would drop related-project links.
+        if ($wsColl) {
+            Invoke-Cerebro (Join-Path $PSScriptRoot 'limet_related.py') @('add-extra', '--cerebro-home', $CerebroHome, '--slug', $slug, '--collection', $wsColl)
+        }
         Invoke-Cerebro $ingestPy @('--project', $slug)
     }
 

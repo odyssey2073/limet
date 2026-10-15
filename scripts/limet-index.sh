@@ -414,8 +414,11 @@ if [ "$COMMAND" = "init" ]; then
 
     ADD_ARGS=(add "$SLUG" --docs "$DOCS_DIR" "$LIMET_DIR/changes" "$LIMET_DIR/archive" --root "$PROJECT_PATH")
     WS_COLL="$(workspace_collection "$PROJECT_PATH")"
-    if [ -n "$WS_COLL" ]; then ADD_ARGS+=(--collections "$WS_COLL"); fi
     invoke_cerebro "$REGISTER_PY" "${ADD_ARGS[@]}"
+    # Merge (never replace) the workspace collection: 'add --collections' would drop related-project links.
+    if [ -n "$WS_COLL" ]; then
+      invoke_cerebro "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/limet_related.py" add-extra --cerebro-home "$CEREBRO_HOME_ARG" --slug "$SLUG" --collection "$WS_COLL"
+    fi
     invoke_cerebro "$INGEST_PY" --project "$SLUG"
   fi
 

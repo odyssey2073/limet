@@ -29,7 +29,10 @@ HOST = "127.0.0.1"
 DEFAULT_PORT = 8799
 IS_WIN = os.name == "nt"
 
-ACTIONS = ("create", "update", "status", "remove", "instructions", "adddocs")
+sys.path.insert(0, HERE)
+import limet_related  # noqa: E402
+
+ACTIONS = ("create", "update", "status", "remove", "instructions", "adddocs", "related", "unrelate")
 
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
@@ -40,6 +43,7 @@ CREATE_NO_WINDOW = 0x08000000 if IS_WIN else 0
 # One job at a time, local single-user tool: a global slot is enough. Guarded by RUN_LOCK since
 # /api/run (writer) and /api/stop (reader/killer) run on different threads (ThreadingHTTPServer).
 RUN_LOCK = threading.Lock()
+JOB_LOCK = threading.Lock()
 RUNNING = {"proc": None, "stop_requested": False}
 
 
@@ -282,6 +286,37 @@ class Handler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             pass
 
+    def _handle_related(self, action, params):
+        paths = params.get("paths")
+        cerebro = _resolve_cerebro_home((paths[0] if isinstance(paths, list) and paths and isinstance(paths[0], str) else ""),
+                                        params.get("cerebro_home") or "")
+        self._start_stream()
+        ok = True
+        try:
+            if not cerebro:
+                raise limet_related.RelatedError("CEREBRO_HOME non impostato")
+            if params.get("dry_run"):
+                self._chunk("\n=== Verifica progetti correlati ===\n")
+                problems = limet_related.check(cerebro, paths)
+                if problems:
+                    raise limet_related.RelatedError("\n".join(problems))
+                self._chunk("Percorsi validi e registrati. Qdrant/collection verificati al momento del collegamento.\n")
+            elif action == "related":
+                self._chunk("\n=== Collega progetti correlati ===\n")
+                limet_related.link(cerebro, paths, QDRANT_URL, log=lambda m: self._chunk(m + "\n"))
+            else:
+                self._chunk("\n=== Scollega progetti correlati ===\n")
+                limet_related.unlink(cerebro, paths, log=lambda m: self._chunk(m + "\n"))
+            self._chunk("\nFatto.\n")
+        except limet_related.RelatedError as e:
+            self._chunk("\n[ERRORE] %s\n" % e)
+            ok = False
+        except Exception as e:
+            self._chunk("\n[ERRORE] %s\n" % e)
+            ok = False
+        self._end_stream()
+        return ok
+
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path == "/":
@@ -310,12 +345,17 @@ class Handler(BaseHTTPRequestHandler):
             slug = slugify(os.path.basename(path.rstrip("\\/")) or path)
             collection = "CRB_" + slug
             registered = False
+            root_matches = None
             if cerebro:
                 reg_file = os.path.join(cerebro, "projects.json")
                 if os.path.exists(reg_file):
                     try:
-                        with open(reg_file, encoding="utf-8") as f:
-                            registered = slug in json.load(f)
+                        with open(reg_file, encoding="utf-8-sig") as f:
+                            _reg = json.load(f)
+                        registered = slug in _reg
+                        _root = (_reg.get(slug) or {}).get("root")
+                        if registered and _root:
+                            root_matches = limet_related.norm_path(_root) == limet_related.norm_path(path)
                     except Exception:
                         registered = False
             qdrant_up = _get_ok(f"{QDRANT_URL}/collections")
@@ -333,6 +373,7 @@ class Handler(BaseHTTPRequestHandler):
                 "slug": slug,
                 "collection": collection,
                 "registered": registered,
+                "root_matches": root_matches,
                 "qdrant_up": qdrant_up,
                 "ollama_up": ollama_up,
                 "collection_created": _collection_exists(collection) if qdrant_up else False,
@@ -377,13 +418,26 @@ class Handler(BaseHTTPRequestHandler):
             self._json({"error": "bad request: %s" % e}, 400)
             return
 
+        # One mutating job at a time (the registry is shared by every action).
+        if not JOB_LOCK.acquire(blocking=False):
+            self._json({"error": "un'altra operazione è in corso: attendi che termini"}, 409)
+            return
+        try:
+            self._run_job(params)
+        finally:
+            JOB_LOCK.release()
+
+    def _run_job(self, params):
         path = (params.get("path") or "").strip()
         action = params.get("action") or "create"
-        if not path:
-            self._json({"error": "project path is required"}, 400)
-            return
         if action not in ACTIONS:
             self._json({"error": "unknown action: %s" % action}, 400)
+            return
+        if action in ("related", "unrelate"):
+            self._handle_related(action, params)
+            return
+        if not path:
+            self._json({"error": "project path is required"}, 400)
             return
 
         done_msg = {
@@ -401,6 +455,25 @@ class Handler(BaseHTTPRequestHandler):
             RUNNING["stop_requested"] = False
             RUNNING["proc"] = None
         try:
+            if action == "remove":
+                # Drop this project's collection from related projects before unregistering it.
+                # A failure here is fatal: removing anyway would leave dangling links in the peers.
+                _rc = _resolve_cerebro_home(path, params.get("cerebro_home") or "")
+                if _rc:
+                    _rslug = slugify(os.path.basename(path.rstrip("\\/")) or path)
+                    _reg = os.path.join(_rc, "projects.json")
+                    try:
+                        _in_registry = False
+                        if os.path.isfile(_reg):
+                            with open(_reg, encoding="utf-8-sig") as _f:
+                                _in_registry = _rslug in json.load(_f)
+                        if _in_registry:
+                            self._chunk("\n=== Scollega correlati ===\n")
+                            limet_related.unlink(_rc, [path], log=lambda m: self._chunk(m + "\n"))
+                    except Exception as e:
+                        self._chunk("\n[ERRORE] scollegamento correlati fallito, rimozione annullata: %s\n" % e)
+                        self._end_stream()
+                        return
             if action == "adddocs":
                 _slug = slugify(os.path.basename(path.rstrip("\\/")) or path)
                 _cerebro = _resolve_cerebro_home(path, params.get("cerebro_home") or "")
@@ -474,6 +547,21 @@ class Handler(BaseHTTPRequestHandler):
                     self._chunk("\n[ERRORE] '%s' exited with code %s — stopped.\n" % (label, proc.returncode))
                     ok = False
                     break
+            if ok and action in ("create", "update") and not params.get("workspace"):
+                rel = [r.strip() for r in (params.get("related") or []) if isinstance(r, str) and r.strip()] \
+                    if isinstance(params.get("related"), list) else []
+                if rel:
+                    self._chunk("\n=== Collega progetti correlati ===\n")
+                    try:
+                        _rc2 = _resolve_cerebro_home(path, params.get("cerebro_home") or "")
+                        if not _rc2:
+                            raise limet_related.RelatedError("CEREBRO_HOME non impostato")
+                        limet_related.link(_rc2, [path] + rel, QDRANT_URL, log=lambda m: self._chunk(m + "\n"))
+                    except Exception as e:
+                        self._chunk("\n[ERRORE] Collegamento correlati fallito (il progetto è comunque %s): %s\n"
+                                    "Correggi i percorsi e rilancia Re-index con gli stessi progetti correlati.\n"
+                                    % ("creato" if action == "create" else "aggiornato", e))
+                        ok = False
             if ok:
                 self._chunk("\n" + done_msg + "\n")
         except Exception as e:

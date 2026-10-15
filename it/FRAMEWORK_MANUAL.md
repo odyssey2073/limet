@@ -634,6 +634,32 @@ spostata (o linkata) in `limet/archive/0001-nome-modifica/`.
    .\scripts\limet.ps1 update -ProjectPath C:\Progetti\TaskFlow -Lang it
    ```
 
+### B.1-bis Documentare un progetto esistente con poca o nessuna documentazione
+
+**Scenario**: il progetto esiste ma ha pochi o nessun documento. LIMET ricava la doc suite dal
+codice con il playbook `limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md` (Graphify + sorgenti); il
+team la valida; l'utente la indicizza. Guida passo-passo: `guides/workflow.html`, scenario
+"Documentare un progetto esistente".
+
+1. Launcher → **Crea** con Strumenti di contesto (crea `docs/`, `docs/_templates/`, il grafo del
+   codice, la registrazione in CEREBRO).
+2. Facoltativo: **Documentazione** per caricare il materiale esistente (md, txt, pdf, epub, docx,
+   xlsx, pptx, html).
+3. L'agente segue il playbook un modulo alla volta e scrive i documenti qui sotto; ciò che non si
+   vede nel codice è marcato `[da confermare]` / `[da chiedere al team]`, mai inventato.
+4. L'utente risolve i marker, poi Launcher → **Re-index → Incrementale**.
+
+| Documento | Percorso |
+|---|---|
+| mappa moduli, architettura, dipendenze, convenzioni, glossario, decisioni (ADR), sintesi non tecnica | `<progetto>/docs/` (`module-map.md`, `architecture.md`, `dependencies.md`, `conventions.md`, `glossary.md`, `decisions.md`, `NON_TECHNICAL_SUMMARY.md`) |
+| Report architetturale Graphify | `<progetto>/docs/architecture/GRAPH_REPORT.md` (copia; `graphify-out/` non è indicizzata) |
+| Mappa e documenti d'insieme del workspace | `<root-workspace>/docs/` e `limet-workspace/MODULE_MAP.md`; ogni modulo figlio ha la propria `docs/` |
+| Progetti correlati in cartelle separate | ciascuno nella propria `docs/`, poi collegamento con il campo **Progetti correlati** di Crea / Re-index |
+
+Note: per `decisions.md` e `dependencies.md` non esiste un template in `docs/_templates/` (l'agente
+segue il playbook). `limet/changes/` e `limet/archive/` servono a feature e bug fix, non alla
+documentazione di base.
+
 ### B.2 Creazione di un nuovo progetto con LIMET (partendo da zero)
 
 **Scenario**: si vuole avviare da zero il progetto "TaskFlow", con LIMET operativo fin dal primo
@@ -782,6 +808,32 @@ Esempio ricorrente usato in questa appendice: il progetto fittizio "TaskFlow" (i
 Appendice B) viene esteso con un secondo progetto correlato, **"TaskFlow-Notifications"** (un
 servizio satellite che invia notifiche quando una card cambia stato), che espone un contratto
 (API/evento) consumato da TaskFlow.
+
+### C.0-bis — Progetti correlati in cartelle non annidate (campo "Progetti correlati" di Crea / Re-index)
+
+Se i progetti stanno in cartelle diverse **senza una cartella padre comune**, non serve il livello
+workspace: nel Launcher usa il campo facoltativo **Progetti correlati** di **Crea** / **Re-index**.
+
+1. Crea il primo progetto con **Crea** (modalità Progetto). Le cartelle finali dei progetti devono
+   avere nomi diversi (lo slug deriva dal nome).
+2. Crea il secondo con **Crea** compilando **Progetti correlati** con il percorso del primo (uno per
+   riga se sono più di uno): al termine di Crea (e dell'indicizzazione) i progetti vengono collegati
+   in un unico passo. Per collegare progetti già creati: **Re-index** con lo stesso campo compilato.
+   Gli elencati devono essere già creati con Crea (registrati, con collection su Qdrant); il collegamento
+   non indicizza nulla da solo.
+3. Ogni progetto aggiunge in `projects.json` (campo `collections`) le collection degli altri:
+   `query_qdrant.py --project <slug>` e `limet_search` cercano in tutte. Nessun Re-index aggiuntivo.
+   Un blocco `LIMET-RELATED` in `AGENTS.md`, `CLAUDE.md` e `.github/copilot-instructions.md` lo
+   comunica all'agente.
+4. Il pulsante **Scollega** sotto il campo rimuove i collegamenti (progetti elencati: tra questo e
+   quelli; lista vuota: da tutti). **Rimuovi** un progetto lo scollega automaticamente dagli altri.
+   Il campo non è disponibile con Modalità Workspace.
+
+Garanzie: validazione completa prima di scrivere (progetto registrato, root coerente, nessuno slug
+duplicato, collection presente su Qdrant), scrittura atomica con copia `projects.json.bak` e
+rollback in caso di errore; Re-index e re-init non cancellano i collegamenti. Limite: il
+collegamento riguarda solo la documentazione (RAG); i grafi del codice Graphify restano per
+progetto. Helper: `scripts/limet_related.py` (test: `python -m unittest tests.test_limet_related`).
 
 ### C.0 — Il livello "workspace" in breve
 

@@ -109,7 +109,7 @@ New-Item -ItemType Directory -Force -Path (Join-Path $LimetProjectDir 'archive')
 # The transversal context tool (CEREBRO RAG + Graphify) is copied alongside the framework files so
 # each project is self-contained: the agent can always run `<limetDir>/scripts/limet-index.ps1`.
 New-Item -ItemType Directory -Force -Path (Join-Path $LimetProjectDir 'scripts') | Out-Null
-foreach ($tool in @('limet-index.ps1', 'limet-index.sh')) {
+foreach ($tool in @('limet-index.ps1', 'limet-index.sh', 'limet_related.py')) {
     Copy-Item -Force (Join-Path $PSScriptRoot $tool) (Join-Path $LimetProjectDir "scripts\$tool")
 }
 

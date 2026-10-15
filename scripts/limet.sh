@@ -94,6 +94,7 @@ mkdir -p "$LIMET_PROJECT_DIR/templates" "$LIMET_PROJECT_DIR/changes" "$LIMET_PRO
 mkdir -p "$LIMET_PROJECT_DIR/scripts"
 cp -f "$SCRIPT_DIR/limet-index.ps1" "$LIMET_PROJECT_DIR/scripts/limet-index.ps1"
 cp -f "$SCRIPT_DIR/limet-index.sh" "$LIMET_PROJECT_DIR/scripts/limet-index.sh"
+cp -f "$SCRIPT_DIR/limet_related.py" "$LIMET_PROJECT_DIR/scripts/limet_related.py"
 
 cp -f "$SOURCE_LANG_DIR/FRAMEWORK_MANUAL.md" "$LIMET_PROJECT_DIR/FRAMEWORK_MANUAL.md"
 cp -f "$SOURCE_LANG_DIR/ONBOARDING_CHECKLIST.md" "$LIMET_PROJECT_DIR/ONBOARDING_CHECKLIST.md"
