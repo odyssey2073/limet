@@ -32,7 +32,7 @@ IS_WIN = os.name == "nt"
 sys.path.insert(0, HERE)
 import limet_related  # noqa: E402
 
-ACTIONS = ("create", "update", "status", "remove", "instructions", "adddocs", "related", "unrelate")
+ACTIONS = ("create", "update", "status", "remove", "instructions", "adddocs", "related", "unrelate", "createrelated")
 
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
@@ -317,6 +317,89 @@ class Handler(BaseHTTPRequestHandler):
         self._end_stream()
         return ok
 
+    def _handle_createrelated(self, params):
+        """Create every listed project (standard Crea) and then link them all together."""
+        paths = params.get("paths")
+        self._start_stream()
+        ok = True
+        with RUN_LOCK:
+            RUNNING["stop_requested"] = False
+            RUNNING["proc"] = None
+        try:
+            if not isinstance(paths, list) or not all(isinstance(p, str) for p in paths):
+                raise limet_related.RelatedError("elenco percorsi non valido")
+            paths = [p.strip() for p in paths if p.strip()]
+            if len(paths) < 2:
+                raise limet_related.RelatedError("servono almeno 2 progetti (uno per riga)")
+            if len(paths) > limet_related.MAX_PROJECTS:
+                raise limet_related.RelatedError("troppi progetti (max %d)" % limet_related.MAX_PROJECTS)
+            if not params.get("context"):
+                raise limet_related.RelatedError('attiva "Strumenti di contesto": serve la registrazione in CEREBRO per collegare i progetti')
+            cerebro = _resolve_cerebro_home(paths[0], params.get("cerebro_home") or "")
+            if not cerebro:
+                raise limet_related.RelatedError("CEREBRO_HOME non impostato")
+            slugs = {}
+            for p in paths:
+                s = slugify(os.path.basename(p.rstrip("\\/")) or p)
+                if s in slugs:
+                    raise limet_related.RelatedError("cartelle finali con lo stesso nome (slug '%s'): %s e %s" % (s, slugs[s], p))
+                slugs[s] = p
+            registry = {}
+            reg_file = os.path.join(cerebro, "projects.json")
+            if os.path.isfile(reg_file):
+                with open(reg_file, encoding="utf-8-sig") as f:
+                    registry = json.load(f)
+            todo = []
+            for p in paths:
+                s = slugify(os.path.basename(p.rstrip("\\/")) or p)
+                entry = registry.get(s) if isinstance(registry, dict) else None
+                if entry is not None:
+                    if limet_related.norm_path(str(entry.get("root", ""))) != limet_related.norm_path(p):
+                        raise limet_related.RelatedError("slug '%s' già registrato per un'altra cartella: %s" % (s, entry.get("root")))
+                    self._chunk("Già registrato, non lo ricreo: %s\n" % p)
+                else:
+                    todo.append(p)
+            for p in todo:
+                for label, argv in build_commands({"action": "create", "path": p, "lang": params.get("lang", "en"),
+                                                   "workspace": False, "context": True, "cerebro_home": cerebro}):
+                    with RUN_LOCK:
+                        if RUNNING["stop_requested"]:
+                            ok = False
+                    if not ok:
+                        break
+                    self._chunk("\n=== %s — %s ===\n" % (os.path.basename(p.rstrip("\\/")), label))
+                    proc = _popen_tree(argv)
+                    with RUN_LOCK:
+                        RUNNING["proc"] = proc
+                    for line in proc.stdout:
+                        self._chunk(line)
+                    proc.wait()
+                    with RUN_LOCK:
+                        RUNNING["proc"] = None
+                        stopped = RUNNING["stop_requested"]
+                    if stopped:
+                        self._chunk("\n[FERMATO] interrotto su richiesta dell'utente.\n")
+                        ok = False
+                        break
+                    if proc.returncode != 0:
+                        self._chunk("\n[ERRORE] '%s' exited with code %s — stopped. I progetti successivi non sono stati creati.\n" % (label, proc.returncode))
+                        ok = False
+                        break
+                if not ok:
+                    break
+            if ok:
+                self._chunk("\n=== Collega progetti correlati ===\n")
+                limet_related.link(cerebro, paths, QDRANT_URL, log=lambda m: self._chunk(m + "\n"))
+                self._chunk("\nFatto. Progetti creati e collegati.\n")
+        except Exception as e:
+            self._chunk("\n[ERRORE] %s\n" % e)
+            ok = False
+        finally:
+            with RUN_LOCK:
+                RUNNING["proc"] = None
+        self._end_stream()
+        return ok
+
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path == "/":
@@ -436,6 +519,9 @@ class Handler(BaseHTTPRequestHandler):
         if action in ("related", "unrelate"):
             self._handle_related(action, params)
             return
+        if action == "createrelated":
+            self._handle_createrelated(params)
+            return
         if not path:
             self._json({"error": "project path is required"}, 400)
             return
@@ -547,21 +633,6 @@ class Handler(BaseHTTPRequestHandler):
                     self._chunk("\n[ERRORE] '%s' exited with code %s — stopped.\n" % (label, proc.returncode))
                     ok = False
                     break
-            if ok and action in ("create", "update") and not params.get("workspace"):
-                rel = [r.strip() for r in (params.get("related") or []) if isinstance(r, str) and r.strip()] \
-                    if isinstance(params.get("related"), list) else []
-                if rel:
-                    self._chunk("\n=== Collega progetti correlati ===\n")
-                    try:
-                        _rc2 = _resolve_cerebro_home(path, params.get("cerebro_home") or "")
-                        if not _rc2:
-                            raise limet_related.RelatedError("CEREBRO_HOME non impostato")
-                        limet_related.link(_rc2, [path] + rel, QDRANT_URL, log=lambda m: self._chunk(m + "\n"))
-                    except Exception as e:
-                        self._chunk("\n[ERRORE] Collegamento correlati fallito (il progetto è comunque %s): %s\n"
-                                    "Correggi i percorsi e rilancia Re-index con gli stessi progetti correlati.\n"
-                                    % ("creato" if action == "create" else "aggiornato", e))
-                        ok = False
             if ok:
                 self._chunk("\n" + done_msg + "\n")
         except Exception as e:

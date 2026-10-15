@@ -654,10 +654,16 @@ team la valida; l'utente la indicizza. Guida passo-passo: `guides/workflow.html`
 | mappa moduli, architettura, dipendenze, convenzioni, glossario, decisioni (ADR), sintesi non tecnica | `<progetto>/docs/` (`module-map.md`, `architecture.md`, `dependencies.md`, `conventions.md`, `glossary.md`, `decisions.md`, `NON_TECHNICAL_SUMMARY.md`) |
 | Report architetturale Graphify | `<progetto>/docs/architecture/GRAPH_REPORT.md` (copia; `graphify-out/` non è indicizzata) |
 | Mappa e documenti d'insieme del workspace | `<root-workspace>/docs/` e `limet-workspace/MODULE_MAP.md`; ogni modulo figlio ha la propria `docs/` |
-| Progetti correlati in cartelle separate | ciascuno nella propria `docs/`, poi collegamento con il campo **Progetti correlati** di Crea / Re-index |
+| Progetti correlati in cartelle separate | ciascuno nella propria `docs/`, poi collegamento con il pulsante **Progetti correlati** di Crea |
 
 Note: per `decisions.md` e `dependencies.md` non esiste un template in `docs/_templates/` (l'agente
-segue il playbook). `limet/changes/` e `limet/archive/` servono a feature e bug fix, non alla
+segue il playbook).
+
+**Più progetti correlati**: l'agente lavora solo sul codice della cartella in cui lo apri; il
+collegamento condivide solo la ricerca documentale (RAG), non il codice né il grafo. Quindi il
+prompt va lanciato **una volta per progetto**, aprendo l'agente in ciascuna cartella (A poi B), con
+**Re-index** di ciascuno a fine giro. Conviene documentare prima A e re-indicizzarlo: l'agente di B
+potrà già consultare i documenti di A per le dipendenze tra i due. `limet/changes/` e `limet/archive/` servono a feature e bug fix, non alla
 documentazione di base.
 
 ### B.2 Creazione di un nuovo progetto con LIMET (partendo da zero)
@@ -809,25 +815,24 @@ Appendice B) viene esteso con un secondo progetto correlato, **"TaskFlow-Notific
 servizio satellite che invia notifiche quando una card cambia stato), che espone un contratto
 (API/evento) consumato da TaskFlow.
 
-### C.0-bis — Progetti correlati in cartelle non annidate (campo "Progetti correlati" di Crea / Re-index)
+### C.0-bis — Progetti correlati in cartelle non annidate (pulsante "Progetti correlati" dentro Crea)
 
 Se i progetti stanno in cartelle diverse **senza una cartella padre comune**, non serve il livello
-workspace: nel Launcher usa il campo facoltativo **Progetti correlati** di **Crea** / **Re-index**.
+workspace: nel Launcher, in **Crea**, premi **Progetti correlati →**.
 
-1. Crea il primo progetto con **Crea** (modalità Progetto). Le cartelle finali dei progetti devono
-   avere nomi diversi (lo slug deriva dal nome).
-2. Crea il secondo con **Crea** compilando **Progetti correlati** con il percorso del primo (uno per
-   riga se sono più di uno): al termine di Crea (e dell'indicizzazione) i progetti vengono collegati
-   in un unico passo. Per collegare progetti già creati: **Re-index** con lo stesso campo compilato.
-   Gli elencati devono essere già creati con Crea (registrati, con collection su Qdrant); il collegamento
-   non indicizza nulla da solo.
+1. Si apre una pagina dedicata: inserisci i percorsi dei progetti (uno per riga, almeno 2). Le
+   cartelle finali devono avere nomi diversi (lo slug deriva dal nome). Lingua e Strumenti di
+   contesto della pagina Crea valgono per tutti (il contesto è obbligatorio).
+2. In fondo premi **Crea progetti correlati**: esegue la Crea standard (struttura LIMET + indice
+   CEREBRO + Graphify) su ogni progetto non ancora registrato (quelli già registrati non vengono
+   ricreati) e poi li collega tutti. **← Indietro** torna alla Crea singola.
 3. Ogni progetto aggiunge in `projects.json` (campo `collections`) le collection degli altri:
    `query_qdrant.py --project <slug>` e `limet_search` cercano in tutte. Nessun Re-index aggiuntivo.
    Un blocco `LIMET-RELATED` in `AGENTS.md`, `CLAUDE.md` e `.github/copilot-instructions.md` lo
    comunica all'agente.
-4. Il pulsante **Scollega** sotto il campo rimuove i collegamenti (progetti elencati: tra questo e
-   quelli; lista vuota: da tutti). **Rimuovi** un progetto lo scollega automaticamente dagli altri.
-   Il campo non è disponibile con Modalità Workspace.
+4. Il pulsante **Scollega** della pagina rimuove i collegamenti (2+ progetti: tra loro; 1 solo: da
+   tutti). **Rimuovi** un progetto lo scollega automaticamente dagli altri. Non è disponibile con
+   Modalità Workspace.
 
 Garanzie: validazione completa prima di scrivere (progetto registrato, root coerente, nessuno slug
 duplicato, collection presente su Qdrant), scrittura atomica con copia `projects.json.bak` e

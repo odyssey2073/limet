@@ -645,10 +645,16 @@ scenario "Documenting an existing project".
 | module map, architecture, dependencies, conventions, glossary, decisions (ADR), non-technical summary | `<project>/docs/` (`module-map.md`, `architecture.md`, `dependencies.md`, `conventions.md`, `glossary.md`, `decisions.md`, `NON_TECHNICAL_SUMMARY.md`) |
 | Graphify architectural report | `<project>/docs/architecture/GRAPH_REPORT.md` (copy; `graphify-out/` is not indexed) |
 | Workspace-wide map and documents | `<workspace-root>/docs/` and `limet-workspace/MODULE_MAP.md`; each child module keeps its own `docs/` |
-| Related projects in separate folders | each one in its own `docs/`, then link with the **Related projects** field of Create / Re-index |
+| Related projects in separate folders | each one in its own `docs/`, then link with the **Related projects** button of Create |
 
 Notes: `decisions.md` and `dependencies.md` have no template in `docs/_templates/` (the agent follows
-the playbook). `limet/changes/` and `limet/archive/` are for features and bug fixes, not for the
+the playbook).
+
+**Several related projects**: the agent works only on the code of the folder it is opened in; the
+link shares only documentation search (RAG), not code or the graph. So run the prompt **once per
+project**, opening the agent in each folder (A then B), with a **Re-index** of each at the end. Better
+to document A first and re-index it: B's agent can then consult A's documents for the dependencies
+between the two. `limet/changes/` and `limet/archive/` are for features and bug fixes, not for the
 base documentation.
 
 ### B.2 Creating a new project with LIMET (from scratch)
@@ -798,25 +804,24 @@ Appendix B) is extended with a second, correlated project, **"TaskFlow-Notificat
 satellite service that sends notifications when a card changes status), which consumes a
 contract (API/event) exposed by TaskFlow.
 
-### C.0-bis — Related projects in non-nested folders ("Related projects" field of Create / Re-index)
+### C.0-bis — Related projects in non-nested folders ("Related projects" button inside Create)
 
 If the projects live in different folders **with no common parent folder**, you do not need the
-workspace level: use the optional **Related projects** field of the Launcher's **Create** / **Re-index**.
+workspace level: in the Launcher, in **Create**, press **Related projects →** (UI label in Italian: "Progetti correlati").
 
-1. Create the first project with **Create** (Project mode). The final folder names of the projects
-   must differ (the slug is derived from the name).
-2. Create the second one with **Create**, filling **Related projects** with the path of the first
-   (one per line if more): at the end of Create (and indexing) the projects are linked in a single
-   step. To link already-created projects: **Re-index** with the same field filled. The listed
-   projects must already be created with Create (registered, collection in Qdrant); linking does not
-   index anything by itself.
+1. A dedicated page opens: enter the project paths (one per line, at least 2). The final folder
+   names must differ (the slug is derived from the name). Language and Context tools from the Create
+   page apply to all (context is mandatory).
+2. At the bottom press **Create related projects** ("Crea progetti correlati"): it runs the standard
+   Create (LIMET structure + CEREBRO index + Graphify) on every project not yet registered (already
+   registered ones are not recreated), then links them all. **← Back** returns to single-project Create.
 3. Each project gets the others' collections in `projects.json` (`collections` field):
    `query_qdrant.py --project <slug>` and `limet_search` search all of them. No extra Re-index needed.
    A `LIMET-RELATED` block in `AGENTS.md`, `CLAUDE.md` and `.github/copilot-instructions.md`
    tells the agent.
-4. The **Scollega** (Unlink) button under the field removes the links (listed projects: between this
-   one and them; empty list: from all). **Remove** on a project unlinks it from the others
-   automatically. The field is not available in Workspace mode.
+4. The page's **Scollega** (Unlink) button removes the links (2+ projects: between them; a single
+   one: from all). **Remove** on a project unlinks it from the others automatically. Not available
+   in Workspace mode.
 
 Guarantees: full validation before writing (project registered, consistent root, no duplicate slug,
 collection present in Qdrant), atomic write with a `projects.json.bak` copy and rollback on error;
