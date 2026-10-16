@@ -33,6 +33,22 @@
 | 1      | [yes: short description / no] | [yes: link / no]                                           | [mandatory if either is "no"]        |
 | 2      |                                |                                                             |                                       |
 
+## Change log — one row per file touched
+
+> See `FRAMEWORK_MANUAL.md` §1.4 and §4. Add a row for **every file created/modified**, **at the
+> time of the change**, not at the end of the feature. It answers, without re-reading the diff:
+> what was touched, why, and how it is verified. The "Implementation outcome" section below
+> remains the final summary; this is the file-by-file detail.
+>
+> If a task touches files living in **another module** (shared library, script-only module), the
+> detail belongs in that module's change log: leave only a pointer row here, so the trace is not
+> duplicated.
+
+| Task | File | Type | What changed | Why | Linked verification |
+| ---- | ---- | ---- | ------------ | --- | ------------------- |
+| 1    | `[path relative to the module root]` | created / modified / deleted | [specific summary, not "various changes"] | [which requirement/task requires it] | [unit test, e2e verification or manual check] |
+| 2    |      |      |              |     |                     |
+
 ## Implementation outcome (fill in once work is finished)
 
 > Retroactive update: do not rewrite history, add a dated section describing what was actually

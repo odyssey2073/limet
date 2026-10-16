@@ -33,6 +33,22 @@
 | 1      | [sì: descrizione breve / no]   | [sì: link / no]                                            | [obbligatorio se uno dei due è "no"] |
 | 2      |                                |                                                             |                                    |
 
+## Registro modifiche — una riga per file toccato
+
+> Vedi `FRAMEWORK_MANUAL.md` §1.4 e §4. Per **ogni file creato/modificato** aggiungere una riga,
+> **al momento della modifica** e non a fine feature. Serve a rispondere senza rileggere il diff
+> a: cosa è stato toccato, perché, e come lo si verifica. La sezione "Esito implementazione" qui
+> sotto resta la sintesi finale; questa è il dettaglio file per file.
+>
+> Se un task tocca file che vivono in un **altro modulo** (libreria condivisa, modulo di script),
+> il dettaglio va nel registro di quel modulo: qui si lascia solo una riga di rimando, per non
+> duplicare la traccia.
+
+| Task | File | Tipo | Cosa è cambiato | Perché | Verifica collegata |
+| ---- | ---- | ---- | --------------- | ------ | ------------------ |
+| 1    | `[percorso relativo alla root del modulo]` | creato / modificato / eliminato | [sintesi puntuale, non "varie modifiche"] | [quale requisito/task lo richiede] | [unit test, verifica e2e o controllo manuale] |
+| 2    |      |      |                 |        |                    |
+
 ## Esito implementazione (da compilare a lavoro concluso)
 
 > Aggiornamento a ritroso: non riscrivere la storia, aggiungere una sezione con data che descrive

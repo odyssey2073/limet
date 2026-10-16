@@ -142,7 +142,7 @@ Regole vincolanti (vedi il manuale per il dettaglio):
   e/o test e2e approfonditi con istruzioni passo-passo, salvo motivazione esplicita di omissione.
   Quando un task passa a \`done\`, annotare anche l'ora (\`YYYY-MM-DD HH:MM\`).
 - **Approvazione umana**: prima di implementare, chiedi all'utente l'approvazione del piano/proposta e registrala nel documento (chi ha approvato + data).
-- **Tracciabilità e comunicazione**: a fine task, per ogni file creato/modificato riporta nella scheda task il test collegato e comunica all'utente l'elenco delle modifiche (file, cosa è cambiato, perché).
+- **Tracciabilità e comunicazione**: ogni file creato/modificato va registrato subito nella sezione "Registro modifiche" del \`TASK_LIST.md\` (una riga per file: task, percorso, tipo, cosa è cambiato, perché, verifica collegata), non a fine feature; se il file vive in un altro modulo, il dettaglio sta nel registro di quel modulo e qui resta un rimando. A fine task comunica all'utente l'elenco delle modifiche (file, cosa è cambiato, perché).
 - **MAI eseguire build o test**: non lanciare MAI build (\`./mvnw package\`) né test (\`./mvnw test\`) in autonomia — l'output riempie il contesto di rumore. Quando serve, dai all'utente il comando, chiedi di eseguirlo e di comunicare l'esito, e resta in standby finché non arriva.
 - Non eseguire comandi con effetti persistenti (commit, push, migrazioni, deploy) senza
   autorizzazione esplicita dell'utente.
@@ -182,7 +182,7 @@ Binding rules (see the manual for full detail):
   and/or thorough e2e tests with step-by-step instructions, unless explicitly justified as
   omitted. When a task moves to \`done\`, also record the time (\`YYYY-MM-DD HH:MM\`).
 - **Human approval**: before implementing, ask the user to approve the plan/proposal and record it in the document (who approved + date).
-- **Traceability and communication**: at the end of a task, for each created/modified file record the linked test in the task sheet and tell the user the list of changes (file, what changed, why).
+- **Traceability and communication**: every created/modified file must be recorded straight away in the "Change log" section of \`TASK_LIST.md\` (one row per file: task, path, type, what changed, why, linked verification), not at the end of the feature; if the file lives in another module, the detail belongs in that module's change log and only a pointer stays here. At the end of a task, tell the user the list of changes (file, what changed, why).
 - **NEVER run builds or tests**: never run a build (\`./mvnw package\`) or tests (\`./mvnw test\`) on your own — the output floods the context with noise. When needed, give the user the command, ask them to run it and report the outcome, and stay on standby until it arrives.
 - Do not run commands with persistent effects (commit, push, migrations, deploy) without the
   user's explicit authorization.

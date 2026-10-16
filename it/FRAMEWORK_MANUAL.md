@@ -39,6 +39,13 @@ Dopo l'implementazione, i documenti di task/piano vengono aggiornati con una sez
 implementazione" datata, che descrive cosa è stato realmente fatto (compresi eventuali
 scostamenti dal piano) — non si riscrive la storia, la si completa.
 
+A questo si affianca il **registro delle modifiche** nel `TASK_LIST.md` (sezione "Registro
+modifiche"): una riga per ogni file creato/modificato, con cosa è cambiato, perché e quale
+verifica lo copre. A differenza dell'"Esito implementazione", che è una sintesi di fine lavoro,
+il registro si compila **al momento della modifica**, task per task. Senza di esso la traccia
+dei file finisce sparsa tra le colonne "Dettaglio" e "Note" della tabella dei task, e diventa
+illeggibile appena un task tocca più di un file.
+
 ### 1.5 Nessun task si considera concluso senza una strategia di verifica (vincolante)
 
 > Questo è un principio **non negoziabile** del framework: ogni task, se non già coperto da test
@@ -149,6 +156,11 @@ lavoro ormai concluso, pur mantenendone la tracciabilità.
   già lavorando con più aggiornamenti nello stesso giorno, nel qual caso vale la stessa regola.
 - **Aggiornamenti a ritroso**: aggiungere una sezione datata ("Esito implementazione (YYYY-MM-DD)"),
   non modificare silenziosamente il testo originale del piano.
+- **Registro modifiche**: ogni file creato/modificato va registrato nella sezione "Registro
+  modifiche" del `TASK_LIST.md` (una riga per file: task, percorso, tipo, cosa è cambiato,
+  perché, verifica collegata), compilata **al momento della modifica** e non a fine feature. Se
+  il file vive in un altro modulo, il dettaglio sta nel registro di quel modulo e qui resta solo
+  un rimando.
 - **Nomi file**: usare i nomi dei template così come forniti (in inglese) come base; per istanze
   concrete, aggiungere un identificativo descrittivo (es. `PLAN_TEMPLATE.md` → `PLAN_<slug>.md`).
 

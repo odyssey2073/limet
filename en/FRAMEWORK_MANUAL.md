@@ -38,6 +38,13 @@ After implementation, plan/task documents are updated with a dated "Implementati
 section describing what was actually done (including any deviation from the plan) — the history
 is not rewritten, it is completed.
 
+Alongside it sits the **change log** in `TASK_LIST.md` ("Change log" section): one row per file
+created/modified, with what changed, why, and which verification covers it. Unlike the
+"Implementation outcome", which is an end-of-work summary, the change log is filled in **at the
+time of the change**, task by task. Without it, the file-level trace ends up scattered across the
+"Detail" and "Notes" columns of the task table, and becomes unreadable as soon as a task touches
+more than one file.
+
 ### 1.5 No task is considered closed without a verification strategy (binding)
 
 > This is a **non-negotiable** principle of the framework: every task, unless already covered by
@@ -146,6 +153,10 @@ already finished, while still preserving traceability.
   already working with multiple updates on the same day, in which case the same rule applies.
 - **Retroactive updates**: add a dated section ("Implementation outcome (YYYY-MM-DD)"), do not
   silently edit the original plan text.
+- **Change log**: every file created/modified must be recorded in the "Change log" section of
+  `TASK_LIST.md` (one row per file: task, path, type, what changed, why, linked verification),
+  filled in **at the time of the change** and not at the end of the feature. If the file lives in
+  another module, the detail belongs in that module's change log and only a pointer stays here.
 - **File names**: use the template names as provided (in English) as a base; for concrete
   instances, add a descriptive identifier (e.g. `PLAN_TEMPLATE.md` → `PLAN_<slug>.md`).
 
