@@ -180,6 +180,41 @@ For every task that introduces or modifies behavior (not just comments/documenta
   to verify **before** (pre) and **after** (post) the test — e.g. SQL queries on the DB — not only
   the return/HTTP response.
 
+**Test quality self-review (mandatory before declaring it complete).** Writing a test is not
+enough: a test can be present, documented and tracked, and still be unable to fail when the
+defect comes back. Before considering the test work finished, run this review and record its
+outcome in the task document. The defects listed here must not be left to the human reviewer.
+
+> **Stopping criterion — mental sabotage.** For every change to production code, ask: *which
+> single plausible alteration of this code would NOT make any test fail?* If an answer exists, a
+> test is missing. This is the mental equivalent of mutation testing, and it works even where no
+> automated tool is available.
+
+1. **Every assert must be able to fail for the reason stated**, not blow the test up earlier for
+   a different cause. An assert that can never fail on its own is noise: it gives the illusion of
+   coverage and produces a misleading diagnosis when something actually breaks.
+2. **The expected value is not derived from the object under test.** If the expected value is
+   read, iterated or computed from the very thing being verified, the test is partly
+   tautological: it catches internal inconsistencies, not omissions (what was removed, or never
+   added).
+3. **No arbitrary sample.** Either the complete set of cases, or a declaredly representative
+   subset with the selection criterion written down. "The most used ones" is not a criterion
+   anyone can defend six months later.
+4. **Verify the contract, not just the happy path.** For every public method touched: what it
+   promises on absent, empty, invalid or out-of-range input — and what it promises *not* to do.
+5. **Declared redundancy.** If a test is already implied by another, state in writing why it is
+   kept (usually: it produces a more precise diagnosis) or remove it. Silent redundancy is
+   mistaken for additional coverage.
+6. **Declared limit.** Whatever the unit test structurally cannot cover (alignment with an
+   external system, a data schema, an environment configuration) must be written in the test
+   itself, pointing to what does cover it: integration tests, verification queries, documented
+   manual checks.
+7. **No shared-state mutation** by a test: public setters on enums or singletons, static caches,
+   data left dirty in the test schema. The suite outcome must not depend on execution order.
+
+This review applies to any language and stack: the principles concern the structure of the
+assertions, not the testing library in use.
+
 ### 5.2 Thorough e2e tests
 
 Required when unit tests alone do not provide enough confidence (external integrations, side
@@ -217,6 +252,9 @@ in the task document, not left implicit.
   implementation deviated from what was planned.
 - **Task marked `done` without verification**: writing code does not equal a completed task; the
   verification strategy of §5 must be completed (or explicitly justified as not applicable).
+- **A test that cannot fail**: assertions that can never fail on their own, expected values
+  derived from the object under test, arbitrary samples of cases. They provide apparent coverage
+  and misleading diagnosis — see the mandatory self-review in §5.1.
 - **Accumulation of "living" documentation never archived**: plans finished months ago that
   remain mixed in with active work, instead of being frozen with `ARCHIVE_ENTRY_TEMPLATE.md`.
 - **Exclusively intuition-driven (vibe-driven) work on non-trivial changes**: skipping the
@@ -636,6 +674,21 @@ LIMET.
    ```powershell
    .\scripts\limet.ps1 update -ProjectPath C:\Projects\TaskFlow -Lang en
    ```
+
+   **Propagation to per-tool files.** `limet.ps1 update` refreshes `AGENTS.md`. From there:
+   - **Claude Code** — if `CLAUDE.md` contains only the `@AGENTS.md` line (the standard case
+     created by the script), it inherits the change automatically: no further action.
+   - **Materialized copy** — if the project was indexed with `limet-index`, the marked blocks were
+     *copied* into `CLAUDE.md` and `.github/copilot-instructions.md`, and stay at the previous
+     version until you re-run:
+
+     ```powershell
+     .\scripts\limet-index.ps1 instructions -ProjectPath C:\Projects\TaskFlow -Lang en
+     ```
+
+     Quick check: look for the `<!-- LIMET:START -->` marker in `CLAUDE.md`. If it is there, the
+     project uses the materialized copy and the second command is needed; if only `@AGENTS.md` is
+     there, it is not.
 
 ### B.1-bis Documenting an existing project with little or no documentation
 

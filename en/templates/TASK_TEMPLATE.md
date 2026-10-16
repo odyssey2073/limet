@@ -70,6 +70,8 @@
 - **Do tests already cover this area?** [yes/no — reference]
 - **New unit tests planned**: [list of cases, or "none because..."]
 - **Where detailed**: [reference to `TEST_PLAN_TEMPLATE.md`]
+- **Quality self-review performed** (`FRAMEWORK_MANUAL.md` §5.1): [yes/no + outcome of the mental
+  sabotage: which alteration of the code would not make any test fail]
 
 ### 5.2 E2e tests
 

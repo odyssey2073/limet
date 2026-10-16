@@ -69,6 +69,8 @@
 - **Esistono già test che coprono quest'area?** [sì/no — riferimento]
 - **Nuovi unit test previsti**: [elenco casi, o "nessuno perché..."]
 - **Dove sono descritti in dettaglio**: [riferimento a `TEST_PLAN_TEMPLATE.md`]
+- **Autorevisione della qualità eseguita** (`FRAMEWORK_MANUAL.md` §5.1): [sì/no + esito del
+  sabotaggio mentale: quale alterazione del codice non farebbe fallire nessun test]
 
 ### 5.2 Test e2e
 

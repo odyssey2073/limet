@@ -20,6 +20,21 @@ casi limite noti.]
 | - | -------------- | -------------------- | --------------------------------------------- |
 | 1 | [...]          | [...]                 | [...]                                          |
 
+### Autorevisione della qualità (obbligatoria — vedi `FRAMEWORK_MANUAL.md` §5.1)
+
+> Da compilare prima di dichiarare completo il lavoro di test. Non è una formalità: un test può
+> essere presente e tracciato e nondimeno non fallire quando il difetto torna.
+
+- **Sabotaggio mentale**: quale singola alterazione plausibile del codice di produzione NON
+  farebbe fallire nessun test? [risposta, o "nessuna" — se una esiste, manca un test]
+- [ ] Ogni assert può fallire **per il motivo dichiarato** (nessun assert che non può fallire da solo)
+- [ ] Il valore atteso **non è derivato** dall'oggetto sotto test
+- [ ] Nessun campione arbitrario: insieme completo, o criterio di selezione scritto
+- [ ] Verificato il contratto del metodo (input assenti/vuoti/non validi), non solo il percorso felice
+- [ ] Eventuali ridondanze fra test sono dichiarate e motivate
+- [ ] Ciò che lo unit test non può coprire è scritto, con rimando a cosa lo copre
+- [ ] Nessuna mutazione di stato condiviso (l'esito non dipende dall'ordine di esecuzione)
+
 ## Test e2e previsti
 
 > Vedi anche `E2E_VERIFICATION_TEMPLATE.md` per la checklist passo-passo di esecuzione manuale.

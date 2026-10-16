@@ -161,6 +161,12 @@ Regole vincolanti (vedi il manuale per il dettaglio):
 - **Nessun task può essere marcato ``done`` senza una strategia di verifica**: unit test dedicati
   e/o test e2e approfonditi con istruzioni passo-passo, salvo motivazione esplicita di omissione.
   Quando un task passa a ``done``, annotare anche l'ora (``YYYY-MM-DD HH:MM``).
+- **Qualità dei test, non solo presenza**: prima di dichiarare completo uno unit test, esegui
+  l'autorevisione (manuale §5.1) e riportane l'esito. Criterio di arresto: *quale singola
+  alterazione plausibile del codice di produzione NON farebbe fallire nessun test?* Se una
+  risposta esiste, manca un test. Verifica inoltre che ogni assert possa fallire per il motivo
+  dichiarato, che il valore atteso non sia derivato dall'oggetto sotto test e che sia coperto il
+  contratto del metodo (input assenti, vuoti, non validi), non solo il percorso felice.
 - **Approvazione umana**: prima di implementare, chiedi all'utente l'approvazione del piano/proposta e registrala nel documento (chi ha approvato + data).
 - **Tracciabilità e comunicazione**: ogni file creato/modificato va registrato subito nella sezione "Registro modifiche" del ``TASK_LIST.md`` (una riga per file: task, percorso, tipo, cosa è cambiato, perché, verifica collegata), non a fine feature; se il file vive in un altro modulo, il dettaglio sta nel registro di quel modulo e qui resta un rimando. A fine task comunica all'utente l'elenco delle modifiche (file, cosa è cambiato, perché).
 - **MAI eseguire build o test**: non lanciare MAI build (``./mvnw package``) né test (``./mvnw test``) in autonomia — l'output riempie il contesto di rumore. Quando serve, dai all'utente il comando, chiedi di eseguirlo e di comunicare l'esito, e resta in standby finché non arriva.
@@ -200,6 +206,12 @@ Binding rules (see the manual for full detail):
 - **No task can be marked ``done`` without a verification strategy**: dedicated unit tests
   and/or thorough e2e tests with step-by-step instructions, unless explicitly justified as
   omitted. When a task moves to ``done``, also record the time (``YYYY-MM-DD HH:MM``).
+- **Test quality, not just presence**: before declaring a unit test complete, run the self-review
+  (manual §5.1) and record its outcome. Stopping criterion: *which single plausible alteration of
+  the production code would NOT make any test fail?* If an answer exists, a test is missing. Also
+  check that every assert can fail for the reason stated, that the expected value is not derived
+  from the object under test, and that the method contract is covered (absent, empty, invalid
+  input), not just the happy path.
 - **Human approval**: before implementing, ask the user to approve the plan/proposal and record it in the document (who approved + date).
 - **Traceability and communication**: every created/modified file must be recorded straight away in the "Change log" section of ``TASK_LIST.md`` (one row per file: task, path, type, what changed, why, linked verification), not at the end of the feature; if the file lives in another module, the detail belongs in that module's change log and only a pointer stays here. At the end of a task, tell the user the list of changes (file, what changed, why).
 - **NEVER run builds or tests**: never run a build (``./mvnw package``) or tests (``./mvnw test``) on your own — the output floods the context with noise. When needed, give the user the command, ask them to run it and report the outcome, and stay on standby until it arrives.

@@ -40,6 +40,10 @@
 ## 5. Verification (mandatory — see manual §1.5/§5)
 
 - [ ] Unit tests have been written/extended for the modified behavior.
+- [ ] The **test quality self-review** has been performed (§5.1): mental sabotage ("which
+      alteration of the code would not make any test fail?"), asserts able to fail for the reason
+      stated, expected value not derived from the object under test, no arbitrary sample, the
+      contract verified beyond the happy path.
 - [ ] It has been assessed whether a thorough e2e test is needed; if so, it has been documented
       with `E2E_VERIFICATION_TEMPLATE.md` (preconditions, pre/post state check, numbered steps,
       expected result per step, objective verification criteria, rollback).

@@ -39,6 +39,10 @@
 ## 5. Verifica (obbligatoria — vedi §1.5/§5 del manuale)
 
 - [ ] Sono stati scritti/estesi unit test per il comportamento modificato.
+- [ ] È stata eseguita l'**autorevisione della qualità** dei test (§5.1): sabotaggio mentale
+      («quale alterazione del codice non farebbe fallire nessun test?»), assert che possono
+      fallire per il motivo dichiarato, atteso non derivato dall'oggetto sotto test, nessun
+      campione arbitrario, contratto verificato oltre al percorso felice.
 - [ ] È stato valutato se serve un test e2e approfondito; se sì, è stato documentato con
       `E2E_VERIFICATION_TEMPLATE.md` (precondizioni, controllo pre/post dello stato, passi
       numerati, risultato atteso per passo, criteri di verifica oggettivi, rollback).

@@ -185,6 +185,43 @@ Per ogni task che introduce o modifica comportamento (non solo commenti/document
   da verificare **prima** (pre) e **dopo** (post) il test — es. query SQL sul DB — non solo la
   risposta di ritorno/HTTP.
 
+**Autorevisione della qualità del test (obbligatoria prima di dichiararlo completo).** Scrivere
+un test non basta: un test può essere presente, documentato e tracciato, e nondimeno non essere
+in grado di fallire quando il difetto si ripresenta. Prima di considerare concluso il lavoro di
+test, eseguire questa verifica e riportarne l'esito nel documento di task. I difetti qui elencati
+non vanno lasciati al revisore umano.
+
+> **Criterio di arresto — sabotaggio mentale.** Per ogni modifica al codice di produzione
+> chiedersi: *quale singola alterazione plausibile di questo codice NON farebbe fallire nessun
+> test?* Se una risposta esiste, manca un test. È l'equivalente mentale del mutation testing, e
+> funziona anche dove non è disponibile uno strumento automatico.
+
+1. **Ogni assert deve poter fallire per il motivo dichiarato**, non far esplodere il test prima
+   per un'altra causa. Un assert che non può mai fallire da solo è rumore: dà l'illusione della
+   copertura e produce una diagnosi fuorviante quando qualcosa si rompe davvero.
+2. **L'atteso non si deriva dall'oggetto sotto test.** Se il valore atteso è letto, iterato o
+   calcolato dalla cosa che si sta verificando, il test è in parte tautologico: rileva le
+   incoerenze interne, non le omissioni (ciò che è stato rimosso o mai aggiunto).
+3. **Nessun campione arbitrario.** O l'insieme completo dei casi, o un sottoinsieme
+   dichiaratamente rappresentativo con il criterio di selezione scritto. "I più usati" non è un
+   criterio difendibile da chi leggerà il test fra sei mesi.
+4. **Verificare il contratto, non solo il percorso felice.** Per ogni metodo pubblico toccato:
+   cosa promette su input assenti, vuoti, non validi o fuori intervallo — e cosa promette di
+   *non* fare.
+5. **Ridondanza dichiarata.** Se un test è già implicato da un altro, motivare per iscritto
+   perché lo si mantiene (di norma: produce una diagnosi più precisa) oppure eliminarlo. Una
+   ridondanza silenziosa viene scambiata per copertura aggiuntiva.
+6. **Limite dichiarato.** Ciò che lo unit test strutturalmente non può coprire (allineamento con
+   un sistema esterno, con uno schema dati, con una configurazione di ambiente) va scritto nel
+   test stesso, con il rimando a ciò che lo copre: test di integrazione, query di verifica,
+   controllo manuale documentato.
+7. **Nessuna mutazione di stato condiviso** da parte di un test: setter pubblici su enum o
+   singleton, cache statiche, dati lasciati sporchi nello schema di test. L'esito della suite non
+   deve dipendere dall'ordine di esecuzione.
+
+Questa verifica vale per qualunque linguaggio e stack: i principi riguardano la struttura delle
+asserzioni, non la libreria di test usata.
+
 ### 5.2 Test e2e approfonditi
 
 Da prevedere quando gli unit test da soli non danno fiducia sufficiente (integrazioni esterne,
@@ -222,6 +259,9 @@ esplicitamente nel documento di task, non lasciato sottinteso.
   l'implementazione reale si è discostata da quanto previsto.
 - **Task marcato `done` senza verifica**: scrivere codice non equivale a un task concluso; serve
   la strategia di verifica di §5 completata (o esplicitamente motivata come non applicabile).
+- **Test che non può fallire**: asserzioni che non possono mai fallire da sole, valori attesi
+  derivati dall'oggetto sotto test, campioni arbitrari di casi. Danno copertura apparente e
+  diagnosi fuorviante — vedi l'autorevisione obbligatoria in §5.1.
 - **Accumulo di documentazione "viva" mai archiviata**: piani conclusi da mesi che restano
   mescolati al lavoro attivo, invece di essere congelati con `ARCHIVE_ENTRY_TEMPLATE.md`.
 - **Uso esclusivamente per intuizione (vibe-driven) su modifiche non banali**: saltare la fase di
@@ -645,6 +685,21 @@ spostata (o linkata) in `limet/archive/0001-nome-modifica/`.
    ```powershell
    .\scripts\limet.ps1 update -ProjectPath C:\Progetti\TaskFlow -Lang it
    ```
+
+   **Propagazione ai file per-tool.** `limet.ps1 update` aggiorna `AGENTS.md`. Da lì:
+   - **Claude Code** — se `CLAUDE.md` contiene solo la riga `@AGENTS.md` (il caso standard creato
+     dallo script), eredita la modifica automaticamente: nessuna azione aggiuntiva.
+   - **Copia materializzata** — se il progetto è stato indicizzato con `limet-index`, i blocchi
+     marcati sono stati *copiati* dentro `CLAUDE.md` e `.github/copilot-instructions.md`, e
+     restano alla versione precedente finché non si rilancia:
+
+     ```powershell
+     .\scripts\limet-index.ps1 instructions -ProjectPath C:\Progetti\TaskFlow -Lang it
+     ```
+
+     Verifica rapida: cercare in `CLAUDE.md` il marcatore `<!-- LIMET:START -->`. Se c'è, il
+     progetto usa la copia materializzata e serve il secondo comando; se c'è solo `@AGENTS.md`,
+     no.
 
 ### B.1-bis Documentare un progetto esistente con poca o nessuna documentazione
 
