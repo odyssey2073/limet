@@ -61,6 +61,8 @@
 | Completed and archived work | `<project>\limet\archive\NNNN-slug\` |
 | Single source of agent instructions | `<project>\AGENTS.md` (marked block `<!-- LIMET:START/END -->`) |
 | Import for Claude Code | `<project>\CLAUDE.md` (`@AGENTS.md` line) |
+| Local git exclusions, never shared or committed (`limet.ps1` only, and only if the project is inside a git working tree) | `<project>\.git\info\exclude` (marked block `# LIMET:EXCLUDE:START/END`) — `AGENTS.md`, `CLAUDE.md`, `limet\`, `graphify-out\`, `.graphifyignore`. **`docs\` is not excluded**: it usually holds repository material |
+| Indexed docs folder (reserved for LIMET) | `<project>\docs-limet\` — not configurable: put the documents to be indexed there. The project's own `docs\`, if any, is neither read nor touched. Projects registered before this convention keep using their folder (§B.1 step 6) |
 
 ## 4bis. Paths generated at the workspace level (after `limet.ps1`/`limet.sh init -Workspace`)
 
@@ -77,6 +79,7 @@
 | Archived cross-project changes | `<workspace>\limet-workspace\archive\NNNN-slug\` |
 | Single source of agent instructions at the workspace level | `<workspace>\AGENTS.md` (marked block `<!-- LIMET-WORKSPACE:START/END -->`, distinct from the per-project `LIMET` block) |
 | Import for Claude Code at the workspace level | `<workspace>\CLAUDE.md` (`@AGENTS.md` line) |
+| Local git exclusions at the workspace level (only if the folder is a git working tree) | `<workspace>\.git\info\exclude` — same as projects, **plus `docs\`**: at this level it is the coordination folder, regenerated and indexed |
 
 ## 5. Quick reference by scenario
 

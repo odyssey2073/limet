@@ -124,6 +124,73 @@ function Get-Slug {
 
 $slug = Get-Slug (Split-Path -Leaf $ProjectPath)
 
+# --- LIMET docs folder resolution ---------------------------------------------------------------
+# LIMET needs a folder it owns: everything in it is indexed into the vector DB and listed in the
+# PROJECT block. That folder is 'docs-limet' and is not configurable -- projects very often already
+# use docs/ for their own material (API specs, build files, binaries) that must NOT be indexed, so
+# LIMET simply stays out of docs/ and never touches it.
+#
+# Resolution order (project mode):
+#   1. the folder already registered in CEREBRO's projects.json for this slug, so projects created
+#      before this convention keep working untouched
+#   2. an existing 'docs-limet' folder
+#   3. an existing 'docs' folder that looks LIMET-owned (templates / graph report / summary), for
+#      projects set up before this convention but never registered in CEREBRO
+#   4. 'docs-limet'
+# Workspace mode always uses 'docs': the workspace root is a LIMET-owned coordination tree, not a
+# project tree, so there is no foreign docs/ to stay clear of.
+$DefaultDocsDir = 'docs-limet'
+
+function Get-RegisteredDocsDir {
+    param([string]$CerebroHome, [string]$Slug, [string]$ProjectPath)
+
+    $reg = Join-Path $CerebroHome 'projects.json'
+    if (-not (Test-Path $reg)) { return $null }
+    try {
+        $entry = (Get-Content $reg -Raw -ErrorAction Stop | ConvertFrom-Json).$Slug
+    } catch { return $null }
+    if (-not $entry -or -not $entry.docs) { return $null }
+
+    $rootFull = (Resolve-Path $ProjectPath).Path.TrimEnd('\')
+    foreach ($d in $entry.docs) {
+        if (-not $d) { continue }
+        $p = $d.TrimEnd('\')
+        # Keep only direct children of the project root, skipping LIMET's own folders.
+        if ($p -like "$rootFull\*") {
+            $rel = $p.Substring($rootFull.Length + 1)
+            if ($rel -notmatch '[\\/]' -and $rel -notin @('limet','limet-workspace')) { return $rel }
+        }
+    }
+    return $null
+}
+
+# Tells a LIMET-generated docs/ apart from a project's own docs/, for pre-convention setups that
+# were never registered in CEREBRO. Only LIMET writes these.
+function Test-LimetOwnedDocs {
+    param([string]$Path)
+    if (-not (Test-Path $Path)) { return $false }
+    foreach ($marker in @('_templates', 'architecture\GRAPH_REPORT.md', 'NON_TECHNICAL_SUMMARY.md')) {
+        if (Test-Path (Join-Path $Path $marker)) { return $true }
+    }
+    return $false
+}
+
+if ($Workspace) {
+    $relDocsDir = 'docs'
+} else {
+    $registered = Get-RegisteredDocsDir -CerebroHome $CerebroHome -Slug $slug -ProjectPath $ProjectPath
+    if ($registered) {
+        $relDocsDir = $registered
+    } elseif (Test-Path (Join-Path $ProjectPath $DefaultDocsDir)) {
+        $relDocsDir = $DefaultDocsDir
+    } elseif (Test-LimetOwnedDocs (Join-Path $ProjectPath 'docs')) {
+        $relDocsDir = 'docs'
+    } else {
+        $relDocsDir = $DefaultDocsDir
+    }
+}
+$docsRoot = Join-Path $ProjectPath $relDocsDir
+
 function Invoke-Cerebro {
     param([string]$Script, [string[]]$ScriptArgs)
     & $venvPython $Script @ScriptArgs
@@ -231,7 +298,7 @@ Query the code (knowledge graph):
 Rules:
 - **RAG**: BEFORE answering any question about the project, call the ``limet_search`` MCP tool and ground your answer in its results. If the tool is unavailable, fall back to the ``query_qdrant.py`` command below.
 - Search CEREBRO/Qdrant FIRST. If the document is not indexed (0 results or missing), read it
-  LOCALLY from ``docs/`` or ``$RelLimetDir/``.
+  LOCALLY from ``$relDocsDir/`` or ``$RelLimetDir/``.
 - Re-indexing and Graphify updates belong to the user, never the agent. Use local docs until indexed.
 - **Code questions** (where is X implemented, who uses Y, how does flow Z work): FIRST use
   ``graphify query`` / ``graphify explain`` / ``graphify path``; THEN confirm exact lines and usages
@@ -254,7 +321,7 @@ Interroga il codice (knowledge graph):
 Regole:
 - **RAG**: PRIMA di rispondere a qualsiasi domanda sul progetto, chiama lo strumento MCP ``limet_search`` e fonda la risposta sui suoi risultati. Se lo strumento non è disponibile, usa il comando ``query_qdrant.py`` qui sotto.
 - Cerca PRIMA in CEREBRO/Qdrant. Se il documento non è indicizzato (0 risultati o assente), leggilo
-  LOCALMENTE da ``docs/`` o ``$RelLimetDir/``.
+  LOCALMENTE da ``$relDocsDir/`` o ``$RelLimetDir/``.
 - Il re-index e gli aggiornamenti Graphify spettano all'utente, mai all'agente. Usa i doc locali
   finché non sono indicizzati.
 - **Domande sul codice** (dov'è implementato X, chi usa Y, come funziona il flusso Z): PRIMA usa
@@ -352,18 +419,18 @@ function Get-LimetBlock {
 function Get-ProjectBlock {
     param([string]$Lang, [string]$Slug, [string]$ProjectRoot)
 
-    $docsDir = Join-Path $ProjectRoot 'docs'
+    $docsDir = Join-Path $ProjectRoot $relDocsDir
     $fileList = ''
     if (Test-Path $docsDir) {
         $files = Get-ChildItem -Path $docsDir -File -Recurse -Filter *.md -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -notmatch '\\_templates\\' } |
             Sort-Object FullName
         if ($files) {
-            $fileList = ($files | ForEach-Object { $rel = $_.FullName.Substring($docsDir.Length + 1); "  - ``docs\$rel``" }) -join "`n"
+            $fileList = ($files | ForEach-Object { $rel = $_.FullName.Substring($docsDir.Length + 1); "  - ``$relDocsDir\$rel``" }) -join "`n"
         }
     }
     if (-not $fileList) {
-        $fileList = '  - (fill docs/ with architecture.md, conventions.md, glossary.md · compila docs/ con architecture.md, conventions.md, glossary.md)'
+        $fileList = "  - (fill $relDocsDir/ with architecture.md, conventions.md, glossary.md · compila $relDocsDir/ con architecture.md, conventions.md, glossary.md)"
     }
     if ($Workspace) {
         $graphEn = 'Workspace code graph (Graphify): `graphify-out/graph.json`; report: `docs/architecture/GRAPH_REPORT.md`.'
@@ -373,8 +440,8 @@ function Get-ProjectBlock {
     } else {
         $graphEn = 'Code graph (Graphify): `graphify-out/` (report: `graphify-out/GRAPH_REPORT.md`).'
         $graphIt = 'Grafo del codice (Graphify): `graphify-out/` (report: `graphify-out/GRAPH_REPORT.md`).'
-        $maintenanceEn = 'Follow limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md to maintain docs/module-map.md, architecture.md, decisions.md, dependencies.md, conventions.md and glossary.md with file:line citations and Mermaid diagrams. UPDATE existing documents. Maintain docs/NON_TECHNICAL_SUMMARY.md after relevant changes. Re-indexing belongs to the user, never the agent. After code/document changes, periodically remind the user (at task completion or archiving): Launcher -> project path -> Re-index -> Incrementale -> click Re-index.'
-        $maintenanceIt = 'Segui limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md per mantenere docs/module-map.md, architecture.md, decisions.md, dependencies.md, conventions.md e glossary.md con citazioni file:line e diagrammi Mermaid. AGGIORNA i documenti esistenti. Mantieni docs/NON_TECHNICAL_SUMMARY.md dopo modifiche rilevanti. Il re-index spetta all''utente, mai all''agente. Dopo modifiche a codice/documenti, ricordarlo periodicamente (al termine di un task o dell''archiviazione): Launcher -> Percorso progetto -> Re-index -> Incrementale -> clic Re-index.'
+        $maintenanceEn = "Follow limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md to maintain $relDocsDir/module-map.md, architecture.md, decisions.md, dependencies.md, conventions.md and glossary.md with file:line citations and Mermaid diagrams. UPDATE existing documents. Maintain $relDocsDir/NON_TECHNICAL_SUMMARY.md after relevant changes. Re-indexing belongs to the user, never the agent. After code/document changes, periodically remind the user (at task completion or archiving): Launcher -> project path -> Re-index -> Incrementale -> click Re-index."
+        $maintenanceIt = "Segui limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md per mantenere $relDocsDir/module-map.md, architecture.md, decisions.md, dependencies.md, conventions.md e glossary.md con citazioni file:line e diagrammi Mermaid. AGGIORNA i documenti esistenti. Mantieni $relDocsDir/NON_TECHNICAL_SUMMARY.md dopo modifiche rilevanti. Il re-index spetta all'utente, mai all'agente. Dopo modifiche a codice/documenti, ricordarlo periodicamente (al termine di un task o dell'archiviazione): Launcher -> Percorso progetto -> Re-index -> Incrementale -> clic Re-index."
     }
 
     return @"
@@ -383,7 +450,7 @@ function Get-ProjectBlock {
 
 **EN** — Project ``$Slug`` — CEREBRO collection ``CRB_$Slug``.
 
-Complete local Markdown inventory under docs/ (excluding _templates; not proof of indexing):
+Complete local Markdown inventory under $relDocsDir/ (excluding _templates; not proof of indexing):
 $fileList
 
 For indexed sources, consult CEREBRO's projects.json and query the collection above.
@@ -394,7 +461,7 @@ $graphEn
 
 **IT** — Progetto ``$Slug`` — collection CEREBRO ``CRB_$Slug``.
 
-Inventario locale completo dei Markdown in docs/ (esclusi _templates; non attesta l'indicizzazione):
+Inventario locale completo dei Markdown in $relDocsDir/ (esclusi _templates; non attesta l'indicizzazione):
 $fileList
 
 Per le fonti indicizzate, consulta projects.json di CEREBRO e interroga la collection indicata sopra.
@@ -433,7 +500,10 @@ function Update-CodeGraph {
 
     $ignore = Join-Path $ProjectRoot '.graphifyignore'
     if (-not (Test-Path $ignore)) {
-        Set-Content -Path $ignore -Value ("docs/`r`nlimet/`r`nlimet-workspace/`r`n*.groovy`r`n") -NoNewline -ErrorAction Stop
+        $ignoreDirs = @($relDocsDir)
+        if ($relDocsDir -ne 'docs') { $ignoreDirs += 'docs' }
+        $ignoreBody = (($ignoreDirs + @('limet','limet-workspace') | ForEach-Object { "$_/" }) + @('*.groovy')) -join "`r`n"
+        Set-Content -Path $ignore -Value ($ignoreBody + "`r`n") -NoNewline -ErrorAction Stop
     }
     $graph = Join-Path $ProjectRoot 'graphify-out\graph.json'
     Push-Location $ProjectRoot
@@ -453,7 +523,7 @@ function Update-CodeGraph {
     }
     $report = Join-Path $ProjectRoot 'graphify-out\GRAPH_REPORT.md'
     if (Test-Path $report) {
-        $archDir = Join-Path $ProjectRoot 'docs\architecture'
+        $archDir = Join-Path $ProjectRoot (Join-Path $relDocsDir 'architecture')
         New-Item -ItemType Directory -Force -Path $archDir -ErrorAction Stop | Out-Null
         Copy-Item -Force $report (Join-Path $archDir 'GRAPH_REPORT.md') -ErrorAction Stop
     } else {
@@ -482,7 +552,26 @@ if ($Command -eq 'init' -or $Command -eq 'update') {
 
 if ($Command -eq 'init') {
 
-    $docsDir = Join-Path $ProjectPath 'docs'
+    # LIMET owns $relDocsDir: everything inside is indexed into the vector DB. New projects get
+    # 'docs-limet', which is LIMET's alone; this only triggers for pre-existing setups whose
+    # registry entry still points at a folder the project also uses for its own material.
+    if (-not $Workspace -and (Test-Path $docsRoot)) {
+        $foreign = Get-ChildItem -Path $docsRoot -File -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension -notin @('.md','.markdown') } |
+            Select-Object -First 5
+        if ($foreign) {
+            $sample = ($foreign | ForEach-Object { $_.FullName.Substring($docsRoot.Length + 1) }) -join ', '
+            Write-Warning @"
+'$relDocsDir/' also holds non-Markdown project files (e.g. $sample).
+LIMET indexes the WHOLE folder into CEREBRO, so those files would be ingested too.
+LIMET's own folder is '$DefaultDocsDir/': this project is using '$relDocsDir/' because that is what
+is registered in CEREBRO. To switch, move LIMET's documents into '$DefaultDocsDir/', drop the
+'$relDocsDir' entry from projects.json, and re-run init followed by 'update -Prune'.
+"@
+        }
+    }
+
+    $docsDir = $docsRoot
     New-Item -ItemType Directory -Force -Path $docsDir | Out-Null
     if ($graphifyAvailable) {
         Update-CodeGraph -ProjectRoot $ProjectPath -Initialize $true
@@ -501,7 +590,7 @@ if ($Command -eq 'init') {
     }
     else {
         # Per-project: docs/ + limet/changes/ + limet/archive/.
-        $docsDir = Join-Path $ProjectPath 'docs'
+        $docsDir = $docsRoot
         $docsTplDir = Join-Path $docsDir '_templates'
         New-Item -ItemType Directory -Force -Path $docsTplDir | Out-Null
 
@@ -539,7 +628,7 @@ if ($Command -eq 'init') {
 
     Write-Host ""
     Write-Host "LIMET-INDEX init complete for '$ProjectPath' (collection: CRB_$slug)."
-    Write-Host "Next: fill in the docs/ templates (architecture, conventions, module map, glossary), then run 'limet-index update'."
+    Write-Host "Next: fill in the $relDocsDir/ templates (architecture, conventions, module map, glossary), then run 'limet-index update'."
 }
 
 # --- update -----------------------------------------------------------------------------------
@@ -549,7 +638,7 @@ if ($Command -eq 'update') {
     if ($graphifyAvailable -and -not $SkipGraph) {
         Update-CodeGraph -ProjectRoot $ProjectPath -Initialize $false
     }
-    $docsDir = Join-Path $ProjectPath 'docs'
+    $docsDir = $docsRoot
     if (Test-Path $docsDir) {
         Invoke-Cerebro $registerPy @('add', $slug, '--docs', $docsDir)
     }
@@ -566,7 +655,7 @@ if ($Command -eq 'update') {
 
 function Set-NonTechnicalSummary {
     param([string]$ProjectRoot, [string]$Name)
-    $target = Join-Path (Join-Path $ProjectRoot 'docs') 'NON_TECHNICAL_SUMMARY.md'
+    $target = Join-Path (Join-Path $ProjectRoot $relDocsDir) 'NON_TECHNICAL_SUMMARY.md'
     if (Test-Path $target) { return }
     New-Item -ItemType Directory -Force -Path (Split-Path $target) | Out-Null
     $content = @"
@@ -588,7 +677,7 @@ function Set-NonTechnicalSummary {
 - [data] — [cosa è cambiato, in termini non tecnici]
 "@
     Set-Content -Path $target -Value $content -NoNewline
-    Write-Host "Created: docs/NON_TECHNICAL_SUMMARY.md"
+    Write-Host "Created: $relDocsDir/NON_TECHNICAL_SUMMARY.md"
 }
 
 if ($Command -eq 'instructions') {
@@ -601,6 +690,7 @@ if ($Command -eq 'instructions') {
 # --- status -----------------------------------------------------------------------------------
 
 if ($Command -eq 'status') {
+    Write-Host "LIMET docs folder: $relDocsDir/ ($docsRoot)"
     Invoke-Cerebro $registerPy @('list')
     Invoke-Cerebro $queryPy @('--project', $slug, 'count')
 }

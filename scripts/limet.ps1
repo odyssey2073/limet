@@ -48,6 +48,13 @@
     Install the multi-project/multi-module coordination layer (`limet-workspace/`) instead of
     the standard per-project one (`limet/`). See DESCRIPTION.
 
+.PARAMETER ExcludeDocs
+    Per-project mode only: also add the LIMET docs folder (`docs-limet/`) to the local git
+    exclusions, as workspace mode does. Use it when that folder is not meant to be versioned.
+    By default it is left visible in `git status`, because the analysis documents LIMET writes
+    there are usually worth committing. The project's own `docs/` is never excluded. Already
+    tracked files are never affected.
+
 .EXAMPLE
     .\limet.ps1 init -ProjectPath C:\Progetti\myapp -Lang it
 
@@ -57,6 +64,10 @@
 .EXAMPLE
     # Coordination layer for a parent folder containing several correlated repos/modules
     .\limet.ps1 init -ProjectPath C:\Progetti\myworkspace -Lang it -Workspace
+
+.EXAMPLE
+    # keep LIMET's own docs-limet/ out of git in this single project, locally
+    .\limet.ps1 update -ProjectPath C:\Progetti\myapp -ExcludeDocs
 #>
 [CmdletBinding()]
 param(
@@ -70,7 +81,9 @@ param(
     [ValidateSet('it','en')]
     [string]$Lang = 'en',
 
-    [switch]$Workspace
+    [switch]$Workspace,
+
+    [switch]$ExcludeDocs
 )
 
 $ErrorActionPreference = 'Stop'
@@ -393,7 +406,7 @@ Write-Host "LIMET $Command complete for '$ProjectPath' (edition: $Lang$(if ($Wor
 # conflicts with other contributors' settings. Only touched if ProjectPath is actually inside a
 # git working tree; silently skipped otherwise (e.g. project not yet under git).
 function Set-LimetGitExclude {
-    param([string]$ProjectPath, [bool]$Workspace)
+    param([string]$ProjectPath, [bool]$Workspace, [bool]$ExcludeDocs)
 
     # Two different PowerShell behaviors can turn "git is not a repo here" (a normal, expected
     # outcome -- not every ProjectPath is under git) into a terminating error when the script-wide
@@ -432,10 +445,31 @@ function Set-LimetGitExclude {
         $relPrefix = if ($prefix) { '/' + $prefix } else { '' }
 
         $limetFolder = if ($Workspace) { 'limet-workspace' } else { 'limet' }
+        # The LIMET docs folder is excluded ONLY in workspace mode: there it is the shared
+        # coordination/CEREBRO folder, regenerated from the sources and indexed in the vector DB.
+        # In per-project mode docs/ is almost always project material that belongs in the
+        # repository (API specs, build files, style assets): excluding it would make new files
+        # there silently vanish from `git status`. -ExcludeDocs opts into the workspace behavior
+        # for a single project, on the folder LIMET actually owns ('docs-limet', or a legacy
+        # LIMET-owned 'docs' for projects set up before that convention).
+        # Note: git exclude files only affect UNTRACKED paths -- anything already committed
+        # under that folder stays tracked and keeps being versioned exactly as before.
+        if ($Workspace) {
+            $docsFolder = 'docs'
+        } elseif (-not (Test-Path (Join-Path $ProjectPath 'docs-limet')) -and
+                  (Test-Path (Join-Path $ProjectPath 'docs\_templates'))) {
+            $docsFolder = 'docs'
+        } else {
+            $docsFolder = 'docs-limet'
+        }
+        $docEntries = if ($Workspace -or $ExcludeDocs) { @("$relPrefix/$docsFolder/") } else { @() }
         $entries = @(
             "$relPrefix/AGENTS.md",
             "$relPrefix/CLAUDE.md",
             "$relPrefix/$limetFolder/"
+        ) + $docEntries + @(
+            "$relPrefix/graphify-out/",
+            "$relPrefix/.graphifyignore"
         )
         $startMarker = '# LIMET:EXCLUDE:START (auto-managed by limet.ps1 -- local only, never committed)'
         $endMarker = '# LIMET:EXCLUDE:END'
@@ -451,7 +485,7 @@ function Set-LimetGitExclude {
     }
 }
 
-Set-LimetGitExclude -ProjectPath $ProjectPath -Workspace $Workspace.IsPresent
+Set-LimetGitExclude -ProjectPath $ProjectPath -Workspace $Workspace.IsPresent -ExcludeDocs $ExcludeDocs.IsPresent
 
 if ($Command -eq 'init') {
     if ($Workspace) {

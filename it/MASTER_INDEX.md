@@ -61,6 +61,8 @@
 | Lavoro concluso e archiviato | `<progetto>\limet\archive\NNNN-slug\` |
 | Fonte unica di istruzioni per l'agente | `<progetto>\AGENTS.md` (blocco marcato `<!-- LIMET:START/END -->`) |
 | Import per Claude Code | `<progetto>\CLAUDE.md` (riga `@AGENTS.md`) |
+| Esclusioni git locali, mai condivise né committate (solo `limet.ps1`, solo se il progetto è in un working tree git) | `<progetto>\.git\info\exclude` (blocco marcato `# LIMET:EXCLUDE:START/END`) — `AGENTS.md`, `CLAUDE.md`, `limet\`, `graphify-out\`, `.graphifyignore`. **`docs\` non è esclusa**: di norma contiene materiale del repository |
+| Cartella documentale indicizzata (riservata a LIMET) | `<progetto>\docs-limet\` — non configurabile: i documenti da indicizzare vanno lì. L'eventuale `docs\` del progetto non viene né letta né toccata. I progetti registrati prima di questa convenzione continuano a usare la loro cartella (§B.1 punto 6) |
 
 ## 4bis. Percorsi generati a livello workspace (dopo `limet.ps1`/`limet.sh init -Workspace`)
 
@@ -77,6 +79,7 @@
 | Modifiche cross-progetto archiviate | `<workspace>\limet-workspace\archive\NNNN-slug\` |
 | Fonte unica di istruzioni per l'agente a livello workspace | `<workspace>\AGENTS.md` (blocco marcato `<!-- LIMET-WORKSPACE:START/END -->`, distinto dal blocco `LIMET` per-progetto) |
 | Import per Claude Code a livello workspace | `<workspace>\CLAUDE.md` (riga `@AGENTS.md`) |
+| Esclusioni git locali a livello workspace (solo se la cartella è un working tree git) | `<workspace>\.git\info\exclude` — come per i progetti, **più `docs\`**: a questo livello è la cartella di coordinamento, rigenerata e indicizzata |
 
 ## 5. Riferimento rapido per scenario
 

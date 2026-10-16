@@ -122,6 +122,12 @@
         <div class="hint">Workspace = più progetti correlati / monorepo multi-modulo (Appendice C).</div>
       </div>
 
+      <div class="field" id="docsDirField">
+        <label>Cartella documentazione LIMET</label>
+        <div class="hint" id="docsHintProject">LIMET crea e indicizza <code>docs-limet/</code>: <strong>i documenti da indicizzare vanno lì</strong>. Tutto il suo contenuto finisce in CEREBRO, quindi va tenuta per sola documentazione. Un'eventuale <code>docs/</code> del progetto non viene né letta né toccata: resta esattamente com'è. <code>docs/</code> è riservata alla sola modalità Workspace.</div>
+        <div class="hint" id="docsHintWorkspace">In modalità Workspace LIMET crea e indicizza <code>docs/</code> <strong>nella radice di coordinamento</strong>: <strong>i documenti d'insieme vanno lì</strong>. La radice è un albero di LIMET, non un progetto, quindi qui non c'è nessuna <code>docs/</code> altrui da preservare. I singoli moduli sotto la radice continuano invece a usare <code>docs-limet/</code>.</div>
+      </div>
+
       <div class="field" id="relOpenField">
         <button type="button" class="go" id="relOpenBtn">Progetti correlati →</button>
         <div class="hint">Per più progetti in cartelle diverse non annidate: li crea tutti e li collega, così una domanda su uno cerca anche nella documentazione degli altri.</div>
@@ -228,6 +234,10 @@
     $('pathField').style.display = relMode ? 'none' : '';
     $('modeField').style.display = relMode ? 'none' : '';
     $('relOpenField').style.display = relMode ? 'none' : '';
+    const wsMode = !relMode && document.querySelector('input[name="mode"]:checked').value === 'workspace';
+    $('docsDirField').style.display = (a === 'create') ? '' : 'none';
+    $('docsHintProject').style.display = wsMode ? 'none' : '';
+    $('docsHintWorkspace').style.display = wsMode ? '' : 'none';
     const btn = $('go');
     btn.style.display = (a === 'docs') ? 'none' : '';
     btn.textContent = relMode ? 'Crea progetti correlati' : BTN[a];
@@ -248,6 +258,7 @@
   $('path').addEventListener('input', disableDocs);
 
   document.getElementById('action').addEventListener('change', refresh);
+  document.getElementById('mode').addEventListener('change', refresh);
 
   let graphifyOk = false;
 

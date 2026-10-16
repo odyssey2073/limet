@@ -312,7 +312,7 @@ installati in `limet-workspace/templates/`, non in `limet/templates/` del singol
 | `templates/MODULE_MAP_TEMPLATE.md` | Per mappare i progetti/moduli di un workspace, i loro ruoli e le dipendenze/contratti tra loro |
 | `templates/CROSS_PROJECT_CHANGE_TEMPLATE.md` | Per coordinare una modifica (feature o bug fix) che attraversa più progetti/moduli |
 
-**Template di documentazione della codebase** (generati in `docs/_templates/` da `limet-index`, vedi
+**Template di documentazione della codebase** (generati in `docs-limet/_templates/` da `limet-index`, vedi
 §A.4 — documentano la codebase stessa, non una singola modifica):
 
 | Template | Quando usarlo |
@@ -556,10 +556,11 @@ costo trascurabile):
 graphify update .
 ```
 
-**Nota su scope**: se il progetto ha anche una cartella di documentazione indicizzata da CEREBRO
-(es. `docs/`), è buona norma escluderla dall'analisi di Graphify tramite un file `.graphifyignore`
-nella root del progetto, per mantenere la separazione delle responsabilità (Graphify = solo
-codice, CEREBRO = solo documentazione) ed evitare duplicazione di informazioni tra le due fonti.
+**Nota su scope**: la cartella di documentazione indicizzata da CEREBRO (`docs-limet/`, o quella
+già censita per i progetti installati prima di questa convenzione) va esclusa dall'analisi di
+Graphify tramite un file `.graphifyignore` nella root del progetto, per mantenere la separazione
+delle responsabilità (Graphify = solo codice, CEREBRO = solo documentazione) ed evitare
+duplicazione di informazioni tra le due fonti. `limet.ps1`/`limet.sh` lo generano già così.
 
 ### A.3 Combinazione pratica CEREBRO + Graphify (riepilogo operativo)
 
@@ -584,24 +585,24 @@ installato nella cartella `limet/scripts/` di ogni progetto da `limet init`.
 
 | Comando | Effetto |
 | --- | --- |
-| `limet/scripts/limet-index.ps1 init -ProjectPath .` | crea `docs/` + template codebase-doc, esegue `graphify .` (report architetturale → `docs/architecture/GRAPH_REPORT.md`), registra il progetto in CEREBRO (`CRB_<slug>`), indicizza i documenti e scrive il blocco `<!-- LIMET-CONTEXT:START/END -->` in `AGENTS.md` |
+| `limet/scripts/limet-index.ps1 init -ProjectPath .` | crea `docs-limet/` + template codebase-doc, esegue `graphify .` (report architetturale → `docs-limet/architecture/GRAPH_REPORT.md`), registra il progetto in CEREBRO (`CRB_<slug>`), indicizza i documenti e scrive il blocco `<!-- LIMET-CONTEXT:START/END -->` in `AGENTS.md` |
 | `limet/scripts/limet-index.ps1 update -ProjectPath .` | riesegue `graphify update .` e re-indicizza (upsert deterministico, nessun duplicato) |
 | `limet/scripts/limet-index.ps1 status -ProjectPath .` | stampa i progetti registrati e il conteggio chunk di questo progetto |
 | `limet/scripts/limet-index.ps1 remove -ProjectPath .` | rimuove dal registro CEREBRO (la collection Qdrant resta; il comando DELETE è stampato per una rimozione deliberata con doppia conferma) |
 
 **Cosa viene indicizzato** (collection `CRB_<slug>` del progetto):
-- `docs/` — documentazione generata della codebase: `architecture/GRAPH_REPORT.md` (auto, Graphify)
+- `docs-limet/` — documentazione generata della codebase: `architecture/GRAPH_REPORT.md` (auto, Graphify)
   più i documenti scritti dall'agente `architecture/ARCHITECTURE.md`, `conventions.md`,
-  `module-map.md`, `glossary.md` (dai template in `docs/_templates/`).
+  `module-map.md`, `glossary.md` (dai template in `docs-limet/_templates/`).
 - `limet/changes/` e `limet/archive/` — i documenti LIMET prodotti nel ciclo di vita (§3).
 
 L'indicizzazione è **ricorsiva**: ogni sottocartella delle cartelle registrate viene ingerita,
-quindi `docs/features/` o `docs/bugfixes/` sono indicizzate esattamente come la radice `docs/`.
-Solo due percorsi vengono saltati: `docs/_templates/` (scaffolding dei template) e `.obsidian/`
-(stato dell'editor).
+quindi `docs-limet/features/` o `docs-limet/bugfixes/` sono indicizzate esattamente come la radice
+`docs-limet/`. Solo due percorsi vengono saltati: `docs-limet/_templates/` (scaffolding dei
+template) e `.obsidian/` (stato dell'editor).
 
 **Aggiunta documenti via launcher**: la UI web `scripts/limet-launcher.py` offre l'azione
-"Documentazione → Aggiungi documenti" che copia i file selezionati in `docs/` (opzionalmente nella
+"Documentazione → Aggiungi documenti" che copia i file selezionati in `docs-limet/` (opzionalmente nella
 sottocartella scelta in "Sotto-cartella": `features`, `bugfixes`, o nessuna) e poi esegue
 `limet-index update` — così i file vengono scritti su disco **e** indicizzati su Qdrant
 (`graphify update` rieseguito).
@@ -701,6 +702,84 @@ spostata (o linkata) in `limet/archive/0001-nome-modifica/`.
      progetto usa la copia materializzata e serve il secondo comando; se c'è solo `@AGENTS.md`,
      no.
 
+   **Esclusioni git locali.** Se il progetto è dentro un working tree git, `limet.ps1 init/update`
+   scrive un blocco marcato in `.git/info/exclude` (non in `.gitignore`: è locale a quel clone,
+   non viene mai condiviso né committato). Conseguenza pratica: **chi fa `git pull` non riceve
+   nulla di LIMET**, e il setup LIMET locale di ciascuno resta intatto, perché git non tocca i
+   file non tracciati.
+
+   Il blocco copre:
+
+   - `AGENTS.md`, `CLAUDE.md`, `limet/` (o `limet-workspace/`);
+   - `graphify-out/` e `.graphifyignore` — artefatti di tooling rigenerabili;
+   - **solo in modalità workspace**, anche `docs/`.
+
+   **Perché `docs/` solo nel workspace.** A livello workspace `docs/` è la cartella di
+   coordinamento condivisa: viene rigenerata dalle fonti e indicizzata nel vector DB, quindi non
+   appartiene alla storia git. Nei **singoli progetti** LIMET non usa affatto `docs/` (vedi punto
+   6): quella cartella è del progetto e LIMET non la tocca mai, né per indicizzarla né per
+   escluderla.
+
+   **Opzione `-ExcludeDocs`.** Se in un singolo progetto si preferisce non versionare nemmeno
+   `docs-limet/`, si può adottare anche lì il comportamento del workspace:
+
+   ```powershell
+   .\limet.ps1 update -ProjectPath C:\Progetti\mioprogetto -ExcludeDocs
+   ```
+
+   Per default `docs-limet/` **non** è esclusa: i documenti di analisi che LIMET vi scrive
+   (`architecture.md`, `module-map.md`, `glossary.md`, …) sono in genere materiale che il team
+   vuole in repository.
+
+   > **Due precisazioni importanti.**
+   >
+   > 1. **I file già tracciati restano tracciati.** I file di esclusione di git valgono solo per i
+   >    percorsi *untracked*: ciò che è già committato sotto la cartella esclusa continua a essere
+   >    versionato esattamente come prima. L'esclusione agisce solo sui file nuovi.
+   > 2. **Per versionare comunque un file escluso** basta forzare: `git add -f docs-limet/<file>`.
+   >
+   > Il blocco è rigenerato a ogni `update`: eventuali voci aggiunte a mano **al suo interno**
+   > andrebbero perse. Le personalizzazioni vanno scritte **fuori** dai marcatori.
+   >
+   > Nota: `limet.sh` non implementa questa gestione delle esclusioni; su bash il blocco va
+   > scritto a mano. Se la cartella non è un repository git, il passo viene semplicemente saltato.
+
+6. **La cartella documentale di LIMET è `docs-limet/`.** Tutto ciò che vi sta dentro viene
+   indicizzato nel vector DB e compare nell'inventario del blocco `PROJECT` di `AGENTS.md`.
+   **I documenti da indicizzare vanno messi lì.**
+
+   La cartella **non è configurabile**, ed è una scelta deliberata. Moltissimi progetti usano già
+   `docs/` per materiale proprio — specifiche API, file di build, jar, asset — che **non deve
+   finire nell'indice semantico**: inquinerebbe le risposte del RAG e farebbe crescere la
+   collection senza beneficio. Invece di chiedere ogni volta a chi installa se la `docs/` del
+   progetto sia «sua» o «di LIMET», LIMET semplicemente **non la usa e non la tocca**: niente da
+   decidere, niente da sbagliare.
+
+   Regole:
+
+   - LIMET **crea** `docs-limet/` all'`init` e indicizza solo quella.
+   - Un'eventuale `docs/` del progetto **non viene né letta, né indicizzata, né esclusa da git**:
+     resta esattamente com'è, tracciata come prima.
+   - Vale per il **singolo progetto** e per i **progetti correlati**. **Non** vale in modalità
+     workspace, dove `docs/` è per definizione la cartella di coordinamento di LIMET: la radice
+     di un workspace è una cartella di LIMET, non un albero di progetto, quindi non c'è nessuna
+     `docs/` altrui da cui stare alla larga.
+   - `.graphifyignore` viene generato escludendo sia `docs-limet/` sia `docs/`, così il grafo del
+     codice non indicizza né l'una né l'altra.
+   - Per sapere quale cartella è in uso: `limet-index.ps1 status -ProjectPath <progetto>` la
+     stampa come prima riga.
+
+   **Progetti installati prima di questa convenzione.** LIMET non rompe nulla: se il progetto è
+   già registrato in CEREBRO con un'altra cartella documentale, continua a usare quella. Lo stesso
+   vale per una `docs/` chiaramente generata da LIMET (riconosciuta da `_templates/`,
+   `architecture/GRAPH_REPORT.md` o `NON_TECHNICAL_SUMMARY.md`) in progetti mai registrati.
+   L'ordine di risoluzione è: registry CEREBRO → `docs-limet/` esistente → `docs/` riconosciuta
+   come di LIMET → `docs-limet/`.
+
+   **Migrare a `docs-limet/`** è possibile ma non è automatico: spostare i documenti nella nuova
+   cartella, togliere la vecchia voce da `projects.json` di CEREBRO, rieseguire `init` e poi un
+   re-index con pulizia (`-Prune`) per rimuovere dalla collection i chunk della vecchia cartella.
+
 ### B.1-bis Documentare un progetto esistente con poca o nessuna documentazione
 
 **Scenario**: il progetto esiste ma ha pochi o nessun documento. LIMET ricava la doc suite dal
@@ -708,7 +787,7 @@ codice con il playbook `limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md` (Graphify
 team la valida; l'utente la indicizza. Guida passo-passo: `guides/workflow.html`, scenario
 "Documentare un progetto esistente".
 
-1. Launcher → **Crea** con Strumenti di contesto (crea `docs/`, `docs/_templates/`, il grafo del
+1. Launcher → **Crea** con Strumenti di contesto (crea `docs-limet/`, `docs-limet/_templates/`, il grafo del
    codice, la registrazione in CEREBRO).
 2. Facoltativo: **Documentazione** per caricare il materiale esistente (md, txt, pdf, epub, docx,
    xlsx, pptx, html).
@@ -718,12 +797,12 @@ team la valida; l'utente la indicizza. Guida passo-passo: `guides/workflow.html`
 
 | Documento | Percorso |
 |---|---|
-| mappa moduli, architettura, dipendenze, convenzioni, glossario, decisioni (ADR), sintesi non tecnica | `<progetto>/docs/` (`module-map.md`, `architecture.md`, `dependencies.md`, `conventions.md`, `glossary.md`, `decisions.md`, `NON_TECHNICAL_SUMMARY.md`) |
-| Report architetturale Graphify | `<progetto>/docs/architecture/GRAPH_REPORT.md` (copia; `graphify-out/` non è indicizzata) |
-| Mappa e documenti d'insieme del workspace | `<root-workspace>/docs/` e `limet-workspace/MODULE_MAP.md`; ogni modulo figlio ha la propria `docs/` |
-| Progetti correlati in cartelle separate | ciascuno nella propria `docs/`, poi collegamento con il pulsante **Progetti correlati** di Crea |
+| mappa moduli, architettura, dipendenze, convenzioni, glossario, decisioni (ADR), sintesi non tecnica | `<progetto>/docs-limet/` (`module-map.md`, `architecture.md`, `dependencies.md`, `conventions.md`, `glossary.md`, `decisions.md`, `NON_TECHNICAL_SUMMARY.md`) |
+| Report architetturale Graphify | `<progetto>/docs-limet/architecture/GRAPH_REPORT.md` (copia; `graphify-out/` non è indicizzata) |
+| Mappa e documenti d'insieme del workspace | `<root-workspace>/docs/` e `limet-workspace/MODULE_MAP.md`; ogni modulo figlio ha la propria `docs-limet/` |
+| Progetti correlati in cartelle separate | ciascuno nella propria `docs-limet/`, poi collegamento con il pulsante **Progetti correlati** di Crea |
 
-Note: per `decisions.md` e `dependencies.md` non esiste un template in `docs/_templates/` (l'agente
+Note: per `decisions.md` e `dependencies.md` non esiste un template in `docs-limet/_templates/` (l'agente
 segue il playbook).
 
 **Più progetti correlati**: l'agente lavora solo sul codice della cartella in cui lo apri; il

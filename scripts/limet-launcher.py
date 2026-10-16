@@ -97,8 +97,20 @@ def _collection_exists(name):
     return _get_ok(f"{QDRANT_URL}/collections/{name}")
 
 
+DEFAULT_DOCS_DIR = "docs-limet"
+
+
+def _is_limet_owned_docs(path):
+    """Tell a LIMET-generated docs/ apart from a project's own docs/. Only LIMET writes these."""
+    return (os.path.isdir(os.path.join(path, "_templates"))
+            or os.path.isfile(os.path.join(path, "architecture", "GRAPH_REPORT.md"))
+            or os.path.isfile(os.path.join(path, "NON_TECHNICAL_SUMMARY.md")))
+
+
 def _docs_dir(slug, path, cerebro):
-    """The project's CEREBRO docs folder (from the registry), fallback <path>/docs."""
+    """LIMET's docs folder for this project. Mirrors limet-index's resolution order: CEREBRO
+    registry (keeps pre-convention projects working), then docs-limet/, then a docs/ that looks
+    LIMET-owned, then docs-limet/."""
     if cerebro:
         reg_file = os.path.join(cerebro, "projects.json")
         if os.path.exists(reg_file):
@@ -110,7 +122,13 @@ def _docs_dir(slug, path, cerebro):
                         return d
             except Exception:
                 pass
-    return os.path.join(path, "docs")
+    default_dir = os.path.join(path, DEFAULT_DOCS_DIR)
+    if os.path.isdir(default_dir):
+        return default_dir
+    legacy = os.path.join(path, "docs")
+    if os.path.isdir(legacy) and _is_limet_owned_docs(legacy):
+        return legacy
+    return default_dir
 
 
 def script_path(name):
@@ -263,6 +281,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def _start_stream(self):
+        self._client_gone = False
         self.send_response(200)
         self.send_header("Content-Type", "text/plain; charset=utf-8")
         self.send_header("Transfer-Encoding", "chunked")
@@ -272,18 +291,30 @@ class Handler(BaseHTTPRequestHandler):
     def _chunk(self, data):
         if not data:
             return
+        # Once the browser is gone (tab closed, page reloaded), keep draining the
+        # subprocess output instead of raising: an unread stdout pipe fills up and
+        # freezes the command mid-run.
+        if getattr(self, "_client_gone", False):
+            return
         if isinstance(data, str):
             data = data.encode("utf-8")
-        self.wfile.write(("%x\r\n" % len(data)).encode("ascii"))
-        self.wfile.write(data)
-        self.wfile.write(b"\r\n")
-        self.wfile.flush()
+        try:
+            self.wfile.write(("%x\r\n" % len(data)).encode("ascii"))
+            self.wfile.write(data)
+            self.wfile.write(b"\r\n")
+            self.wfile.flush()
+        except OSError:
+            self._client_gone = True
+            sys.stderr.write("[launcher] client disconnesso: output non piu' inviato, "
+                             "il comando prosegue fino al termine\n")
 
     def _end_stream(self):
+        if getattr(self, "_client_gone", False):
+            return
         try:
             self.wfile.write(b"0\r\n\r\n")
             self.wfile.flush()
-        except (BrokenPipeError, ConnectionResetError):
+        except OSError:
             pass
 
     def _handle_related(self, action, params):

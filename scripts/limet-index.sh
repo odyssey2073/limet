@@ -100,6 +100,64 @@ slugify() {
 }
 SLUG="$(slugify "$(basename "$PROJECT_PATH")")"
 
+# --- LIMET docs folder resolution ----------------------------------------------------------------
+# LIMET owns REL_DOCS_DIR: everything inside is indexed into CEREBRO. That folder is 'docs-limet'
+# and is not configurable -- projects very often already use docs/ for their own material (API
+# specs, build files, binaries) that must NOT be indexed, so LIMET stays out of docs/ entirely.
+# Resolution order (project mode): CEREBRO registry (keeps pre-convention projects working) ->
+# existing docs-limet/ -> an existing docs/ that looks LIMET-owned -> docs-limet.
+# Workspace mode always uses docs/: the workspace root is LIMET's own coordination tree.
+DEFAULT_DOCS_DIR="docs-limet"
+
+registered_docs_dir() {
+  local reg="$CEREBRO_HOME_ARG/projects.json"
+  [ -f "$reg" ] || return 0
+  "$VENV_PYTHON" - "$reg" "$SLUG" "$PROJECT_PATH" <<'PY' 2>/dev/null || true
+import json, os, sys
+reg, slug, root = sys.argv[1], sys.argv[2], sys.argv[3]
+try:
+    with open(reg, encoding="utf-8-sig") as f:
+        entry = json.load(f).get(slug) or {}
+except Exception:
+    sys.exit(0)
+root = os.path.abspath(root).rstrip("/\\")
+for d in entry.get("docs", []) or []:
+    p = os.path.abspath(str(d)).rstrip("/\\")
+    if p.startswith(root + os.sep):
+        rel = p[len(root) + 1:]
+        if os.sep not in rel and "/" not in rel and rel not in ("limet", "limet-workspace"):
+            print(rel)
+            break
+PY
+}
+
+# Tells a LIMET-generated docs/ apart from a project's own docs/, for pre-convention setups that
+# were never registered in CEREBRO. Only LIMET writes these.
+is_limet_owned_docs() {
+  local dir="$1"
+  [ -d "$dir" ] || return 1
+  [ -d "$dir/_templates" ] && return 0
+  [ -f "$dir/architecture/GRAPH_REPORT.md" ] && return 0
+  [ -f "$dir/NON_TECHNICAL_SUMMARY.md" ] && return 0
+  return 1
+}
+
+if [ "$WORKSPACE" = "1" ]; then
+  REL_DOCS_DIR="docs"
+else
+  REL_DOCS_DIR="$(registered_docs_dir)"
+  if [ -z "$REL_DOCS_DIR" ]; then
+    if [ -d "$PROJECT_PATH/$DEFAULT_DOCS_DIR" ]; then
+      REL_DOCS_DIR="$DEFAULT_DOCS_DIR"
+    elif is_limet_owned_docs "$PROJECT_PATH/docs"; then
+      REL_DOCS_DIR="docs"
+    else
+      REL_DOCS_DIR="$DEFAULT_DOCS_DIR"
+    fi
+  fi
+fi
+DOCS_ROOT="$PROJECT_PATH/$REL_DOCS_DIR"
+
 invoke_cerebro() {
   local script="$1"; shift
   "$VENV_PYTHON" "$script" "$@"
@@ -190,7 +248,7 @@ Query the code (knowledge graph):
 Rules:
 - **RAG**: BEFORE answering any question about the project, call the \`limet_search\` MCP tool and ground your answer in its results. If the tool is unavailable, fall back to the \`query_qdrant.py\` command below.
 - Search CEREBRO/Qdrant FIRST. If the document is not indexed (0 results or missing), read it
-  LOCALLY from \`docs/\` or \`$rel/\`.
+  LOCALLY from \`$REL_DOCS_DIR/\` or \`$rel/\`.
 - Re-indexing and Graphify updates belong to the user, never the agent. Use local docs until indexed.
 - **Code questions** (where is X implemented, who uses Y, how does flow Z work): FIRST use
   \`graphify query\` / \`graphify explain\` / \`graphify path\`; THEN confirm exact lines and usages
@@ -213,7 +271,7 @@ Interroga il codice (knowledge graph):
 Regole:
 - **RAG**: PRIMA di rispondere a qualsiasi domanda sul progetto, chiama lo strumento MCP \`limet_search\` e fonda la risposta sui suoi risultati. Se lo strumento non è disponibile, usa il comando \`query_qdrant.py\` qui sotto.
 - Cerca PRIMA in CEREBRO/Qdrant. Se il documento non è indicizzato (0 risultati o assente), leggilo
-  LOCALMENTE da \`docs/\` o \`$rel/\`.
+  LOCALMENTE da \`$REL_DOCS_DIR/\` o \`$rel/\`.
 - Il re-index e gli aggiornamenti Graphify spettano all'utente, mai all'agente. Usa i doc locali
   finché non sono indicizzati.
 - **Domande sul codice** (dov'è implementato X, chi usa Y, come funziona il flusso Z): PRIMA usa
@@ -275,12 +333,12 @@ set_marked_block() {
 }
 
 get_project_block() {
-  local lang="$1" slug="$2" root="$3" docs_dir="$root/docs" file_list="" rel
+  local lang="$1" slug="$2" root="$3" docs_dir="$root/$REL_DOCS_DIR" file_list="" rel
   if [ -d "$docs_dir" ]; then
-    file_list="$(find "$docs_dir" -type f -name '*.md' 2>/dev/null | grep -v '/_templates/' | LC_ALL=C sort | while IFS= read -r f; do rel="${f#"$docs_dir"/}"; printf "  - \`docs/%s\`\n" "$rel"; done)"
+    file_list="$(find "$docs_dir" -type f -name '*.md' 2>/dev/null | grep -v '/_templates/' | LC_ALL=C sort | while IFS= read -r f; do rel="${f#"$docs_dir"/}"; printf "  - \`%s/%s\`\n" "$REL_DOCS_DIR" "$rel"; done)"
   fi
   if [ -z "$file_list" ]; then
-    file_list='  - (fill docs/ with architecture.md, conventions.md, glossary.md · compila docs/ con architecture.md, conventions.md, glossary.md)'
+    file_list="  - (fill $REL_DOCS_DIR/ with architecture.md, conventions.md, glossary.md · compila $REL_DOCS_DIR/ con architecture.md, conventions.md, glossary.md)"
   fi
   local graph_en graph_it maintenance_en maintenance_it
   if [ "$WORKSPACE" = "1" ]; then
@@ -291,8 +349,8 @@ get_project_block() {
   else
     graph_en='Code graph (Graphify): `graphify-out/` (report: `graphify-out/GRAPH_REPORT.md`).'
     graph_it='Grafo del codice (Graphify): `graphify-out/` (report: `graphify-out/GRAPH_REPORT.md`).'
-    maintenance_en='Follow limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md to maintain docs/module-map.md, architecture.md, decisions.md, dependencies.md, conventions.md and glossary.md with file:line citations and Mermaid diagrams. UPDATE existing documents. Maintain docs/NON_TECHNICAL_SUMMARY.md after relevant changes. Re-indexing belongs to the user, never the agent. After code/document changes, periodically remind the user (at task completion or archiving): Launcher → project path → Re-index → Incrementale → click Re-index.'
-    maintenance_it="Segui limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md per mantenere docs/module-map.md, architecture.md, decisions.md, dependencies.md, conventions.md e glossary.md con citazioni file:line e diagrammi Mermaid. AGGIORNA i documenti esistenti. Mantieni docs/NON_TECHNICAL_SUMMARY.md dopo modifiche rilevanti. Il re-index spetta all'utente, mai all'agente. Dopo modifiche a codice/documenti, ricordarlo periodicamente (al termine di un task o dell'archiviazione): Launcher → Percorso progetto → Re-index → Incrementale → clic Re-index."
+    maintenance_en="Follow limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md to maintain $REL_DOCS_DIR/module-map.md, architecture.md, decisions.md, dependencies.md, conventions.md and glossary.md with file:line citations and Mermaid diagrams. UPDATE existing documents. Maintain $REL_DOCS_DIR/NON_TECHNICAL_SUMMARY.md after relevant changes. Re-indexing belongs to the user, never the agent. After code/document changes, periodically remind the user (at task completion or archiving): Launcher → project path → Re-index → Incrementale → click Re-index."
+    maintenance_it="Segui limet/templates/CODEBASE_ANALYSIS_TEMPLATE.md per mantenere $REL_DOCS_DIR/module-map.md, architecture.md, decisions.md, dependencies.md, conventions.md e glossary.md con citazioni file:line e diagrammi Mermaid. AGGIORNA i documenti esistenti. Mantieni $REL_DOCS_DIR/NON_TECHNICAL_SUMMARY.md dopo modifiche rilevanti. Il re-index spetta all'utente, mai all'agente. Dopo modifiche a codice/documenti, ricordarlo periodicamente (al termine di un task o dell'archiviazione): Launcher → Percorso progetto → Re-index → Incrementale → clic Re-index."
   fi
   printf '%s\n' \
     "<!-- PROJECT:START -->" \
@@ -300,7 +358,7 @@ get_project_block() {
     "" \
     "**EN** — Project \`$slug\` — CEREBRO collection \`CRB_$slug\`." \
     "" \
-    "Complete local Markdown inventory under docs/ (excluding _templates; not proof of indexing):" \
+    "Complete local Markdown inventory under $REL_DOCS_DIR/ (excluding _templates; not proof of indexing):" \
     "$file_list" \
     "" \
     "For indexed sources, consult CEREBRO's projects.json and query the collection above." \
@@ -311,7 +369,7 @@ get_project_block() {
     "" \
     "**IT** — Progetto \`$slug\` — collection CEREBRO \`CRB_$slug\`." \
     "" \
-    "Inventario locale completo dei Markdown in docs/ (esclusi _templates; non attesta l'indicizzazione):" \
+    "Inventario locale completo dei Markdown in $REL_DOCS_DIR/ (esclusi _templates; non attesta l'indicizzazione):" \
     "$file_list" \
     "" \
     "Per le fonti indicizzate, consulta projects.json di CEREBRO e interroga la collection indicata sopra." \
@@ -350,7 +408,11 @@ write_instruction_files() {
 update_code_graph() {
   local root="$1" initialize="$2"
   if [ ! -f "$root/.graphifyignore" ]; then
-    printf 'docs/\nlimet/\nlimet-workspace/\n*.groovy\n' > "$root/.graphifyignore"
+    if [ "$REL_DOCS_DIR" = "docs" ]; then
+      printf 'docs/\nlimet/\nlimet-workspace/\n*.groovy\n' > "$root/.graphifyignore"
+    else
+      printf '%s/\ndocs/\nlimet/\nlimet-workspace/\n*.groovy\n' "$REL_DOCS_DIR" > "$root/.graphifyignore"
+    fi
   fi
   if [ "$initialize" = "1" ] || [ ! -f "$root/graphify-out/graph.json" ]; then
     ( cd "$root" && graphify extract . --code-only --no-cluster ) || { echo "Error: graphify extract failed." >&2; return 1; }
@@ -363,8 +425,8 @@ update_code_graph() {
     return 1
   fi
   if [ -f "$root/graphify-out/GRAPH_REPORT.md" ]; then
-    mkdir -p "$root/docs/architecture"
-    cp -f "$root/graphify-out/GRAPH_REPORT.md" "$root/docs/architecture/GRAPH_REPORT.md"
+    mkdir -p "$root/$REL_DOCS_DIR/architecture"
+    cp -f "$root/graphify-out/GRAPH_REPORT.md" "$root/$REL_DOCS_DIR/architecture/GRAPH_REPORT.md"
   else
     echo "Warning: Graphify report missing; no report copied into docs." >&2
   fi
@@ -389,7 +451,18 @@ fi
 
 if [ "$COMMAND" = "init" ]; then
 
-  DOCS_DIR="$PROJECT_PATH/docs"
+  DOCS_DIR="$DOCS_ROOT"
+  if [ "$WORKSPACE" != "1" ] && [ -d "$DOCS_DIR" ]; then
+    FOREIGN="$(find "$DOCS_DIR" -type f ! -name '*.md' ! -name '*.markdown' 2>/dev/null | head -n 5 | sed "s|^$DOCS_DIR/||" | paste -sd ', ' -)"
+    if [ -n "$FOREIGN" ]; then
+      echo "Warning: '$REL_DOCS_DIR/' also holds non-Markdown project files (e.g. $FOREIGN)." >&2
+      echo "         LIMET indexes the WHOLE folder into CEREBRO: those files would be ingested too." >&2
+      echo "         LIMET's own folder is '$DEFAULT_DOCS_DIR/'; this project uses '$REL_DOCS_DIR/' because" >&2
+      echo "         that is what CEREBRO's registry says. To switch, move LIMET's documents into" >&2
+      echo "         '$DEFAULT_DOCS_DIR/', drop the '$REL_DOCS_DIR' entry from projects.json, then re-run" >&2
+      echo "         init followed by 'update --prune'." >&2
+    fi
+  fi
   mkdir -p "$DOCS_DIR"
   if [ "$GRAPHIFY_OK" = "1" ]; then
     update_code_graph "$PROJECT_PATH" 1
@@ -402,7 +475,7 @@ if [ "$COMMAND" = "init" ]; then
     invoke_cerebro "$INGEST_PY" --project "$SLUG"
     WS_COLL=""
   else
-    DOCS_DIR="$PROJECT_PATH/docs"
+    DOCS_DIR="$DOCS_ROOT"
     DOCS_TPL_DIR="$DOCS_DIR/_templates"
     mkdir -p "$DOCS_TPL_DIR"
 
@@ -426,7 +499,7 @@ if [ "$COMMAND" = "init" ]; then
   write_instruction_files "$PROJECT_PATH" "$LANG_EDITION" "$SLUG"
   echo ""
   echo "LIMET-INDEX init complete for '$PROJECT_PATH' (collection: CRB_$SLUG)."
-  echo "Next: fill in the docs/ templates (architecture, conventions, module map, glossary), then run 'limet-index update'."
+  echo "Next: fill in the $REL_DOCS_DIR/ templates (architecture, conventions, module map, glossary), then run 'limet-index update'."
 fi
 
 # --- update -----------------------------------------------------------------------------------
@@ -436,8 +509,8 @@ if [ "$COMMAND" = "update" ]; then
   if [ "$GRAPHIFY_OK" = "1" ] && [ "$SKIP_GRAPH" != "1" ]; then
     update_code_graph "$PROJECT_PATH" 0
   fi
-  if [ -d "$PROJECT_PATH/docs" ]; then
-    invoke_cerebro "$REGISTER_PY" add "$SLUG" --docs "$PROJECT_PATH/docs"
+  if [ -d "$DOCS_ROOT" ]; then
+    invoke_cerebro "$REGISTER_PY" add "$SLUG" --docs "$DOCS_ROOT"
   fi
 
   INGEST_ARGS=(--project "$SLUG")
@@ -451,7 +524,7 @@ fi
 # --- instructions -----------------------------------------------------------------------------
 
 ensure_non_technical_summary() {
-  local root="$1" name="$2" target="$root/docs/NON_TECHNICAL_SUMMARY.md"
+  local root="$1" name="$2" target="$root/$REL_DOCS_DIR/NON_TECHNICAL_SUMMARY.md"
   [ -f "$target" ] && return 0
   mkdir -p "$(dirname "$target")"
   cat > "$target" <<EOF
@@ -472,7 +545,7 @@ ensure_non_technical_summary() {
 
 - [data] — [cosa è cambiato, in termini non tecnici]
 EOF
-  echo "Created: docs/NON_TECHNICAL_SUMMARY.md"
+  echo "Created: $REL_DOCS_DIR/NON_TECHNICAL_SUMMARY.md"
 }
 
 if [ "$COMMAND" = "instructions" ]; then
@@ -485,6 +558,7 @@ fi
 # --- status -----------------------------------------------------------------------------------
 
 if [ "$COMMAND" = "status" ]; then
+  echo "LIMET docs folder: $REL_DOCS_DIR/ ($DOCS_ROOT)"
   invoke_cerebro "$REGISTER_PY" list
   invoke_cerebro "$QUERY_PY" --project "$SLUG" count
 fi
