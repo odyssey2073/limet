@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LIMET — Guida per il team AI-first</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="burger" aria-label="Menu">☰</button>
+<aside id="side">
+  <div class="brand"><b>LIMET</b><small>Guida per il team AI-first</small></div>
+  <input id="q" type="search" placeholder="Cerca nella guida…" aria-label="Cerca">
+  <nav id="nav"></nav>
+  <div class="sidefoot">
+    <button class="b" id="theme" title="Tema chiaro/scuro">◐ Tema</button>
+    <button class="b" id="reset" title="Azzera i dati salvati">↺ Reset</button>
+  </div>
+</aside>
+
+<main>
+
+<!-- ============ 1. BENVENUTO ============ -->
+<section class="page" id="benvenuto" data-title="Benvenuto" data-ico="👋" data-grp="Inizia">
+  <span class="kicker">LIMET · guida completa per il team</span>
+  <h1>Lavorare con l'IA in modo ordinato, tracciabile e verificato</h1>
+  <p class="lead">LIMET (<i>Lightweight Iterative Method for Engineering with Traceability</i>) non è un programma che scrive codice al posto tuo.
+    È un <b>metodo di lavoro</b> più <b>tre strumenti di contesto</b> che diamo agli assistenti IA (GitHub Copilot CLI, Claude Code…) perché lavorino
+    con <b>memoria</b>, con una <b>mappa del codice</b> e con un <b>piano scritto</b> — invece di andare a intuito.</p>
+
+  <div class="grid g3">
+    <div class="mini"><div class="big">🧠</div><h4>Memoria</h4>L'IA ricorda decisioni e specifiche passate (CEREBRO).</div>
+    <div class="mini"><div class="big">🗺️</div><h4>Mappa</h4>L'IA vede chi chiama chi nel codice (Graphify).</div>
+    <div class="mini"><div class="big">📝</div><h4>Piano</h4>Prima si scrive cosa fare e come verificarlo (spec-driven).</div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Come leggere questa guida</h2>
+    <p>Puoi leggerla in ordine (consigliato la prima volta, circa 40–60 minuti) oppure saltare dal menu a sinistra. Sono segnate con ✔ le sezioni già viste. Ogni sezione parte dal concetto <b>in parole semplici</b> e poi scende nel <b>dettaglio operativo</b>.</p>
+    <div class="grid g3">
+      <div class="mini"><h4>🆕 Sei nuovo?</h4>Leggi <b>Perché LIMET</b>, <b>Visione d'insieme</b>, i <b>3 pilastri</b> e <b>Ciclo di vita</b>.</div>
+      <div class="mini"><h4>🛠️ Devi installare?</h4>Vai a <b>Installazione</b> e <b>LIMET in un progetto</b>.</div>
+      <div class="mini"><h4>⚡ Hai fretta?</h4>Apri <b>Checklist di sessione</b> e <b>Chi fa cosa</b>.</div>
+    </div>
+  </div>
+
+  <div class="callout info"><b class="t">Le tre regole che valgono sempre</b>
+    <b>1.</b> Prima si scrive il piano, poi il codice. &nbsp;<b>2.</b> Nessuna decisione ambigua resta implicita. &nbsp;<b>3.</b> Nessun task è concluso senza una prova di verifica.</div>
+</section>
+
+<!-- ============ 2. PERCHE ============ -->
+<section class="page" id="perche" data-title="Perché LIMET" data-ico="🎯" data-grp="Inizia">
+  <span class="kicker">Il problema</span>
+  <h1>Perché serve un metodo, non solo un buon assistente IA</h1>
+  <p class="lead">Gli assistenti IA scrivono codice molto bene. Ma di base hanno tre limiti strutturali che nessun prompt brillante risolve.</p>
+
+  <div class="grid g3">
+    <div class="mini"><div class="big">🫥</div><h4>Non ricordano</h4>Ogni conversazione riparte da zero: decisioni, motivazioni e vincoli già discussi vanno ri-spiegati.</div>
+    <div class="mini"><div class="big">🔭</div><h4>Non vedono tutto</h4>Leggono pezzi di codice, non l'intero progetto: possono toccare una funzione senza sapere chi altro la usa.</div>
+    <div class="mini"><div class="big">🎲</div><h4>Indovinano</h4>Danno risposte plausibili anche quando non sanno: il rischio è un errore che sembra corretto.</div>
+  </div>
+
+  <figure>
+  <svg viewBox="0 0 900 330" role="img" aria-label="Confronto senza e con LIMET">
+    <text x="225" y="36" text-anchor="middle" font-size="22" class="tt" style="fill:var(--red)">✗ Senza LIMET</text>
+    <text x="675" y="36" text-anchor="middle" font-size="22" class="tt" style="fill:var(--green)">✓ Con LIMET</text>
+    <line x1="450" y1="20" x2="450" y2="310" class="ln" stroke-dasharray="6 6"/>
+    <g font-size="17">
+      <rect x="30" y="56" width="390" height="44" rx="10" class="box"/><text x="225" y="84" text-anchor="middle">Richiesta all'IA</text>
+      <rect x="30" y="118" width="390" height="44" rx="10" class="box"/><text x="225" y="146" text-anchor="middle">L'IA "indovina" leggendo il codice</text>
+      <rect x="30" y="180" width="390" height="44" rx="10" class="box"/><text x="225" y="208" text-anchor="middle">Risposta plausibile, forse sbagliata</text>
+      <rect x="30" y="242" width="390" height="44" rx="10" style="fill:rgba(248,113,113,.15);stroke:var(--red);stroke-width:2"/><text x="225" y="270" text-anchor="middle">Bug scoperto tardi, contesto perso</text>
+      <path d="M225 100v18M225 162v18M225 224v18" class="ln"/>
+
+      <rect x="480" y="56" width="390" height="44" rx="10" class="box"/><text x="675" y="84" text-anchor="middle">Richiesta + piano scritto</text>
+      <rect x="480" y="118" width="390" height="44" rx="10" class="box"/><text x="675" y="146" text-anchor="middle">Memoria + mappa del codice</text>
+      <rect x="480" y="180" width="390" height="44" rx="10" class="box"/><text x="675" y="208" text-anchor="middle">Modifica nel perimetro approvato</text>
+      <rect x="480" y="242" width="390" height="44" rx="10" style="fill:rgba(74,222,128,.15);stroke:var(--green);stroke-width:2"/><text x="675" y="270" text-anchor="middle">Verificata e archiviata</text>
+      <path d="M675 100v18M675 162v18M675 224v18" class="hl"/>
+    </g>
+  </svg>
+  <figcaption>Stesso assistente, stesso modello: cambia il contesto che gli forniamo e il processo che seguiamo.</figcaption></figure>
+
+  <h2>Cosa guadagna il team</h2>
+  <div class="grid g2">
+    <div class="card"><h3 style="margin-top:0">⏱️ Meno tempo perso</h3>Il contesto non si ri-spiega a ogni sessione: si interroga la memoria condivisa.</div>
+    <div class="card"><h3 style="margin-top:0">🛡️ Meno regressioni</h3>Prima di modificare si sa "chi altro la usa" e come si verifica che funzioni.</div>
+    <div class="card"><h3 style="margin-top:0">📚 Decisioni tracciate</h3>Ogni scelta ha risposta e data scritte: non vive solo nella testa di qualcuno.</div>
+    <div class="card"><h3 style="margin-top:0">🤝 Onboarding rapido</h3>Un collega (o un nuovo agente) si aggiorna leggendo i documenti, non rifacendo tutto da zero.</div>
+  </div>
+
+  <div class="callout warn"><b class="t">Cosa LIMET NON è</b>
+    Non è un tool che "automatizza" gli sviluppatori. Non esegue build, test, commit o deploy al posto tuo. Non è legato a un prodotto specifico: funziona anche se qualche strumento manca (vedi <i>Anti-pattern e degradazione</i>).</div>
+</section>
+
+<!-- ============ 3. VISIONE ============ -->
+<section class="page" id="visione" data-title="Visione d'insieme" data-ico="🧭" data-grp="Inizia">
+  <span class="kicker">Il quadro generale</span>
+  <h1>Tutti i pezzi di LIMET in una pagina</h1>
+  <p class="lead">Al centro c'è l'agente IA. Intorno, tre fonti di contesto lo informano; sopra, il metodo spec-driven gli dà un binario da seguire; tu decidi, approvi ed esegui le azioni con effetti reali.</p>
+
+  <figure>
+  <svg viewBox="0 0 920 560" role="img" aria-label="Schema generale LIMET">
+    <defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--accent)"/></marker></defs>
+    <!-- metodo -->
+    <rect x="20" y="14" width="880" height="64" rx="14" style="fill:rgba(74,222,128,.13);stroke:var(--green);stroke-width:2.5"/>
+    <text x="460" y="42" text-anchor="middle" font-size="20" class="tt">📝 Metodo spec-driven (il binario)</text>
+    <text x="460" y="66" text-anchor="middle" font-size="15" class="dim">Proposta → Revisione → Task → Applicazione → Verifica → Archiviazione</text>
+    <!-- fonti -->
+    <g font-size="17">
+    <rect x="20" y="170" width="250" height="150" rx="14" style="fill:rgba(56,189,248,.12);stroke:var(--blue);stroke-width:2.5"/>
+    <text x="145" y="205" text-anchor="middle" font-size="21" class="tt">🧠 CEREBRO</text>
+    <text x="145" y="232" text-anchor="middle">Memoria documentale</text>
+    <text x="145" y="256" text-anchor="middle" class="dim">"Perché? Cosa dice la spec?"</text>
+    <text x="145" y="290" text-anchor="middle" class="dim" font-size="14">Qdrant + Ollama (locale)</text>
+
+    <rect x="650" y="170" width="250" height="150" rx="14" style="fill:rgba(192,132,252,.12);stroke:var(--purple);stroke-width:2.5"/>
+    <text x="775" y="205" text-anchor="middle" font-size="21" class="tt">🗺️ Graphify</text>
+    <text x="775" y="232" text-anchor="middle">Mappa del codice</text>
+    <text x="775" y="256" text-anchor="middle" class="dim">"Dove? Chi lo chiama?"</text>
+    <text x="775" y="290" text-anchor="middle" class="dim" font-size="14">Analisi AST (locale)</text>
+
+    <rect x="335" y="130" width="250" height="230" rx="18" style="fill:rgba(249,115,22,.15);stroke:var(--accent);stroke-width:3"/>
+    <text x="460" y="190" text-anchor="middle" font-size="42">🤖</text>
+    <text x="460" y="232" text-anchor="middle" font-size="22" class="tt">Agente IA</text>
+    <text x="460" y="260" text-anchor="middle" class="dim">Copilot CLI · Claude Code</text>
+    <text x="460" y="300" text-anchor="middle" font-size="14" class="dim">istruito da AGENTS.md</text>
+    <text x="460" y="322" text-anchor="middle" font-size="14" class="dim">(blocco LIMET)</text>
+    </g>
+    <path d="M270 245H335" class="hl" marker-end="url(#ar)"/>
+    <path d="M650 245H585" class="hl" marker-end="url(#ar)"/>
+    <!-- dati -->
+    <rect x="335" y="430" width="250" height="96" rx="14" class="box" stroke-dasharray="7 5"/>
+    <text x="460" y="466" text-anchor="middle" font-size="18" class="tt">🔎 Dati reali (read-only)</text>
+    <text x="460" y="492" text-anchor="middle" font-size="14" class="dim">DB, log, API — opzionale</text>
+    <path d="M460 430V360" class="hl" marker-end="url(#ar)" stroke-dasharray="7 5"/>
+    <!-- umano -->
+    <rect x="20" y="420" width="250" height="116" rx="14" style="fill:rgba(252,211,77,.12);stroke:var(--yellow);stroke-width:2.5"/>
+    <text x="145" y="455" text-anchor="middle" font-size="19" class="tt">👤 Tu</text>
+    <text x="145" y="482" text-anchor="middle" font-size="15">Decidi · approvi</text>
+    <text x="145" y="504" text-anchor="middle" font-size="15">Build · test · commit · re-index</text>
+    <path d="M270 470H335" class="ln" stroke-dasharray="3 6"/>
+    <rect x="650" y="420" width="250" height="116" rx="14" class="box"/>
+    <text x="775" y="455" text-anchor="middle" font-size="19" class="tt">📁 Il progetto</text>
+    <text x="775" y="482" text-anchor="middle" font-size="15" class="dim">codice · docs-limet/</text>
+    <text x="775" y="504" text-anchor="middle" font-size="15" class="dim">limet/changes · limet/archive</text>
+    <path d="M585 470H650" class="ln" stroke-dasharray="3 6"/>
+    <path d="M460 78V130" class="hl" marker-end="url(#ar)"/>
+  </svg>
+  <figcaption>Le frecce arancioni sono flussi di contesto verso l'agente; quelle tratteggiate sono canali opzionali o azioni umane.</figcaption></figure>
+
+  <h2>Un esempio in 3 mosse</h2>
+  <p>Richiesta: <i>«Vogliamo poter riassegnare una pratica a un altro ente.»</i></p>
+  <ol class="steps">
+    <li><b>Graphify — dove vive oggi la logica di assegnazione?</b>L'agente trova funzioni, classi e dipendenze reali, senza leggere l'intero repository.</li>
+    <li><b>CEREBRO — cosa è già stato deciso?</b>Recupera vincoli e specifiche passate (es. ruoli ammessi) e li cita.</li>
+    <li><b>Spec-driven — si scrive il piano</b>Proposta + task + strategia di verifica; tu approvi; solo dopo si implementa, passo per passo.</li>
+  </ol>
+</section>
+
+<!-- ============ 4. CEREBRO ============ -->
+<section class="page" id="cerebro" data-title="CEREBRO · la memoria" data-ico="🧠" data-grp="I tre pilastri">
+  <span class="kicker">Pilastro 1</span>
+  <h1>CEREBRO — la memoria del progetto</h1>
+  <p class="lead">Tecnicamente è un sistema <b>RAG</b> (<i>Retrieval-Augmented Generation</i>) basato su un <b>database vettoriale</b>. In pratica: la documentazione di progetto diventa interrogabile <b>in italiano normale</b>.</p>
+
+  <div class="analogy">💡 <b>Analogia.</b> Un bibliotecario che ha letto <i>ogni</i> documento scritto sul progetto. Non gli chiedi "cerca la parola X": gli chiedi <i>"perché abbiamo bloccato la riassegnazione a certi ruoli?"</i> e ti porta al paragrafo giusto, anche se quel documento usa parole diverse.</div>
+
+  <h2>Come funziona, senza gergo</h2>
+  <ol class="steps">
+    <li><b>Si leggono i documenti</b>Formati supportati: <code>.md .txt .pdf .docx .xlsx .pptx .html</code>.</li>
+    <li><b>Si spezzano in frammenti (chunk)</b>Paragrafi di dimensione gestibile.</li>
+    <li><b>Ogni frammento diventa un "codice di significato"</b>Un modello di embedding locale (Ollama, <code>nomic-embed-text</code>) lo trasforma in un vettore numerico.</li>
+    <li><b>I vettori vanno in Qdrant</b>Una collection isolata per progetto: <code>CRB_&lt;slug&gt;</code>. Nessuna contaminazione tra progetti.</li>
+    <li><b>Quando chiedi, anche la domanda diventa un vettore</b>Si recuperano i frammenti più vicini <i>per significato</i> e l'agente li usa citando la fonte.</li>
+  </ol>
+
+  <h2>Perché "vettoriale"? Un solo concetto da ricordare</h2>
+  <p>Un motore tradizionale trova solo corrispondenze <b>esatte di testo</b>. Un database vettoriale confronta il <b>significato</b>: frasi simili finiscono "vicine" in uno spazio numerico.</p>
+
+  <figure>
+  <svg viewBox="0 0 900 430" role="img" aria-label="Spazio dei significati">
+      <rect x="10" y="10" width="880" height="410" rx="14" class="box" style="fill:var(--card2)"/>
+    <text x="30" y="40" font-size="16" class="dim">Spazio dei significati (semplificato in 2 dimensioni)</text>
+    <!-- cluster permessi -->
+    <ellipse cx="270" cy="210" rx="190" ry="110" style="fill:rgba(56,189,248,.12);stroke:var(--blue);stroke-width:2;stroke-dasharray:6 5"/>
+    <g font-size="16"><circle cx="170" cy="180" r="8" style="fill:var(--blue)"/><text x="185" y="175">ruoli e autorizzazioni</text>
+    <circle cx="300" cy="250" r="8" style="fill:var(--blue)"/><text x="170" y="285">permessi utente</text>
+    <circle cx="340" cy="190" r="8" style="fill:var(--blue)"/><text x="352" y="198">accesso negato per profilo</text>
+    <!-- altri cluster -->
+    <circle cx="690" cy="110" r="8" style="fill:var(--purple)"/><text x="590" y="95">generazione PDF</text>
+    <circle cx="740" cy="160" r="8" style="fill:var(--purple)"/><text x="680" y="190">export CSV</text>
+    <circle cx="700" cy="310" r="8" style="fill:var(--green)"/><text x="590" y="340">notifiche e-mail</text>
+    <circle cx="780" cy="280" r="8" style="fill:var(--green)"/><text x="720" y="260">avvisi di cambio stato</text></g>
+    <!-- query -->
+    <text x="448" y="296" font-size="38" style="fill:var(--accent)">★</text>
+    <text x="420" y="378" font-size="16" class="tt" style="fill:var(--accent2)">La tua domanda:</text>
+        <text x="420" y="400" font-size="16" style="fill:var(--accent2)">"chi può riassegnare una pratica?"</text>
+    <path d="M440 285L335 255" class="hl" stroke-dasharray="5 4"/>
+    <text x="355" y="330" font-size="14" class="dim">trova i frammenti vicini</text>
+  </svg>
+  <figcaption>La domanda non contiene le parole "ruoli" o "autorizzazioni", ma ha un significato vicino a quel gruppo di frammenti: è ciò che il bibliotecario ti restituisce.</figcaption></figure>
+
+  <div class="grid g2">
+    <div class="mini"><h4 style="color:var(--red)">✗ Ricerca testuale classica</h4>Cerchi "permessi utente": trovi solo documenti che contengono proprio quelle parole. Se la spec dice "ruoli e autorizzazioni", la perdi.</div>
+    <div class="mini"><h4 style="color:var(--green)">✓ Ricerca semantica (CEREBRO)</h4>Trova anche "ruoli e autorizzazioni" perché il significato è vicino, e ti dà il frammento con il nome del file sorgente.</div>
+  </div>
+
+  <h2>A cosa serve concretamente</h2>
+  <ul class="ck">
+    <li>L'agente risponde a "perché è stato fatto così" <b>citando il documento</b>, non inventando.</li>
+    <li>Le decisioni di mesi fa (anche su un altro modulo) tornano disponibili in secondi.</li>
+    <li>Nuovi colleghi e nuovi agenti si aggiornano dalla stessa memoria condivisa.</li>
+    <li><b>100% locale</b>: nessuna chiamata cloud, nessuna API key, i documenti non lasciano la macchina.</li>
+  </ul>
+
+  <h2>Come lo interroghi</h2>
+  <div class="cmd">python &lt;CEREBRO&gt;\scripts\query_qdrant.py --project &lt;slug&gt; search "perché la riassegnazione è limitata?" --limit 5</div>
+  <p>Oppure, senza digitare nulla: il server MCP <code>limet_search</code> (si registra una volta per tool) fa interrogare i documenti in modo trasparente a Copilot CLI e Claude Code.</p>
+
+  <div class="callout info"><b class="t">Cosa viene indicizzato</b>
+    <code>docs-limet/</code> (documentazione della codebase, ricorsiva), <code>limet/changes/</code> e <code>limet/archive/</code> (i documenti LIMET). Sono esclusi solo <code>docs-limet/_templates/</code> e <code>.obsidian/</code>. Gli aggiornamenti sono <i>upsert</i> deterministici: nessun duplicato.</div>
+  <div class="callout warn"><b class="t">Importante</b>Un documento non ancora indicizzato non è "invisibile": l'agente può leggerlo dai file locali. Ma il Re-index (lo lanci tu) lo rende ricercabile per significato.</div>
+</section>
+
+<!-- ============ 5. GRAPHIFY ============ -->
+<section class="page" id="graphify" data-title="Graphify · la mappa" data-ico="🗺️" data-grp="I tre pilastri">
+  <span class="kicker">Pilastro 2</span>
+  <h1>Graphify — la mappa delle relazioni nel codice</h1>
+  <p class="lead">Analizza il codice e costruisce un <b>grafo</b>: chi chiama chi, chi dipende da chi. Non cerca testo: ne capisce la <b>struttura</b>.</p>
+
+  <div class="analogy">💡 <b>Analogia.</b> La differenza tra <b>Ctrl+F su un elenco telefonico</b> (trovi solo righe con quelle lettere) e <b>Google Maps</b> (sa come le strade sono collegate e ti dice il percorso).</div>
+
+  <h2>Ricerca testuale vs grafo</h2>
+  <figure>
+  <svg viewBox="0 0 900 380" role="img" aria-label="grep contro grafo">
+    <text x="215" y="34" text-anchor="middle" font-size="20" class="tt" style="fill:var(--red)">✗ Ricerca testuale (grep)</text>
+    <text x="685" y="34" text-anchor="middle" font-size="20" class="tt" style="fill:var(--green)">✓ Grafo (Graphify)</text>
+    <line x1="450" y1="18" x2="450" y2="360" class="ln" stroke-dasharray="6 6"/>
+    <g font-family="Consolas,monospace" font-size="14">
+      <rect x="20" y="52" width="400" height="296" rx="12" class="box"/>
+      <text x="34" y="82">Servizio.java:41  calcolaRata(x)</text>
+      <text x="34" y="110" class="dim">// vedi calcolaRata() per il piano</text>
+      <text x="34" y="138">Report.java:9   calcolaRata2()</text>
+      <text x="34" y="166" class="dim">README.md:20  "usa calcolaRata"</text>
+      <text x="34" y="194">Test.java:77  assertEquals(calcolaRata…</text>
+      <text x="34" y="222" class="dim">Legacy.java:5 // calcolaRata rimossa</text>
+    </g>
+    <text x="34" y="262" font-size="15" style="fill:var(--red)">• mescola commenti, nomi simili, test</text>
+    <text x="34" y="288" font-size="15" style="fill:var(--red)">• non vede le chiamate indirette</text>
+    <text x="34" y="314" font-size="15" style="fill:var(--red)">• non dice "cosa si rompe se la cambio"</text>
+    <!-- grafo -->
+    <g font-size="15">
+      <rect x="500" y="70" width="150" height="40" rx="10" class="box"/><text x="575" y="96" text-anchor="middle">ContrattoService</text>
+      <rect x="720" y="70" width="150" height="40" rx="10" class="box"/><text x="795" y="96" text-anchor="middle">ReportBatch</text>
+      <rect x="610" y="170" width="170" height="48" rx="12" style="fill:rgba(249,115,22,.2);stroke:var(--accent);stroke-width:3"/><text x="695" y="200" text-anchor="middle" class="tt">calcolaRata()</text>
+      <rect x="500" y="280" width="150" height="40" rx="10" class="box"/><text x="575" y="306" text-anchor="middle">TassoRepository</text>
+      <rect x="720" y="280" width="150" height="40" rx="10" class="box"/><text x="795" y="306" text-anchor="middle">Arrotondamenti</text>
+    </g>
+    <g class="hl" style="stroke-width:2.5"><path d="M575 110L650 170" marker-end="url(#ar2)"/><path d="M795 110L740 170" marker-end="url(#ar2)"/><path d="M660 218L590 280" marker-end="url(#ar2)"/><path d="M730 218L780 280" marker-end="url(#ar2)"/></g>
+    <defs><marker id="ar2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9z" style="fill:var(--accent)"/></marker></defs>
+    <text x="475" y="150" font-size="14" class="dim">chiamanti (2)</text>
+    <text x="475" y="255" font-size="14" class="dim">dipendenze (2)</text>
+    <text x="685" y="352" text-anchor="middle" font-size="15" style="fill:var(--green)">Sai esattamente chi la usa e da cosa dipende</text>
+  </svg>
+  <figcaption>Il grafo mostra solo relazioni reali. Prima di modificare una funzione condivisa, sai subito l'impatto.</figcaption></figure>
+
+  <h2>Cosa genera e come lo usi</h2>
+  <p>Nella root del progetto crea la cartella <code>graphify-out/</code> con <code>graph.json</code> (per le macchine), <code>graph.html</code> (grafo interattivo da aprire nel browser) e <code>GRAPH_REPORT.md</code> (report architetturale in linguaggio naturale).</p>
+  <div class="tablewrap"><table>
+    <tr><th>Domanda</th><th>Comando</th></tr>
+    <tr><td>Relazione/dipendenze in linguaggio naturale</td><td><code>graphify query "cosa collega ClasseA a ClasseB?"</code></td></tr>
+    <tr><td>Spiegami un simbolo</td><td><code>graphify explain "NomeClasse"</code></td></tr>
+    <tr><td>Percorso tra due simboli</td><td><code>graphify path "ClasseA" "ClasseB"</code></td></tr>
+    <tr><td>Aggiorna dopo modifiche al codice</td><td><code>graphify update .</code></td></tr>
+  </table></div>
+
+  <ul class="ck">
+    <li><b>Costo quasi nullo</b>: è analisi locale (AST), non richiede chiamate a un modello IA esterno.</li>
+    <li>Meno regressioni: si sa "chi altro la usa" prima di toccare qualcosa.</li>
+    <li>Analizzare un flusso su più moduli (frontend → backend) diventa rapido e affidabile.</li>
+  </ul>
+  <div class="callout info"><b class="t">Separazione delle responsabilità</b>Graphify copre <b>solo il codice</b>, CEREBRO <b>solo la documentazione</b>. Per questo <code>docs-limet/</code> viene esclusa da Graphify tramite <code>.graphifyignore</code> (lo script la genera già così).</div>
+  <p class="sticky-note">AST = <i>Abstract Syntax Tree</i>, lo "scheletro grammaticale" del codice: funzioni, classi, chiamate.</p>
+</section>
+
+<!-- ============ 6. SPEC DRIVEN ============ -->
+<section class="page" id="spec" data-title="Spec-driven · il piano" data-ico="📝" data-grp="I tre pilastri">
+  <span class="kicker">Pilastro 3</span>
+  <h1>Approccio spec-driven — il "contratto" scritto prima di agire</h1>
+  <p class="lead">Prima di modificare codice non banale si scrive <b>cosa</b> si vuole ottenere, <b>perché</b> e <b>come</b> si verificherà. È l'opposto del <i>vibe coding</i>: procedere a tentativi, fidandosi dell'intuito del momento.</p>
+
+  <div class="analogy">💡 <b>Analogia.</b> Aggiungere una stanza a casa <b>senza disegni</b>, sperando che si incastri, oppure con un <b>progetto approvato</b> dall'architetto. Costa 10 minuti in più all'inizio ed evita di abbattere un muro dopo.</div>
+
+  <div class="grid g2">
+    <div class="mini"><h4 style="color:var(--red)">✗ Vibe-driven</h4>Si parte dal codice, si decide strada facendo, il "perché" resta nella chat. Dopo un mese nessuno ricorda cosa è stato scelto e perché.</div>
+    <div class="mini"><h4 style="color:var(--green)">✓ Spec-driven</h4>Si scrive il piano, lo si approva, si implementa a passi piccoli con verifica. Il documento è la <b>fonte di verità condivisa</b> tra te e l'agente.</div>
+  </div>
+
+  <h2>I cinque principi del manuale</h2>
+  <div class="grid g2">
+    <div class="card"><h3 style="margin-top:0">1 · Spec-driven, non vibe-driven</h3>Il documento di piano è la fonte di verità, non il contesto implicito della conversazione.</div>
+    <div class="card"><h3 style="margin-top:0">2 · Tracciabilità delle decisioni</h3>Ogni ambiguità è una <b>domanda contestuale</b> con risposta e data. Se si deve procedere senza risposta, si dichiara l'assunzione e il suo rischio.</div>
+    <div class="card"><h3 style="margin-top:0">3 · Scrivere ≠ eseguire</h3>L'agente propone modifiche e comandi; <b>build, test, commit, push, migrazioni e deploy</b> li esegui tu (o la pipeline).</div>
+    <div class="card"><h3 style="margin-top:0">4 · Aggiornamento a ritroso</h3>A lavoro finito si aggiunge una sezione datata "Esito implementazione". Non si riscrive la storia, la si completa. Il <b>registro modifiche</b> si compila <i>mentre</i> si modifica.</div>
+  </div>
+  <div class="card" style="border-color:var(--accent)"><h3 style="margin-top:0">5 · Nessun task è concluso senza verifica <span class="chip red">vincolante</span></h3>Ogni task deve prevedere <b>unit test</b> e, quando serve, un <b>piano e2e</b> ripetibile da chiunque. Un "non applicabile" è accettato solo se motivato per iscritto (es. solo commenti o rinomine interne). Dettagli nella sezione <i>Verifica obbligatoria</i>.</div>
+
+  <h2>Cosa ottieni</h2>
+  <ul class="ck">
+    <li>Puoi <b>rivedere il piano prima</b> di spendere tempo e budget in un'implementazione sbagliata.</li>
+    <li>Chiunque (manager, collega, altro agente) capisce una modifica passata leggendo un documento.</li>
+    <li>Riduce le regressioni "silenziose": ogni modifica ha una strategia di verifica obbligatoria.</li>
+    <li>Ispirato ai flussi di <i>change proposal</i> come OpenSpec, ma indipendente dagli strumenti e con una fase di verifica esplicita.</li>
+  </ul>
+
+  <h2>Stati dei documenti e dei task</h2>
+  <figure>
+  <svg viewBox="0 0 900 250" role="img" aria-label="Stati documenti e task">
+    <defs><marker id="ar3" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9z" style="fill:var(--accent)"/></marker></defs>
+    <text x="20" y="28" font-size="16" class="tt dim">Documento</text>
+    <g font-size="16" text-anchor="middle">
+      <rect x="20" y="40" width="150" height="46" rx="23" class="box"/><text x="95" y="69">DRAFT</text>
+      <rect x="250" y="40" width="150" height="46" rx="23" class="box"/><text x="325" y="69">APPROVATO</text>
+      <rect x="480" y="40" width="150" height="46" rx="23" class="box"/><text x="555" y="69">IN CORSO</text>
+      <rect x="710" y="40" width="170" height="46" rx="23" style="fill:rgba(74,222,128,.18);stroke:var(--green);stroke-width:2"/><text x="795" y="69">COMPLETATO</text>
+    </g>
+    <path d="M170 63H250M400 63H480M630 63H710" class="hl" marker-end="url(#ar3)"/>
+    <text x="20" y="140" font-size="16" class="tt dim">Task</text>
+    <g font-size="16" text-anchor="middle">
+      <rect x="20" y="152" width="150" height="46" rx="23" class="box"/><text x="95" y="181">pending</text>
+      <rect x="250" y="152" width="150" height="46" rx="23" class="box"/><text x="325" y="181">in_progress</text>
+      <rect x="480" y="152" width="150" height="46" rx="23" style="fill:rgba(74,222,128,.18);stroke:var(--green);stroke-width:2"/><text x="555" y="181">done</text>
+      <rect x="250" y="210" width="150" height="34" rx="17" style="fill:rgba(248,113,113,.15);stroke:var(--red);stroke-width:2"/><text x="325" y="233" font-size="14">blocked + motivo</text>
+    </g>
+    <path d="M170 175H250M400 175H480" class="hl" marker-end="url(#ar3)"/>
+    <text x="650" y="168" font-size="15" class="dim">done solo con test verde,</text>
+    <text x="650" y="190" font-size="15" class="dim">registrato con data e ora</text>
+    <text x="650" y="212" font-size="15" class="dim">AAAA-MM-GG HH:MM</text>
+  </svg>
+  <figcaption>Le date sono sempre nel formato <code>YYYY-MM-DD</code>; per il passaggio a <code>done</code> si aggiunge anche l'ora.</figcaption></figure>
+</section>
+
+<!-- ============ 7. SCEGLI STRUMENTO ============ -->
+<section class="page" id="scegli" data-title="Quale strumento uso?" data-ico="🔀" data-grp="I tre pilastri">
+  <span class="kicker">Criterio di combinazione</span>
+  <h1>Quale fonte di contesto devo usare?</h1>
+  <p class="lead">Non vanno usate a caso: la domanda determina lo strumento. Prova il selettore qui sotto.</p>
+
+  <div class="card"><div id="toolpick"></div><div id="toolres"></div></div>
+
+  <h2>Le regole in sintesi</h2>
+  <ol class="steps">
+    <li><b>"Dove / come è implementato?"</b>→ Graphify per primo (costo quasi nullo).</li>
+    <li><b>"Perché / qual è la specifica?"</b>→ CEREBRO.</li>
+    <li><b>Flusso end-to-end o più moduli</b>→ prima Graphify, poi CEREBRO, <i>incrocia</i> i risultati, poi scrivi il piano.</li>
+    <li><b>Verificare uno stato reale</b>→ accesso dati <b>read-only</b>.</li>
+    <li><b>Non ripetere</b> una ricerca se il contesto è già stato recuperato nella stessa sessione (spreco di tempo e token).</li>
+  </ol>
+  <div class="callout ok"><b class="t">Se uno strumento manca</b>LIMET degrada con grazia: CEREBRO → ricerca full-text manuale nei docs; Graphify → grep/ricerca per simbolo; dati reali → una query manuale in sola lettura. Tracciabilità e verifica restano identiche.</div>
+</section>
+
+<!-- ============ 8. CICLO ============ -->
+<section class="page" id="ciclo" data-title="Ciclo di vita" data-ico="🔄" data-grp="Il metodo">
+  <span class="kicker">Il metodo</span>
+  <h1>Il ciclo di vita di una modifica</h1>
+  <p class="lead">Ogni bug fix o feature attraversa le stesse fasi. Sono <b>fluide</b>, non rigide: se emerge un'informazione nuova si torna indietro. Clicca una fase per vedere scopo, modo di lavoro e documenti.</p>
+
+  <figure>
+  <svg viewBox="0 0 920 210" role="img" aria-label="Ciclo di vita">
+    <defs><marker id="ar4" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9z" style="fill:var(--accent)"/></marker></defs>
+    <g font-size="15" text-anchor="middle">
+      <g><circle cx="60" cy="80" r="38" class="box" stroke-dasharray="5 4"/><text x="60" y="76" class="tt">0</text><text x="60" y="96" font-size="12">Esplora</text></g>
+      <g><circle cx="190" cy="80" r="38" class="box"/><text x="190" y="76" class="tt">1</text><text x="190" y="96" font-size="12">Proposta</text></g>
+      <g><circle cx="320" cy="80" r="38" style="fill:rgba(252,211,77,.2);stroke:var(--yellow);stroke-width:3"/><text x="320" y="76" class="tt">2</text><text x="320" y="96" font-size="12">Revisione</text></g>
+      <g><circle cx="450" cy="80" r="38" class="box"/><text x="450" y="76" class="tt">3</text><text x="450" y="96" font-size="12">Task</text></g>
+      <g><circle cx="580" cy="80" r="38" class="box"/><text x="580" y="76" class="tt">4</text><text x="580" y="96" font-size="12">Applica</text></g>
+      <g><circle cx="710" cy="80" r="38" style="fill:rgba(74,222,128,.2);stroke:var(--green);stroke-width:3"/><text x="710" y="76" class="tt">5</text><text x="710" y="96" font-size="12">Verifica</text></g>
+      <g><circle cx="840" cy="80" r="38" class="box" stroke-dasharray="5 4"/><text x="840" y="76" class="tt">6</text><text x="840" y="96" font-size="12">Comunica</text></g>
+    </g>
+    <path d="M98 80H152M228 80H282M358 80H412M488 80H542M618 80H672M748 80H802" class="hl" marker-end="url(#ar4)"/>
+    <path d="M840 118C840 190 190 190 190 120" class="ln" stroke-dasharray="6 6" marker-end="url(#ar4)"/>
+    <text x="520" y="186" text-anchor="middle" font-size="14" class="dim">Archiviazione (7) · e se serve si torna indietro</text>
+    <text x="320" y="40" text-anchor="middle" font-size="13" style="fill:var(--yellow)">decide l'umano</text>
+    <text x="710" y="40" text-anchor="middle" font-size="13" style="fill:var(--green)">obbligatoria</text>
+  </svg>
+  <figcaption>Giallo = punto di decisione umana. Verde = fase che non si può saltare. Tratteggiato = opzionale.</figcaption></figure>
+
+  <div class="phases" id="phases"></div>
+  <div class="card" id="phaseBody"></div>
+
+  <div class="callout info"><b class="t">Convenzione di cartella</b>Ogni modifica vive in <code>limet/changes/NNNN-slug-breve/</code> (numero a 4 cifre + slug), per ordine cronologico e univocità. A lavoro concluso passa in <code>limet/archive/NNNN-slug-breve/</code>.</div>
+</section>
+
+<!-- ============ 9. DOCUMENTI ============ -->
+<section class="page" id="documenti" data-title="I documenti (template)" data-ico="📄" data-grp="Il metodo">
+  <span class="kicker">Il metodo</span>
+  <h1>I template: quale documento uso e quando</h1>
+  <p class="lead">LIMET fornisce 13 template di ciclo di vita, 2 di livello workspace e 2 per documentare la codebase. Non si usano sempre tutti: dipende dal tipo di lavoro.</p>
+
+  <h2>Cosa devo fare?</h2>
+  <div class="card"><div class="tabs" id="tplpick"></div><div id="tplres"></div></div>
+
+  <h2>Elenco completo</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Template</th><th>Risponde a…</th><th>Quando</th></tr>
+    <tr><td><code>PLAN</code></td><td>Cosa, perché, come (breve)</td><td>Modifica piccola/media</td></tr>
+    <tr><td><code>CHANGE_PROPOSAL</code></td><td><b>Perché</b>: motivazione, impatto</td><td>Modifica ampia</td></tr>
+    <tr><td><code>SPEC</code></td><td><b>Cosa</b>: requisiti come scenari dato/quando/allora</td><td>Una per capability toccata</td></tr>
+    <tr><td><code>DESIGN</code></td><td><b>Come</b>: scelte tecniche e alternative scartate</td><td>Opzionale, se il come non è ovvio</td></tr>
+    <tr><td><code>TASK_LIST</code></td><td>Passi tracciabili + registro modifiche</td><td>Sempre</td></tr>
+    <tr><td><code>TASK</code></td><td>Scheda di un task complesso</td><td>Se serve analisi dedicata</td></tr>
+    <tr><td><code>BUG_REPORT</code></td><td>Osservato, atteso, riproduzione, causa radice</td><td>Si parte da un difetto</td></tr>
+    <tr><td><code>TEST_PLAN</code></td><td>Unit test (e criteri e2e) <i>prima</i> del codice</td><td>Sempre</td></tr>
+    <tr><td><code>TEST_EXECUTION</code></td><td>Esito <b>reale</b> dei test</td><td>Dopo l'esecuzione</td></tr>
+    <tr><td><code>E2E_VERIFICATION</code></td><td>Checklist manuale end-to-end ripetibile</td><td>Integrazioni, UI, effetti reali</td></tr>
+    <tr><td><code>NON_TECHNICAL_SUMMARY</code></td><td>Cosa cambia, per i non tecnici</td><td>Se rilevante</td></tr>
+    <tr><td><code>GLOSSARY</code></td><td>Termini di dominio condivisi</td><td>Quando emerge un'ambiguità</td></tr>
+    <tr><td><code>ARCHIVE_ENTRY</code></td><td>Congelamento dello storico</td><td>Chiusura</td></tr>
+    <tr><td><code>MODULE_MAP</code> · <code>CROSS_PROJECT_CHANGE</code></td><td>Mappa e coordinamento cross-progetto</td><td>Solo workspace</td></tr>
+    <tr><td><code>ARCHITECTURE</code> · <code>CONVENTIONS</code></td><td>Panoramica e convenzioni della codebase</td><td>Generati da <code>limet-index</code></td></tr>
+  </table></div>
+  <div class="callout info"><b class="t">Naming</b>Si usano i nomi dei template in inglese come base; le istanze concrete aggiungono uno slug (es. <code>PLAN_&lt;slug&gt;.md</code>) oppure restano <code>PLAN.md</code> dentro la cartella numerata della modifica.</div>
+</section>
+
+<!-- ============ 10. TEST ============ -->
+<section class="page" id="test" data-title="Verifica obbligatoria" data-ico="✅" data-grp="Il metodo">
+  <span class="kicker">Il principio non negoziabile</span>
+  <h1>Nessun task è concluso senza una prova</h1>
+  <p class="lead">Ogni task che cambia comportamento deve avere <b>unit test</b> dedicati e, quando servono, un <b>piano e2e</b> passo-passo. Marcare <code>done</code> senza questa sezione compilata non è consentito. Anche un "non applicabile" va motivato.</p>
+
+  <figure>
+  <svg viewBox="0 0 900 330" role="img" aria-label="Livelli di verifica">
+    <polygon points="450,20 760,310 140,310" style="fill:var(--card2);stroke:var(--border);stroke-width:2"/>
+    <polygon points="450,20 530,95 370,95" style="fill:rgba(249,115,22,.3);stroke:var(--accent);stroke-width:2.5"/>
+    <polygon points="370,95 530,95 610,170 290,170" style="fill:rgba(56,189,248,.18);stroke:var(--blue);stroke-width:2.5"/>
+    <polygon points="290,170 610,170 760,310 140,310" style="fill:rgba(74,222,128,.18);stroke:var(--green);stroke-width:2.5"/>
+    <g text-anchor="middle" font-size="17">
+      <text x="450" y="76" class="tt">E2E</text>
+      <text x="450" y="138" class="tt">Integrazione / pre-post stato</text>
+      <text x="450" y="236" class="tt" font-size="21">Unit test</text><text x="450" y="264" class="dim" font-size="15">tanti, veloci, mirati al comportamento</text>
+    </g>
+    <g font-size="15"><text x="780" y="60" class="dim">pochi, ripetibili da</text><text x="780" y="80" class="dim">chiunque</text>
+    <text x="20" y="60" class="dim">integrazioni, UI,</text><text x="20" y="80" class="dim">effetti su sistemi reali</text></g>
+  </svg>
+  <figcaption>Schema concettuale: la base sono gli unit test; i livelli superiori si aggiungono quando gli unit non bastano a dare fiducia.</figcaption></figure>
+
+  <h2>Unit test: non basta "farli passare"</h2>
+  <ul class="ck">
+    <li>Verifica se esistono test dell'area toccata: se sì, <b>estendili</b> invece di duplicarli.</li>
+    <li>Il test deve <b>fallire se il difetto torna</b> (per un bug: scrivi prima il test di regressione).</li>
+    <li>Pianifica in <code>TEST_PLAN</code> prima/durante, registra l'esito reale in <code>TEST_EXECUTION</code> dopo. Può eseguirlo l'utente.</li>
+    <li>Con risorse a stato (DB, file, cache): annota lo stato <b>prima</b> e <b>dopo</b> (es. query SQL), non solo la risposta.</li>
+  </ul>
+
+  <h2>Autorevisione della qualità del test</h2>
+  <div class="callout warn"><b class="t">Criterio di arresto — "sabotaggio mentale"</b>
+    Per ogni modifica chiediti: <b>quale singola alterazione plausibile di questo codice NON farebbe fallire nessun test?</b> Se esiste una risposta, manca un test. È l'equivalente mentale del mutation testing.</div>
+  <div class="grid g2">
+    <div class="mini"><h4>1 · Assert che possono fallire</h4>Un assert che non può fallire da solo è rumore e dà falsa copertura.</div>
+    <div class="mini"><h4>2 · Atteso indipendente</h4>Il valore atteso non va letto/calcolato dall'oggetto sotto test (tautologia).</div>
+    <div class="mini"><h4>3 · Niente campioni arbitrari</h4>Tutti i casi, oppure un sottoinsieme con criterio di selezione scritto.</div>
+    <div class="mini"><h4>4 · Contratto, non solo percorso felice</h4>Cosa promette su input assenti, vuoti, non validi o fuori intervallo.</div>
+    <div class="mini"><h4>5 · Ridondanza dichiarata</h4>Un test già implicato da un altro si motiva o si elimina.</div>
+    <div class="mini"><h4>6 · Limite dichiarato</h4>Ciò che lo unit non può coprire (schema DB, ambiente) è scritto con il rimando a cosa lo copre.</div>
+    <div class="mini"><h4>7 · Nessuno stato condiviso</h4>Niente mutazioni di singleton/cache/dati sporchi: l'esito non dipende dall'ordine.</div>
+  </div>
+
+  <h2>Test e2e: quando e come</h2>
+  <p>Da prevedere per integrazioni esterne, effetti su sistemi reali, comportamenti dipendenti da ambiente, interfacce utente, timing/concorrenza. Non serve che sia automatizzato, ma deve essere <b>ripetibile da chiunque</b>:</p>
+  <div class="grid g3">
+    <div class="mini"><h4>Prima</h4>Precondizioni (ambiente, dati) e <b>stato iniziale</b> da controllare.</div>
+    <div class="mini"><h4>Durante</h4>Passi numerati, con il <b>risultato atteso per ogni passo</b>.</div>
+    <div class="mini"><h4>Dopo</h4>Criteri oggettivi (query, log, risposta), stato finale, <b>rollback</b> se resta stato residuo.</div>
+  </div>
+  <div class="callout ok"><b class="t">Quando si può omettere</b>Solo per modifiche non comportamentali (commenti, riformattazione, rinomina di variabili interne senza cambi di contratto) — e va scritto esplicitamente.</div>
+</section>
+
+<!-- ============ 11. RUOLI ============ -->
+<section class="page" id="ruoli" data-title="Chi fa cosa" data-ico="🤝" data-grp="Il metodo">
+  <span class="kicker">Responsabilità</span>
+  <h1>Agente e persona: chi fa cosa</h1>
+  <p class="lead">Il principio è semplice: <b>l'agente scrive e propone, tu decidi ed esegui ciò che ha effetti reali</b>.</p>
+
+  <div class="grid g2">
+    <div class="card" style="border-color:var(--accent)"><h3 style="margin-top:0">🤖 L'agente</h3>
+      <ul class="ck">
+        <li>Raccoglie contesto (Graphify, CEREBRO, dati read-only)</li>
+        <li>Scrive piano, spec, task, test plan, documenti</li>
+        <li>Modifica il codice nel perimetro approvato</li>
+        <li>Compila il registro modifiche mentre lavora</li>
+        <li>Registra domande contestuali e assunzioni</li>
+        <li>Ti <b>dà il comando</b> di build/test e attende l'esito</li>
+        <li>Ti ricorda il Re-index a fine task</li>
+      </ul></div>
+    <div class="card" style="border-color:var(--yellow)"><h3 style="margin-top:0">👤 Tu</h3>
+      <ul class="ck">
+        <li><b>Approvi</b> il piano prima del codice</li>
+        <li>Rispondi alle domande contestuali</li>
+        <li><b>Esegui</b> build e test, incolli l'esito</li>
+        <li>Fai <b>commit, push</b>, migrazioni, deploy</li>
+        <li>Lanci il <b>Re-index</b> dal Launcher</li>
+        <li>Verifichi gli scostamenti dal perimetro</li>
+        <li>Decidi quando un task è davvero chiuso</li>
+      </ul></div>
+  </div>
+
+  <h2>Il "ping-pong" di una verifica</h2>
+  <figure>
+  <svg viewBox="0 0 900 330" role="img" aria-label="Scambio agente-persona">
+    <defs><marker id="ar5" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9z" style="fill:var(--accent)"/></marker></defs>
+    <g font-size="18" class="tt" text-anchor="middle"><rect x="40" y="10" width="200" height="40" rx="10" style="fill:rgba(249,115,22,.2);stroke:var(--accent);stroke-width:2"/><text x="140" y="37">🤖 Agente</text>
+    <rect x="660" y="10" width="200" height="40" rx="10" style="fill:rgba(252,211,77,.2);stroke:var(--yellow);stroke-width:2"/><text x="760" y="37">👤 Tu</text></g>
+    <path d="M140 50V320M760 50V320" class="ln" stroke-dasharray="4 6"/>
+    <g font-size="15" text-anchor="middle">
+      <path d="M140 90H760" class="hl" marker-end="url(#ar5)"/><text x="450" y="82">«Fix pronto. Esegui: ./mvnw test -Dtest=…»</text>
+      <path d="M760 150H140" class="hl" marker-end="url(#ar5)"/><text x="450" y="142">«Esito: 1 test rosso (log incollato)»</text>
+      <path d="M140 210H760" class="hl" marker-end="url(#ar5)"/><text x="450" y="202">«Causa trovata, correzione, riesegui»</text>
+      <path d="M760 270H140" class="hl" marker-end="url(#ar5)"/><text x="450" y="262">«Verde. Registra in TEST_EXECUTION»</text>
+    </g>
+  </svg>
+  <figcaption>Nel frattempo l'agente resta in <b>standby</b>: non prosegue finché l'esito non arriva.</figcaption></figure>
+
+  <div class="callout warn"><b class="t">Azioni che richiedono SEMPRE la tua autorizzazione esplicita</b>commit · push · migrazioni · deploy · comandi distruttivi · build/test (li esegui tu).</div>
+</section>
+
+<!-- ============ 12. SETUP ============ -->
+<section class="page" id="setup" data-title="Installazione" data-ico="🛠️" data-grp="Mettilo in pratica">
+  <span class="kicker">Una tantum per macchina</span>
+  <h1>Installare gli strumenti</h1>
+  <p class="lead">Servono quattro componenti. Poi la gestione quotidiana si fa dal <b>Launcher web</b>, non dalla riga di comando.</p>
+
+  <figure>
+  <svg viewBox="0 0 900 300" role="img" aria-label="Pipeline di indicizzazione">
+    <defs><marker id="ar6" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9z" style="fill:var(--accent)"/></marker></defs>
+    <g font-size="16" text-anchor="middle">
+      <rect x="10" y="40" width="150" height="70" rx="12" class="box"/><text x="85" y="70" class="tt">Documenti</text><text x="85" y="92" class="dim" font-size="13">md · pdf · docx…</text>
+      <rect x="200" y="40" width="150" height="70" rx="12" class="box"/><text x="275" y="70" class="tt">Chunk</text><text x="275" y="92" class="dim" font-size="13">frammenti</text>
+      <rect x="390" y="40" width="160" height="70" rx="12" style="fill:rgba(56,189,248,.15);stroke:var(--blue);stroke-width:2"/><text x="470" y="70" class="tt">Ollama</text><text x="470" y="92" class="dim" font-size="13">nomic-embed-text · :11434</text>
+      <rect x="590" y="40" width="150" height="70" rx="12" style="fill:rgba(74,222,128,.15);stroke:var(--green);stroke-width:2"/><text x="665" y="70" class="tt">Qdrant</text><text x="665" y="92" class="dim" font-size="13">CRB_&lt;slug&gt; · :6333</text>
+      <rect x="770" y="40" width="120" height="70" rx="12" style="fill:rgba(249,115,22,.15);stroke:var(--accent);stroke-width:2"/><text x="830" y="70" class="tt">Agente</text><text x="830" y="92" class="dim" font-size="13">risponde citando</text>
+    </g>
+    <path d="M160 75H200M350 75H390M550 75H590M740 75H770" class="hl" marker-end="url(#ar6)"/>
+    <g font-size="16" text-anchor="middle">
+      <rect x="10" y="170" width="260" height="90" rx="12" style="fill:rgba(192,132,252,.15);stroke:var(--purple);stroke-width:2"/><text x="140" y="203" class="tt">Codice sorgente</text><text x="140" y="228" class="dim" font-size="13">Graphify (AST) → graphify-out/</text>
+      <rect x="320" y="170" width="260" height="90" rx="12" class="box"/><text x="450" y="203" class="tt">Launcher LIMET</text><text x="450" y="228" class="dim" font-size="13">127.0.0.1:8799 — Crea · Re-index · Status</text>
+      <rect x="630" y="170" width="260" height="90" rx="12" class="box"/><text x="760" y="203" class="tt">AGENTS.md</text><text x="760" y="228" class="dim" font-size="13">istruisce l'agente a usare tutto</text>
+    </g>
+    <path d="M270 215H320M580 215H630" class="hl" marker-end="url(#ar6)"/>
+  </svg>
+  <figcaption>I documenti passano da CEREBRO (testo → significato → Qdrant); il codice passa da Graphify. Il Launcher orchestra entrambi.</figcaption></figure>
+
+  <div class="callout info"><b class="t">Prerequisiti</b>Python 3.10+, Docker Desktop (per Qdrant), Ollama, Git. Tutto gira in locale: nessun dato lascia la macchina.</div>
+
+  <ol class="steps">
+    <li><b>Qdrant — il database vettoriale</b>Con Docker Desktop avviato:
+      <div class="cmd">docker pull qdrant/qdrant
+docker run -d --name qdrant -p 6333:6333 -p 6334:6334 -v qdrant_storage:/qdrant/storage qdrant/qdrant
+curl http://localhost:6333/collections</div>Verifica: risposta JSON con l'elenco (vuoto) delle collection.</li>
+    <li><b>Ollama + modello di embedding</b>Installa Ollama da <code>ollama.com</code>, poi:
+      <div class="cmd">ollama pull nomic-embed-text
+curl http://localhost:11434</div>Verifica: "Ollama is running".</li>
+    <li><b>CEREBRO</b>
+      <div class="cmd">git clone https://github.com/odyssey2073/cerebro.git
+cd cerebro
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+copy .env.example .env</div>Il <code>.env</code> di default (<code>QDRANT_URL=http://localhost:6333</code>, <code>OLLAMA_URL=http://localhost:11434</code>, <code>EMBEDDING_MODEL=nomic-embed-text</code>) è già corretto.</li>
+    <li><b>Graphify</b>
+      <div class="cmd">uv tool install graphifyy
+graphify install</div>Alternative: <code>pipx install graphifyy</code> o <code>pip install graphifyy</code>. <code>graphify install</code> registra la skill per l'assistente in uso (<code>--project</code> solo per il progetto corrente).</li>
+    <li><b>LIMET + Launcher</b>
+      <div class="cmd">git clone &lt;repo-limet&gt; &lt;LIMET_HOME&gt;
+python &lt;LIMET_HOME&gt;\scripts\limet-launcher.py</div>Si apre l'interfaccia web (<code>127.0.0.1:8799</code>). Da qui registri progetti, indicizzi, fai Re-index. Non serve toccare CEREBRO a mano.</li>
+    <li><b>(Opzionale) Server MCP <code>limet_search</code></b>Per far interrogare i documenti in modo trasparente:
+      <div class="cmd">claude mcp add limet -- python &lt;CEREBRO&gt;\scripts\limet_mcp.py
+copilot mcp add limet -- python &lt;CEREBRO&gt;\scripts\limet_mcp.py</div>Claude Code può anche auto-iniettare il RAG a ogni prompt con un hook; Copilot CLI usa il tool MCP + le istruzioni in <code>AGENTS.md</code>.</li>
+  </ol>
+
+  <h2>Problemi frequenti</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Sintomo</th><th>Causa probabile</th><th>Soluzione</th></tr>
+    <tr><td><code>Connection refused :6333</code></td><td>Qdrant non avviato</td><td><code>docker start qdrant</code></td></tr>
+    <tr><td><code>Connection refused :11434</code></td><td>Ollama non avviato</td><td><code>ollama serve</code></td></tr>
+    <tr><td><code>Collection doesn't exist</code></td><td>Mai indicizzato</td><td>Eseguire Crea/Re-index dal Launcher</td></tr>
+    <tr><td>Risposte non aggiornate</td><td>Documenti cambiati, non re-indicizzati</td><td>Re-index (incrementale) dal Launcher</td></tr>
+  </table></div>
+  <p class="sticky-note">I comandi sono quelli del manuale (Appendice A). Per i dettagli aggiornati consulta anche <code>it\guides\install.html</code> nel repository LIMET.</p>
+</section>
+
+<!-- ============ 13. PROGETTO ============ -->
+<section class="page" id="progetto" data-title="LIMET in un progetto" data-ico="📦" data-grp="Mettilo in pratica">
+  <span class="kicker">Attivazione</span>
+  <h1>Cosa succede quando attivi LIMET in un progetto</h1>
+  <p class="lead">Avere i documenti non basta: l'agente deve essere <b>istruito</b> a consultarli a <b>ogni sessione</b>. LIMET lo fa con un solo meccanismo valido per tutti gli strumenti.</p>
+
+  <h2>Un contenuto, due strumenti</h2>
+  <figure>
+  <svg viewBox="0 0 900 250" role="img" aria-label="AGENTS.md come fonte unica">
+    <defs><marker id="ar7" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9z" style="fill:var(--accent)"/></marker></defs>
+    <g font-size="17" text-anchor="middle">
+      <rect x="320" y="20" width="260" height="80" rx="14" style="fill:rgba(249,115,22,.18);stroke:var(--accent);stroke-width:3"/><text x="450" y="55" class="tt" font-size="20">AGENTS.md</text><text x="450" y="80" class="dim" font-size="14">blocco LIMET:START … END</text>
+      <rect x="40" y="160" width="300" height="70" rx="12" class="box"/><text x="190" y="190" class="tt">Copilot CLI</text><text x="190" y="214" class="dim" font-size="14">legge AGENTS.md nativamente</text>
+      <rect x="560" y="160" width="300" height="70" rx="12" class="box"/><text x="710" y="190" class="tt">Claude Code</text><text x="710" y="214" class="dim" font-size="14">CLAUDE.md contiene la riga «@AGENTS.md»</text>
+    </g>
+    <path d="M400 100L230 160M500 100L670 160" class="hl" marker-end="url(#ar7)"/>
+  </svg>
+  <figcaption>Si scrive una volta sola; nessuna logica per-tool da mantenere.</figcaption></figure>
+
+  <h2>Come si attiva</h2>
+  <p>Dal Launcher, azione <b>Crea</b> (consigliato) — oppure da riga di comando:</p>
+  <div class="cmd">.\scripts\limet.ps1 init   -ProjectPath C:\percorso\progetto -Lang it
+.\scripts\limet.ps1 update -ProjectPath C:\percorso\progetto -Lang it</div>
+  <div class="cmd">./scripts/limet.sh init --project-path /percorso/progetto --lang it</div>
+  <p><code>update</code> è <b>idempotente</b>: rigenera <code>limet/</code> e sostituisce il blocco in <code>AGENTS.md</code> senza duplicarlo.</p>
+
+  <h3>Cosa crea <code>init</code></h3>
+  <div class="tree"><span class="h">&lt;progetto&gt;\</span>
+├─ <span class="h">AGENTS.md</span>            <span class="n">← blocco LIMET (fonte unica di istruzioni)</span>
+├─ CLAUDE.md             <span class="n">← riga @AGENTS.md</span>
+├─ <span class="h">limet\</span>
+│   ├─ FRAMEWORK_MANUAL.md · ONBOARDING_CHECKLIST.md
+│   ├─ templates\         <span class="n">← i template</span>
+│   ├─ <span class="h">changes\</span>          <span class="n">← lavoro in corso: 0001-slug\ …</span>
+│   ├─ <span class="h">archive\</span>          <span class="n">← lavoro concluso</span>
+│   └─ scripts\           <span class="n">← limet-index</span>
+├─ <span class="h">docs-limet\</span>           <span class="n">← documentazione indicizzata da CEREBRO</span>
+│   ├─ architecture\ (GRAPH_REPORT.md, ARCHITECTURE.md, …)
+│   ├─ features\ · bugfixes\
+│   └─ _templates\        <span class="n">← non indicizzata</span>
+├─ graphify-out\         <span class="n">← grafo del codice</span>
+└─ .graphifyignore</div>
+  <div class="callout info"><b class="t">Locale, non condiviso</b>Quando il progetto è in un working tree git, gli script aggiungono <code>AGENTS.md</code>, <code>CLAUDE.md</code>, <code>limet\</code>, <code>graphify-out\</code> e <code>.graphifyignore</code> a <code>.git\info\exclude</code>: restano sulla tua macchina e non vengono committati. La cartella <code>docs\</code> del progetto non viene né letta né toccata (la documentazione LIMET è in <code>docs-limet\</code>).</div>
+
+  <h2>Tenere gli indici aggiornati: <code>limet-index</code></h2>
+  <div class="tablewrap"><table>
+    <tr><th>Comando</th><th>Effetto</th></tr>
+    <tr><td><code>limet-index init</code></td><td>Crea <code>docs-limet/</code>, esegue Graphify, registra il progetto in CEREBRO (<code>CRB_&lt;slug&gt;</code>), indicizza, scrive il blocco <code>LIMET-CONTEXT</code></td></tr>
+    <tr><td><code>limet-index update</code></td><td>Riesegue <code>graphify update .</code> e re-indicizza (nessun duplicato)</td></tr>
+    <tr><td><code>limet-index status</code></td><td>Progetti registrati e conteggio chunk</td></tr>
+    <tr><td><code>limet-index remove</code></td><td>Toglie dal registro (la collection Qdrant resta; DELETE solo con doppia conferma)</td></tr>
+  </table></div>
+  <div class="callout warn"><b class="t">Il Re-index è tuo</b>Dopo modifiche a codice o documenti, l'agente te lo <b>ricorda</b> ma non lo lancia: Launcher → progetto → <b>Re-index</b> → Incrementale. Fino ad allora i documenti locali restano consultabili anche se il RAG non è aggiornato.</div>
+
+  <h2>Verifica dopo l'installazione</h2>
+  <ul class="ck">
+    <li>Chiedi all'agente se <b>conosce la posizione del manuale e dei template</b> (non darlo per scontato).</li>
+    <li>Rilancia <code>init/update</code> su una cartella di prova: <code>grep -c 'LIMET:START' AGENTS.md</code> deve dare <b>1</b>.</li>
+  </ul>
+  <div class="callout warn"><b class="t">Cosa NON basta</b>
+    <ul class="ck ul x" style="margin:4px 0 0"><li>Salvare i documenti in <code>limet/</code> senza referenziarli in <code>AGENTS.md</code>: l'agente non li scopre da solo.</li>
+    <li>Citare LIMET una volta in chat: senza blocco persistente si perde alla sessione dopo.</li>
+    <li>Creare skill o cartelle di istruzioni diverse per ogni tool: viola il principio "una sola fonte".</li></ul></div>
+</section>
+
+<!-- ============ 14. WORKSPACE ============ -->
+<section class="page" id="workspace" data-title="Più progetti (workspace)" data-ico="🏗️" data-grp="Mettilo in pratica">
+  <span class="kicker">Scenari multi-progetto</span>
+  <h1>Quando il lavoro attraversa più progetti</h1>
+  <p class="lead">Backend e frontend in repository separati? Un monorepo a moduli? Serve un livello di <b>coordinamento</b> sopra i singoli progetti — senza sostituirli.</p>
+
+  <figure>
+  <svg viewBox="0 0 900 420" role="img" aria-label="Workspace con due progetti">
+    <defs><marker id="ar8" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9z" style="fill:var(--accent)"/></marker></defs>
+    <rect x="10" y="10" width="880" height="400" rx="16" style="fill:none;stroke:var(--accent);stroke-width:2.5;stroke-dasharray:9 6"/>
+    <text x="30" y="40" font-size="17" class="tt" style="fill:var(--accent2)">limet-workspace\  (cartella padre o radice del monorepo)</text>
+    <g font-size="15" text-anchor="middle">
+      <rect x="40" y="62" width="240" height="64" rx="10" class="box"/><text x="160" y="90" class="tt">MODULE_MAP.md</text><text x="160" y="112" class="dim" font-size="13">progetti, ruoli, contratti</text>
+      <rect x="330" y="62" width="240" height="64" rx="10" class="box"/><text x="450" y="90" class="tt">changes\ · archive\</text><text x="450" y="112" class="dim" font-size="13">modifiche cross-progetto</text>
+      <rect x="620" y="62" width="240" height="64" rx="10" class="box"/><text x="740" y="90" class="tt">CRB_&lt;ws&gt;</text><text x="740" y="112" class="dim" font-size="13">collection RAG del workspace</text>
+    </g>
+    <g font-size="16" text-anchor="middle">
+      <rect x="60" y="210" width="330" height="170" rx="14" style="fill:rgba(56,189,248,.1);stroke:var(--blue);stroke-width:2.5"/>
+      <text x="225" y="242" class="tt" font-size="19">Progetto A (es. backend)</text>
+      <text x="225" y="274" class="dim" font-size="14">limet\ propri changes/archive</text><text x="225" y="298" class="dim" font-size="14">AGENTS.md · docs-limet\</text><text x="225" y="322" class="dim" font-size="14">Graphify proprio</text>
+      <rect x="510" y="210" width="330" height="170" rx="14" style="fill:rgba(192,132,252,.1);stroke:var(--purple);stroke-width:2.5"/>
+      <text x="675" y="242" class="tt" font-size="19">Progetto B (es. notifiche)</text>
+      <text x="675" y="274" class="dim" font-size="14">limet\ propri changes/archive</text><text x="675" y="298" class="dim" font-size="14">AGENTS.md · docs-limet\</text><text x="675" y="322" class="dim" font-size="14">Graphify proprio</text>
+    </g>
+    <path d="M390 295H510" class="hl" marker-end="url(#ar8)"/><path d="M510 330H390" class="hl" marker-end="url(#ar8)"/>
+    <text x="450" y="280" text-anchor="middle" font-size="14" class="dim">contratto</text>
+    <path d="M160 126V210M740 126V210" class="ln" stroke-dasharray="5 5"/>
+  </svg>
+  <figcaption>Il workspace <b>coordina</b>; piano, task e test di dettaglio restano nel <code>limet\</code> di ogni progetto.</figcaption></figure>
+
+  <h2>Cosa aggiunge il workspace</h2>
+  <ul class="ck">
+    <li><code>MODULE_MAP.md</code>: compilato <b>a mano</b> una volta e <b>mai sovrascritto</b> da <code>update</code>.</li>
+    <li>Solo 2 template: <code>MODULE_MAP</code> e <code>CROSS_PROJECT_CHANGE</code> (si coordina, non si implementa).</li>
+    <li>Blocco <code>LIMET-WORKSPACE</code> in <code>AGENTS.md</code> della cartella padre; ogni progetto ricorda all'agente di consultare <code>MODULE_MAP.md</code> prima di modifiche con impatto su altri.</li>
+    <li>Ogni progetto rileva <code>CRB_&lt;ws&gt;</code> come collection extra: una sola ricerca copre entrambe.</li>
+  </ul>
+  <div class="cmd">.\scripts\limet.ps1 init -ProjectPath C:\percorso\workspace -Lang it -Workspace</div>
+
+  <h2>Progetti correlati in cartelle non annidate</h2>
+  <p>Senza una cartella padre comune non serve il workspace: nel Launcher, in <b>Crea</b>, premi <b>Progetti correlati →</b>, inserisci almeno 2 percorsi (nomi di cartella finali diversi) e premi <b>Crea progetti correlati</b>. Ogni progetto aggiunge in <code>projects.json</code> le collection degli altri, e <code>query_qdrant.py --project &lt;slug&gt;</code> cerca in tutte.</p>
+  <div class="callout info"><b class="t">Garanzie e limiti</b>Validazione completa prima di scrivere, scrittura atomica con backup <code>projects.json.bak</code> e rollback in caso di errore. <b>Limite:</b> il collegamento riguarda solo la documentazione (RAG); i grafi Graphify restano per progetto. <b>Scollega</b> rimuove i collegamenti.</div>
+
+  <h2>Flusso di una modifica cross-progetto</h2>
+  <ol class="steps">
+    <li><b>Mappa</b>Consulta <code>MODULE_MAP.md</code>: quali progetti sono coinvolti e quale contratto li lega?</li>
+    <li><b>Coordina</b>Crea <code>limet-workspace\changes\NNNN-slug\</code> da <code>CROSS_PROJECT_CHANGE</code>: owner di ogni modifica condivisa, ordine di build/deploy.</li>
+    <li><b>Dettaglia</b>Piano, task e test vivono nel <code>limet\changes\</code> di ciascun progetto; nel workspace resta un rimando.</li>
+    <li><b>Verifica e2e cross-progetto</b>Un solo percorso end-to-end che attraversa i progetti, documentato.</li>
+    <li><b>Archivia</b> a livello workspace e di ogni progetto; ricorda i Re-index anche dei progetti figli.</li>
+  </ol>
+</section>
+
+<!-- ============ 15. ESEMPI ============ -->
+<section class="page" id="esempi" data-title="Esempi passo-passo" data-ico="🧪" data-grp="Mettilo in pratica">
+  <span class="kicker">Casi concreti</span>
+  <h1>Due esempi completi: un bug e una feature</h1>
+  <p class="lead">Progetto di esempio fittizio <b>"TaskFlow"</b> (web app di gestione attività). Le stesse fasi valgono per qualunque progetto reale.</p>
+
+  <div class="tabs" data-group="ex"><button data-tab="bug">🐞 Bug fix: manca la colonna "stato" nel CSV</button><button data-tab="feat">✨ Feature: esportare in PDF</button></div>
+
+  <div class="tabpanel" data-group="ex" data-id="bug">
+  <ol class="steps">
+    <li><b>Checklist di onboarding</b>A inizio sessione, sempre.</li>
+    <li><b>Cartella + bug report</b><div class="cmd">New-Item -ItemType Directory limet\changes\0002-fix-export-csv-stato
+Copy-Item limet\templates\BUG_REPORT_TEMPLATE.md limet\changes\0002-fix-export-csv-stato\BUG_REPORT.md</div>Si compila: osservato, atteso, riproduzione e — dopo l'indagine — la <b>causa radice</b> (es. "le intestazioni CSV non sono state aggiornate quando è stato introdotto il campo stato").</li>
+    <li><b>TASK_LIST minimale</b>1-2 righe che puntano al bug report.</li>
+    <li><b>TEST_PLAN prima del fix</b>Test di regressione che <b>deve fallire</b> col bug presente: export di un'attività "completata" e verifica di intestazione e valore.</li>
+    <li><b>Fix minimale sulla causa radice</b>Non un cerotto sul sintomo.</li>
+    <li><b>Esegui i test (tu) e registra in TEST_EXECUTION</b>Comando, estratto di log, PASS/FAIL.</li>
+    <li><b>Task <code>done</code></b>Con data e ora, solo a test verde.</li>
+    <li><b>E2E manuale</b>Esporta da un'attività reale in ambiente di test, apri il file, controlla la colonna.</li>
+    <li><b>Archivia</b>ARCHIVE_ENTRY e spostamento in <code>limet\archive\0002-…</code>; poi Re-index.</li>
+  </ol></div>
+
+  <div class="tabpanel" data-group="ex" data-id="feat">
+  <ol class="steps">
+    <li><b>Checklist di onboarding</b>Come sempre.</li>
+    <li><b>CHANGE_PROPOSAL</b>Il <i>perché</i>: richiesta ricorrente di condividere report non modificabili; impatto atteso.</li>
+    <li><b>SPEC</b>Il <i>cosa</i>, verificabile: "dato un elenco filtrato, l'utente genera un PDF con le stesse colonne del CSV, su A4, con data e filtro nell'intestazione".</li>
+    <li><b>DESIGN (opzionale)</b>Libreria PDF, paginazione per elenchi lunghi, gestione errori.</li>
+    <li><b>TASK_LIST</b>Endpoint di generazione · pulsante "Esporta PDF" · permessi · test con elenco vuoto.</li>
+    <li><b>Per ogni task</b>TEST_PLAN → implementazione → TEST_EXECUTION → <code>done</code> con data/ora.</li>
+    <li><b>NON_TECHNICAL_SUMMARY</b>"Nuovo pulsante Esporta PDF" per il pubblico non tecnico.</li>
+    <li><b>E2E_VERIFICATION</b>Checklist end-to-end su test/staging prima del rilascio.</li>
+    <li><b>Archivia</b> in <code>limet\archive\0003-export-pdf\</code> e Re-index.</li>
+  </ol></div>
+
+  <div class="callout info"><b class="t">Da notare</b>In entrambi i casi il test e il piano <b>precedono</b> il codice, e l'agente non esegue mai build/test: passa il comando a te.</div>
+</section>
+
+<!-- ============ 16. GIORNATA ============ -->
+<section class="page" id="giornata" data-title="La tua giornata con LIMET" data-ico="📅" data-grp="Mettilo in pratica">
+  <span class="kicker">Routine quotidiana</span>
+  <h1>Come si presenta una sessione di lavoro</h1>
+  <p class="lead">Una routine ripetibile: all'inizio poco sforzo in più, a fine giornata molta meno confusione.</p>
+
+  <figure>
+  <svg viewBox="0 0 900 200" role="img" aria-label="Timeline giornata">
+    <line x1="40" y1="100" x2="860" y2="100" class="hl"/>
+    <g font-size="15" text-anchor="middle">
+      <circle cx="80" cy="100" r="16" style="fill:var(--accent)"/><text x="80" y="106" style="fill:#1a0d00" class="tt">1</text><text x="80" y="64" class="tt">Apri</text><text x="80" y="144" class="dim" font-size="13">checklist</text>
+      <circle cx="240" cy="100" r="16" style="fill:var(--accent)"/><text x="240" y="106" style="fill:#1a0d00" class="tt">2</text><text x="240" y="64" class="tt">Contesto</text><text x="240" y="144" class="dim" font-size="13">Graphify / CEREBRO</text>
+      <circle cx="400" cy="100" r="16" style="fill:var(--accent)"/><text x="400" y="106" style="fill:#1a0d00" class="tt">3</text><text x="400" y="64" class="tt">Piano</text><text x="400" y="144" class="dim" font-size="13">+ tua approvazione</text>
+      <circle cx="560" cy="100" r="16" style="fill:var(--accent)"/><text x="560" y="106" style="fill:#1a0d00" class="tt">4</text><text x="560" y="64" class="tt">Implementa</text><text x="560" y="144" class="dim" font-size="13">task per task</text>
+      <circle cx="720" cy="100" r="16" style="fill:var(--accent)"/><text x="720" y="106" style="fill:#1a0d00" class="tt">5</text><text x="720" y="64" class="tt">Verifica</text><text x="720" y="144" class="dim" font-size="13">tu esegui i test</text>
+      <circle cx="850" cy="100" r="16" style="fill:var(--green)"/><text x="850" y="106" style="fill:#1a0d00" class="tt">6</text><text x="850" y="64" class="tt">Chiudi</text><text x="850" y="144" class="dim" font-size="13">archivia + re-index</text>
+    </g>
+  </svg></figure>
+
+  <ol class="steps">
+    <li><b>Avvia e allinea l'agente</b>Apri la sessione nel progetto. Chiedi: <i>«Conosci la posizione del manuale LIMET e dei template? Riassumimi le regole vincolanti.»</i> Passa la checklist di onboarding.</li>
+    <li><b>Descrivi l'obiettivo, non la soluzione</b>Es. <i>«Vorrei poter riassegnare una pratica. Raccogli il contesto da Graphify e CEREBRO e proponimi un piano.»</i></li>
+    <li><b>Rispondi alle domande contestuali</b>Sono il momento in cui aggiungi più valore: ogni risposta viene scritta con data.</li>
+    <li><b>Approva (o correggi) il piano</b>Solo dopo si scrive codice.</li>
+    <li><b>Lascia lavorare l'agente, task per task</b>Vedrai aggiornarsi <code>TASK_LIST.md</code> e il registro modifiche.</li>
+    <li><b>Esegui i comandi che ti passa</b>Incolla l'esito: se è rosso, l'agente indaga; se è verde, registra e chiude il task.</li>
+    <li><b>Chiudi la giornata</b>Task archiviati, poi Launcher → <b>Re-index</b>. Il commit lo fai tu.</li>
+  </ol>
+
+  <h2>Frasi utili da dire all'agente</h2>
+  <div class="grid g2">
+    <div class="mini"><h4>Contesto</h4>«Prima di proporre, interroga Graphify e CEREBRO e cita le fonti.»</div>
+    <div class="mini"><h4>Perimetro</h4>«Dichiara cosa è dentro e fuori scope e le alternative scartate.»</div>
+    <div class="mini"><h4>Verifica</h4>«Scrivi TEST_PLAN prima del codice e dammi il comando di test per classe e per metodo.»</div>
+    <div class="mini"><h4>Onestà</h4>«Se hai un dubbio, scrivilo come domanda contestuale: non assumere.»</div>
+  </div>
+</section>
+
+<!-- ============ 17. ANTIPATTERN ============ -->
+<section class="page" id="antipattern" data-title="Anti-pattern" data-ico="⚠️" data-grp="Riferimento">
+  <span class="kicker">Cosa evitare</span>
+  <h1>Gli errori più comuni (e come riconoscerli)</h1>
+  <div class="grid g2">
+    <div class="card"><h3 style="margin-top:0">🎯 Assumere invece di chiedere</h3>Procedere su un'ambiguità senza scriverla come domanda contestuale. <b>Rimedio:</b> ogni dubbio diventa una riga con risposta e data.</div>
+    <div class="card"><h3 style="margin-top:0">🚀 Azioni persistenti senza permesso</h3>Commit, push, migrazioni, comandi distruttivi non richiesti. <b>Rimedio:</b> li fai tu.</div>
+    <div class="card"><h3 style="margin-top:0">📉 Documentazione che diverge dal codice</h3>Piani e task non aggiornati dopo uno scostamento. <b>Rimedio:</b> sezione datata "Esito implementazione".</div>
+    <div class="card"><h3 style="margin-top:0">☑️ Task "done" senza verifica</h3>Codice scritto ≠ task concluso. <b>Rimedio:</b> serve la strategia di test completata o un "non applicabile" motivato.</div>
+    <div class="card"><h3 style="margin-top:0">🪞 Test che non può fallire</h3>Assert tautologici, attesi derivati dall'oggetto testato, campioni arbitrari. <b>Rimedio:</b> autorevisione e sabotaggio mentale.</div>
+    <div class="card"><h3 style="margin-top:0">🗃️ Documentazione "viva" mai archiviata</h3>Piani chiusi da mesi mescolati al lavoro attivo. <b>Rimedio:</b> ARCHIVE_ENTRY e spostamento in <code>archive\</code>.</div>
+    <div class="card"><h3 style="margin-top:0">🎲 Vibe-driven su modifiche non banali</h3>Saltare proposta e specifica. <b>Rimedio:</b> 10 minuti di piano scritto.</div>
+    <div class="card"><h3 style="margin-top:0">🔁 Ricercare due volte lo stesso contesto</h3>Spreco di tempo e token nella stessa sessione. <b>Rimedio:</b> riusa quanto già recuperato.</div>
+  </div>
+  <div class="callout ok"><b class="t">Dettaglio utile: la "degradazione controllata"</b>Se CEREBRO o Graphify non sono disponibili, non si smette di usare LIMET: si sostituiscono con ricerca manuale. Non cambia mai il principio di tracciabilità né il requisito di verifica.</div>
+</section>
+
+<!-- ============ 18. CHECKLIST ============ -->
+<section class="page" id="checklist" data-title="Checklist di sessione" data-ico="☑️" data-grp="Riferimento">
+  <span class="kicker">Da usare a ogni feature o bug fix</span>
+  <h1>Checklist di onboarding</h1>
+  <p class="lead">Spunta ogni voce; se una non è applicabile, annotalo invece di saltarla in silenzio. Lo stato resta salvato in questo browser.</p>
+  <div class="card" style="display:flex;align-items:center;gap:22px;flex-wrap:wrap">
+    <svg viewBox="0 0 100 100" width="110" height="110" role="img" aria-label="Avanzamento">
+      <circle cx="50" cy="50" r="40" fill="none" style="stroke:var(--border)" stroke-width="12"/>
+      <circle id="chkRing" cx="50" cy="50" r="40" fill="none" style="stroke:var(--accent)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 251.3" transform="rotate(-90 50 50)"/>
+      <text id="chkPct" x="50" y="57" text-anchor="middle" font-size="22" font-weight="700">0%</text>
+    </svg>
+    <div><div style="font-size:20px;font-weight:700" id="chkTxt">0 voci</div><div class="dim" style="color:var(--dim)">completate in questa sessione</div><button class="b" id="chkClear" style="margin-top:8px">Azzera checklist</button></div>
+  </div>
+  <div id="chk"></div>
+</section>
+
+<!-- ============ 19. GLOSSARIO / FAQ ============ -->
+<section class="page" id="glossario" data-title="Glossario e FAQ" data-ico="📚" data-grp="Riferimento">
+  <span class="kicker">Riferimento</span>
+  <h1>Glossario e domande frequenti</h1>
+  <h2>Glossario</h2>
+  <dl class="glos">
+    <dt>RAG</dt><dd>Retrieval-Augmented Generation: l'IA risponde dopo aver recuperato documenti rilevanti, citandoli.</dd>
+    <dt>Vector database / Qdrant</dt><dd>Archivio che confronta il <i>significato</i> dei testi, non le parole esatte.</dd>
+    <dt>Embedding</dt><dd>Il "codice numerico di significato" di un testo, prodotto da un modello (qui Ollama <code>nomic-embed-text</code>).</dd>
+    <dt>Chunk</dt><dd>Frammento di documento indicizzato.</dd>
+    <dt>Collection <code>CRB_&lt;slug&gt;</code></dt><dd>Contenitore isolato in Qdrant dei documenti di un progetto.</dd>
+    <dt>AST</dt><dd>Abstract Syntax Tree: lo scheletro grammaticale del codice.</dd>
+    <dt>Knowledge graph</dt><dd>Mappa dei simboli del codice e delle loro relazioni.</dd>
+    <dt>Context provider</dt><dd>Fonte di contesto per l'agente: documentale, strutturale o dati reali.</dd>
+    <dt>MCP</dt><dd>Model Context Protocol: modo standard per dare strumenti (come <code>limet_search</code>) all'agente.</dd>
+    <dt>Spec-driven</dt><dd>Lavoro guidato da specifiche scritte prima del codice.</dd>
+    <dt>Vibe coding</dt><dd>Procedere a intuito, senza piano scritto.</dd>
+    <dt>Domanda contestuale</dt><dd>Ambiguità registrata con risposta e data, invece di assumerla.</dd>
+    <dt>Workspace</dt><dd>Livello di coordinamento sopra più progetti o moduli correlati.</dd>
+    <dt>Re-index</dt><dd>Aggiornamento di Graphify e CEREBRO dopo modifiche; lo lancia l'utente.</dd>
+  </dl>
+  <h2>Domande frequenti</h2>
+  <details><summary>LIMET rallenta il lavoro?</summary><div>Aggiunge qualche minuto di piano all'inizio e fa risparmiare ri-spiegazioni, regressioni e riscritture. Per un fix puntuale basta un <code>TASK_LIST</code> da 1-2 righe.</div></details>
+  <details><summary>Devo usare tutti i template?</summary><div>No. Usa la sequenza adatta (vedi "I documenti"). I principi — tracciabilità e verifica — valgono sempre; i template sono scheletri.</div></details>
+  <details><summary>Funziona con strumenti diversi da Copilot e Claude?</summary><div>Sì: <code>AGENTS.md</code> è uno standard aperto letto dalla maggior parte degli agenti CLI moderni. LIMET è agnostico rispetto agli strumenti.</div></details>
+  <details><summary>I miei documenti escono dalla macchina?</summary><div>No. CEREBRO usa Qdrant e Ollama in locale, senza API key né chiamate cloud; Graphify analizza il codice localmente.</div></details>
+  <details><summary>Perché l'agente non lancia i test da solo?</summary><div>Per separare lo scrivere dall'eseguire (§1.3): controlli tu cosa gira, e l'output non satura il contesto dell'agente. Ti dà il comando esatto e attende l'esito.</div></details>
+  <details><summary>Cosa faccio se Qdrant o Ollama non rispondono?</summary><div>Segnalalo e procedi senza contesto RAG (leggendo i docs locali). Poi: <code>docker start qdrant</code> oppure <code>ollama serve</code>.</div></details>
+  <details><summary>Dove trovo il manuale completo?</summary><div><code>it\FRAMEWORK_MANUAL.md</code> nel repository LIMET, con <code>it\MASTER_INDEX.md</code> per l'ordine di lettura, e le guide interattive <code>it\guides\workflow.html</code> e <code>install.html</code>.</div></details>
+  <details><summary>Il progetto ha poca documentazione: da dove parto?</summary><div>Usa <code>limet-index init</code> per generare il report Graphify e i template di architettura/convenzioni, e fai scrivere all'agente <code>ARCHITECTURE.md</code>, <code>conventions.md</code>, <code>module-map.md</code> e <code>glossary.md</code> (manuale B.1-bis).</div></details>
+</section>
+
+<!-- ============ 20. ADOZIONE ============ -->
+<section class="page" id="adozione" data-title="Adozione nel team" data-ico="🚀" data-grp="Riferimento">
+  <span class="kicker">Proposta di diffusione</span>
+  <h1>Come introdurre LIMET nel team</h1>
+  <p class="lead">Un percorso graduale suggerito (<i>proposta operativa, non parte del manuale</i>): si parte piccoli, si impara, si estende.</p>
+
+  <figure>
+  <svg viewBox="0 0 900 230" role="img" aria-label="Roadmap di adozione">
+    <defs><marker id="ar9" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9z" style="fill:var(--accent)"/></marker></defs>
+    <g font-size="16" text-anchor="middle">
+      <rect x="10" y="30" width="200" height="150" rx="14" class="box"/><text x="110" y="62" class="tt">1 · Pilota</text><text x="110" y="92" class="dim" font-size="14">1 progetto</text><text x="110" y="114" class="dim" font-size="14">1-2 persone</text><text x="110" y="136" class="dim" font-size="14">setup completo</text>
+      <rect x="250" y="30" width="200" height="150" rx="14" class="box"/><text x="350" y="62" class="tt">2 · Formazione</text><text x="350" y="92" class="dim" font-size="14">sessione con questa</text><text x="350" y="114" class="dim" font-size="14">guida + demo bug fix</text><text x="350" y="136" class="dim" font-size="14">checklist condivisa</text>
+      <rect x="490" y="30" width="200" height="150" rx="14" class="box"/><text x="590" y="62" class="tt">3 · Estensione</text><text x="590" y="92" class="dim" font-size="14">più progetti</text><text x="590" y="114" class="dim" font-size="14">workspace se servono</text><text x="590" y="136" class="dim" font-size="14">docs indicizzati</text>
+      <rect x="730" y="30" width="160" height="150" rx="14" style="fill:rgba(74,222,128,.15);stroke:var(--green);stroke-width:2"/><text x="810" y="62" class="tt">4 · Routine</text><text x="810" y="92" class="dim" font-size="14">retrospettiva</text><text x="810" y="114" class="dim" font-size="14">miglioramento</text><text x="810" y="136" class="dim" font-size="14">dei template</text>
+    </g>
+    <path d="M210 105H250M450 105H490M690 105H730" class="hl" marker-end="url(#ar9)"/>
+  </svg></figure>
+
+  <h2>Cosa osservare nel pilota</h2>
+  <ul class="ck">
+    <li>L'agente cita davvero i documenti (CEREBRO) e usa il grafo (Graphify)?</li>
+    <li>Le domande contestuali emergono presto o a fine lavoro?</li>
+    <li>I task <code>done</code> hanno sempre una prova di verifica registrata?</li>
+    <li>Quanto spesso ci si dimentica il Re-index? (il promemoria dell'agente basta?)</li>
+  </ul>
+
+  <h2>Obiezioni tipiche e risposte</h2>
+  <details><summary>«È burocrazia.»</summary><div>È un piano di una pagina e un registro compilato mentre si lavora. Il costo si ripaga la prima volta che si ritrova una decisione in 10 secondi invece di ricostruirla.</div></details>
+  <details><summary>«L'IA già sa programmare.»</summary><div>Sì, ma non conosce il <i>nostro</i> contesto né ricorda ieri. LIMET le dà memoria, mappa e un piano da seguire.</div></details>
+  <details><summary>«E se si sbaglia?»</summary><div>Per questo esistono approvazione del piano, test obbligatori e azioni persistenti sempre a carico dell'umano.</div></details>
+
+  <div class="callout info"><b class="t">Prossimo passo</b>Fai il quiz finale per verificare di aver colto i concetti chiave, poi installa LIMET su un progetto reale.</div>
+</section>
+
+<!-- ============ 21. QUIZ ============ -->
+<section class="page" id="verifica" data-title="Quiz finale" data-ico="🎓" data-grp="Riferimento">
+  <span class="kicker">Verifica la comprensione</span>
+  <h1>Sette domande per capire se ci sei</h1>
+  <p class="lead">Scegli una risposta: vedrai subito se è corretta e perché.</p>
+  <div id="quiz"></div>
+  <div class="card" style="font-size:18px;font-weight:700" id="quizRes">Risposte: 0 / 7</div>
+</section>
+
+
+</main>
+<script src="assets/app.js"></script>
+</body>
+</html>
